@@ -1,5 +1,5 @@
 begin;
-select plan(10);
+select plan(12);
 
 select has_table('public', 'profiles', 'profiles table exists');
 select col_type_is('public', 'profiles', 'role', 'user_role', 'role is user_role');
@@ -47,30 +47,53 @@ select is(public.is_admin(), true, 'is_admin() is true for an admin');
 -- but still holds a real PostgREST JWT, so it must NOT be exempt from
 -- the role-change guard, even though Supabase's default privileges grant
 -- UPDATE on public.profiles to anon.
+--
+-- Since Task 8, RLS on profiles has no anon-targeted UPDATE policy, so the
+-- anon UPDATE now matches zero rows and returns quietly instead of ever
+-- reaching the trigger. The property under test ("an anonymous caller
+-- cannot change anybody's role") still holds; the enforcing layer is now
+-- RLS instead of the trigger, so the assertion is on outcome, not SQLSTATE.
 set local role anon;
 set local request.jwt.claims = '{"role":"anon"}';
 
-select throws_ok(
+select lives_ok(
   $$ update public.profiles set role = 'admin'
       where id = '11111111-1111-1111-1111-111111111111' $$,
-  'JB004',
-  null,
-  'anon may not promote a profile to admin'
+  'an anon role change is filtered by RLS rather than erroring'
+);
+
+set local role postgres;
+set local request.jwt.claims = '';
+
+select is(
+  (select role::text from public.profiles
+    where id = '11111111-1111-1111-1111-111111111111'),
+  'member',
+  'the anon caller could not change the role'
 );
 
 -- regression: PostgREST issues `set local role anon` even on a request
 -- that carries no decodable token, so request.jwt.claims can be entirely
 -- unset while the session is still acting as anon (not a direct
--- connection). The guard must not treat "no claims" alone as exempt.
+-- connection). Same outcome-based assertion: RLS filters the anon caller's
+-- update to zero rows regardless of whether jwt.claims is set at all.
 set local role anon;
 reset request.jwt.claims;
 
-select throws_ok(
+select lives_ok(
   $$ update public.profiles set role = 'admin'
       where id = '11111111-1111-1111-1111-111111111111' $$,
-  'JB004',
-  null,
-  'anon with no jwt.claims set may not promote a profile to admin'
+  'an anon caller with no jwt.claims set is filtered by RLS rather than erroring'
+);
+
+set local role postgres;
+set local request.jwt.claims = '';
+
+select is(
+  (select role::text from public.profiles
+    where id = '11111111-1111-1111-1111-111111111111'),
+  'member',
+  'the anon caller with no jwt.claims set could not change the role'
 );
 
 select * from finish();

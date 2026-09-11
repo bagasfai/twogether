@@ -1,9 +1,11 @@
 begin;
-select plan(6);
+select plan(9);
 
 insert into auth.users (id, email) values
   ('11111111-1111-1111-1111-111111111111', 'member@test.local'),
-  ('22222222-2222-2222-2222-222222222222', 'host@test.local');
+  ('22222222-2222-2222-2222-222222222222', 'host@test.local'),
+  ('33333333-3333-3333-3333-333333333333', 'cohost@test.local'),
+  ('44444444-4444-4444-4444-444444444444', 'other-cohost@test.local');
 
 insert into public.sessions
   (id, title, starts_at, ends_at, location, max_participants, created_by, status)
@@ -14,6 +16,10 @@ values
   ('aaaaaaaa-0000-0000-0000-000000000002', 'Draft Session',
    now() + interval '2 days', now() + interval '2 days 2 hours',
    'GOR Jakbar', 16, '22222222-2222-2222-2222-222222222222', 'draft');
+
+insert into public.session_hosts (session_id, user_id, role)
+values ('aaaaaaaa-0000-0000-0000-000000000001',
+        '33333333-3333-3333-3333-333333333333', 'cohost');
 
 insert into public.participants (session_id, user_id, status, cancelled_at)
 values ('aaaaaaaa-0000-0000-0000-000000000001',
@@ -68,6 +74,45 @@ select is(
   (select count(*)::int from public.sessions),
   2,
   'the host sees their own draft session'
+);
+
+-- cohost self-promotion regression (carry-forward from earlier task review):
+-- session_hosts_update_owner and session_hosts_insert_owner key on
+-- is_session_owner(session_id) — the actor's PRE-EXISTING owner status —
+-- never on the role value in the row being written. A cohost writing
+-- role='owner' on their own row must not be able to satisfy their own
+-- check, and must not be able to insert a new session_hosts row either.
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"33333333-3333-3333-3333-333333333333","role":"authenticated"}';
+
+select lives_ok(
+  $$ update public.session_hosts set role = 'owner'
+      where session_id = 'aaaaaaaa-0000-0000-0000-000000000001'
+        and user_id = '33333333-3333-3333-3333-333333333333' $$,
+  'a cohost self-promotion update is filtered by RLS rather than erroring'
+);
+
+set local role postgres;
+reset request.jwt.claims;
+
+select is(
+  (select role::text from public.session_hosts
+    where session_id = 'aaaaaaaa-0000-0000-0000-000000000001'
+      and user_id = '33333333-3333-3333-3333-333333333333'),
+  'cohost',
+  'the cohost could not promote themselves to owner'
+);
+
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"33333333-3333-3333-3333-333333333333","role":"authenticated"}';
+
+select throws_ok(
+  $$ insert into public.session_hosts (session_id, user_id, role)
+     values ('aaaaaaaa-0000-0000-0000-000000000001',
+             '44444444-4444-4444-4444-444444444444', 'cohost') $$,
+  '42501',
+  null,
+  'a cohost cannot insert a new session_hosts row for their session'
 );
 
 select * from finish();
