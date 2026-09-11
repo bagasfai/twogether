@@ -126,12 +126,16 @@ All `STABLE SECURITY DEFINER SET search_path = public, pg_temp`, `EXECUTE`
 granted to `authenticated` only.
 
 ```
-current_user_role()      -> user_role   profiles.role for auth.uid()
-is_admin()               -> boolean
-is_session_host(uuid)    -> boolean     admin OR row in session_hosts
-is_session_owner(uuid)   -> boolean     admin OR session_hosts.role = 'owner'
-session_is_public(uuid)  -> boolean     status IN ('scheduled','live','completed')
+current_user_role()      -> user_role   profiles.role for auth.uid()      [0002]
+is_admin()               -> boolean                                        [0002]
+is_session_host(uuid)    -> boolean     admin OR row in session_hosts      [0007]
+is_session_owner(uuid)   -> boolean     admin OR session_hosts.role='owner'[0007]
+session_is_public(uuid)  -> boolean     status IN ('scheduled','live','completed') [0007]
 ```
+
+The two profile-scoped helpers ship in the `profiles` migration, not with the
+session-scoped ones: they read only `profiles`, and the role-escalation guard
+in that same migration calls `is_admin()`.
 
 ### Policies
 
@@ -153,6 +157,12 @@ role" is not expressible as a policy. A `BEFORE UPDATE` trigger on `profiles`
 raises when `NEW.role IS DISTINCT FROM OLD.role AND NOT is_admin()`. **Without
 this trigger, self-update is self-promotion to admin.** This is the only
 authorization rule in the system not enforced by a policy.
+
+The guard additionally exempts calls where `auth.uid()` is null — migrations,
+`seed.sql`, the SQL editor, and any `service_role` connection. Without that
+exemption the guard locks out its own bootstrap and no first admin can ever be
+created (§12). Those contexts already bypass RLS entirely, so the exemption
+grants them nothing they did not already have.
 
 ### Out of scope for this migration
 - **Storage bucket policies** (`storage.objects` RLS) for gallery photos —
@@ -214,8 +224,10 @@ the host UPDATE policy. No capacity invariant is involved.
 
 ### Error codes
 Custom SQLSTATEs so Server Actions map to form errors without string-matching:
-`JB001` registration closed, `JB002` session full, `JB003` already registered,
-`JB004` not authorized.
+`JB001` registration closed or session not found, `JB002` session full,
+`JB003` already registered / no active registration, `JB004` not authorized,
+`JB005` invalid match player (not checked in, or wrong session — raised by the
+`match_players` guard in §4).
 
 ## 7. Waitlist promotion trigger
 
@@ -286,17 +298,27 @@ SELECT policies, so a member's channel only delivers rows they could query.
 
 ```
 supabase/migrations/
-  20260911_0001_enums_and_utils.sql    enums, set_updated_at()
-  20260911_0002_profiles.sql           profiles, handle_new_user(), role guard
-  20260911_0003_core_tables.sql        sessions … gallery_photos, indexes, updated_at triggers
-  20260911_0004_rls_helpers.sql        is_admin(), is_session_host(), …
-  20260911_0005_rls_policies.sql       ENABLE RLS, grants, every policy
-  20260911_0006_registration.sql       the four RPCs + promotion trigger
-  20260911_0007_realtime.sql           publication + replica identity
+  20260911000001_enums_and_utils.sql        enums, set_updated_at()
+  20260911000002_profiles.sql               profiles, handle_new_user(),
+                                            current_user_role(), is_admin(), role guard
+  20260911000003_sessions.sql               sessions, session_hosts, owner trigger
+  20260911000004_participants.sql           participants + indexes
+  20260911000005_courts_matches.sql         courts, matches, match_players, JB005 guard
+  20260911000006_announcements_galleries.sql
+  20260911000007_rls_helpers.sql            is_session_host/owner, session_is_public
+  20260911000008_rls_core.sql               RLS: profiles, sessions, session_hosts, participants
+  20260911000009_rls_operations.sql         RLS: courts, matches, announcements, galleries
+  20260911000010_registration.sql           the four RPCs + promotion trigger
+  20260911000011_realtime.sql               publication + replica identity
 ```
 
-Helpers land at 0004, after the tables they read, rather than relying on
-plpgsql bodies not being validated at `CREATE` time.
+The table migrations are split per domain, and the policies across two files,
+so a reviewer can reject one group while approving its neighbour.
+
+Session-scoped helpers land at 0007, after the tables they read, rather than
+relying on plpgsql bodies not being validated at `CREATE` time. Each migration
+is paired with a pgTAP file under `supabase/tests/` — see the implementation
+plan at `docs/superpowers/plans/2026-09-11-core-schema-rls.md`.
 
 ## 12. Admin bootstrap
 
