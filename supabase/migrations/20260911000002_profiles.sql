@@ -59,18 +59,25 @@ revoke execute on function public.current_user_role(), public.is_admin() from pu
 grant execute on function public.current_user_role(), public.is_admin() to authenticated;
 
 -- RLS WITH CHECK cannot see OLD, so the no-self-promotion rule lives here.
--- auth.uid() is null for migrations, seeds, and service_role calls; those are
--- already unconstrained by RLS, and exempting them is what makes the first
--- admin bootstrappable at all.
+-- The exemption is for callers with no PostgREST JWT at all (migrations,
+-- seed.sql, the SQL editor, direct psql) and for service_role — not for
+-- auth.uid() is null in general, since the anon role also has a null
+-- auth.uid() (no "sub" claim) despite holding a real JWT. Exempting on
+-- auth.uid() alone would let anon promote any profile to admin, which
+-- defeats the guard entirely. Only the four named contexts are exempt;
+-- exempting them is what makes the first admin bootstrappable at all.
 create or replace function public.guard_profile_role_change()
 returns trigger
 language plpgsql
 security definer
 set search_path = public, pg_temp
 as $$
+declare
+  v_claims jsonb := nullif(current_setting('request.jwt.claims', true), '')::jsonb;
 begin
   if new.role is distinct from old.role
-     and auth.uid() is not null
+     and v_claims is not null
+     and coalesce(v_claims ->> 'role', '') <> 'service_role'
      and not public.is_admin() then
     raise exception 'only an admin may change a role' using errcode = 'JB004';
   end if;
