@@ -1,5 +1,5 @@
 begin;
-select plan(9);
+select plan(11);
 
 insert into auth.users (id, email) values
   ('11111111-1111-1111-1111-111111111111', 'member@test.local'),
@@ -15,7 +15,10 @@ values
    'GOR Jakbar', 16, '22222222-2222-2222-2222-222222222222', 'scheduled'),
   ('aaaaaaaa-0000-0000-0000-000000000002', 'Draft Session',
    now() + interval '2 days', now() + interval '2 days 2 hours',
-   'GOR Jakbar', 16, '22222222-2222-2222-2222-222222222222', 'draft');
+   'GOR Jakbar', 16, '22222222-2222-2222-2222-222222222222', 'draft'),
+  ('aaaaaaaa-0000-0000-0000-000000000003', 'Cancelled Session',
+   now() + interval '3 days', now() + interval '3 days 2 hours',
+   'GOR Jakbar', 16, '22222222-2222-2222-2222-222222222222', 'cancelled');
 
 insert into public.session_hosts (session_id, user_id, role)
 values ('aaaaaaaa-0000-0000-0000-000000000001',
@@ -58,6 +61,17 @@ select is(
   'a member cannot see another user''s cancelled row'
 );
 
+-- positive assertion: without this, deleting the participants SELECT
+-- policy outright would still pass every other assertion in this file,
+-- since they all check denials.
+select is(
+  (select count(*)::int from public.participants
+    where user_id = '11111111-1111-1111-1111-111111111111'
+      and status = 'confirmed'),
+  1,
+  'a member sees their own confirmed row'
+);
+
 select throws_ok(
   $$ insert into public.sessions
        (title, starts_at, ends_at, location, max_participants, created_by)
@@ -72,8 +86,20 @@ select throws_ok(
 set local request.jwt.claims = '{"sub":"22222222-2222-2222-2222-222222222222","role":"authenticated"}';
 select is(
   (select count(*)::int from public.sessions),
-  2,
-  'the host sees their own draft session'
+  3,
+  'the host sees their own draft and cancelled sessions too'
+);
+
+-- sessions is the one place this migration deliberately exposes data to
+-- unauthenticated callers; an anon visitor should see only the scheduled
+-- session, never the draft or the cancelled one.
+set local role anon;
+set local request.jwt.claims = '{"role":"anon"}';
+
+select is(
+  (select count(*)::int from public.sessions),
+  1,
+  'an anon visitor sees only the scheduled session, not draft or cancelled'
 );
 
 -- cohost self-promotion regression (carry-forward from earlier task review):

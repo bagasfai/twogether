@@ -5,7 +5,15 @@ alter table public.sessions enable row level security;
 alter table public.session_hosts enable row level security;
 alter table public.participants enable row level security;
 
-grant select, update on public.profiles to authenticated;
+-- Make the privilege set on these four tables authoritative rather than
+-- inherited from Supabase's default privileges: strip whatever anon and
+-- authenticated were granted by default, then grant back exactly the set
+-- this migration intends. Scoped to these four tables only — task 9 owns
+-- courts, matches, match_players, announcements, and galleries.
+revoke all on public.profiles, public.sessions, public.session_hosts, public.participants
+  from anon, authenticated;
+
+grant select, update, delete on public.profiles to authenticated;
 grant select on public.sessions to anon, authenticated;
 grant insert, update, delete on public.sessions to authenticated;
 grant select, insert, update, delete on public.session_hosts to authenticated;

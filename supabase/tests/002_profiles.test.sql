@@ -45,21 +45,25 @@ select is(public.is_admin(), true, 'is_admin() is true for an admin');
 
 -- regression: an anon-role caller has a null auth.uid() (no "sub" claim)
 -- but still holds a real PostgREST JWT, so it must NOT be exempt from
--- the role-change guard, even though Supabase's default privileges grant
--- UPDATE on public.profiles to anon.
+-- the role-change guard.
 --
--- Since Task 8, RLS on profiles has no anon-targeted UPDATE policy, so the
--- anon UPDATE now matches zero rows and returns quietly instead of ever
--- reaching the trigger. The property under test ("an anonymous caller
--- cannot change anybody's role") still holds; the enforcing layer is now
--- RLS instead of the trigger, so the assertion is on outcome, not SQLSTATE.
+-- Since Task 8 fix round 2, this migration REVOKEs the default privileges
+-- Supabase grants anon on public.profiles and grants back only select,
+-- update, delete to authenticated (not anon). So anon now has no UPDATE
+-- privilege on profiles at all, and the write is refused at the grant
+-- layer (42501) before RLS or the trigger are ever reached. The property
+-- under test ("an anonymous caller cannot change anybody's role") still
+-- holds either way; assert both the refusal and, via a privileged
+-- read-back, that the role truly did not change.
 set local role anon;
 set local request.jwt.claims = '{"role":"anon"}';
 
-select lives_ok(
+select throws_ok(
   $$ update public.profiles set role = 'admin'
       where id = '11111111-1111-1111-1111-111111111111' $$,
-  'an anon role change is filtered by RLS rather than erroring'
+  '42501',
+  null,
+  'anon has no grant to update profiles at all'
 );
 
 set local role postgres;
@@ -75,15 +79,17 @@ select is(
 -- regression: PostgREST issues `set local role anon` even on a request
 -- that carries no decodable token, so request.jwt.claims can be entirely
 -- unset while the session is still acting as anon (not a direct
--- connection). Same outcome-based assertion: RLS filters the anon caller's
--- update to zero rows regardless of whether jwt.claims is set at all.
+-- connection). Same outcome: the grant-layer refusal doesn't depend on
+-- jwt.claims being set at all.
 set local role anon;
 reset request.jwt.claims;
 
-select lives_ok(
+select throws_ok(
   $$ update public.profiles set role = 'admin'
       where id = '11111111-1111-1111-1111-111111111111' $$,
-  'an anon caller with no jwt.claims set is filtered by RLS rather than erroring'
+  '42501',
+  null,
+  'anon with no jwt.claims set still has no grant to update profiles'
 );
 
 set local role postgres;
