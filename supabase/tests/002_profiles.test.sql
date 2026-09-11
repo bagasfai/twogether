@@ -1,5 +1,5 @@
 begin;
-select plan(9);
+select plan(10);
 
 select has_table('public', 'profiles', 'profiles table exists');
 select col_type_is('public', 'profiles', 'role', 'user_role', 'role is user_role');
@@ -56,6 +56,21 @@ select throws_ok(
   'JB004',
   null,
   'anon may not promote a profile to admin'
+);
+
+-- regression: PostgREST issues `set local role anon` even on a request
+-- that carries no decodable token, so request.jwt.claims can be entirely
+-- unset while the session is still acting as anon (not a direct
+-- connection). The guard must not treat "no claims" alone as exempt.
+set local role anon;
+reset request.jwt.claims;
+
+select throws_ok(
+  $$ update public.profiles set role = 'admin'
+      where id = '11111111-1111-1111-1111-111111111111' $$,
+  'JB004',
+  null,
+  'anon with no jwt.claims set may not promote a profile to admin'
 );
 
 select * from finish();

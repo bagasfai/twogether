@@ -66,6 +66,11 @@ grant execute on function public.current_user_role(), public.is_admin() to authe
 -- auth.uid() alone would let anon promote any profile to admin, which
 -- defeats the guard entirely. Only the four named contexts are exempt;
 -- exempting them is what makes the first admin bootstrappable at all.
+-- The "no claims" half of the check also requires the role GUC to not be
+-- anon/authenticated, because PostgREST issues `set local role anon` (or
+-- authenticated) before executing even on a request that carries no
+-- decodable token, so an absent request.jwt.claims GUC alone cannot be
+-- trusted to mean "direct connection" — role must corroborate it.
 create or replace function public.guard_profile_role_change()
 returns trigger
 language plpgsql
@@ -74,11 +79,14 @@ set search_path = public, pg_temp
 as $$
 declare
   v_claims jsonb := nullif(current_setting('request.jwt.claims', true), '')::jsonb;
+  v_role text := coalesce(nullif(current_setting('role', true), ''), 'none');
 begin
   if new.role is distinct from old.role
-     and v_claims is not null
-     and coalesce(v_claims ->> 'role', '') <> 'service_role'
-     and not public.is_admin() then
+     and not public.is_admin()
+     and not (
+       (v_claims is null and v_role not in ('anon', 'authenticated'))
+       or coalesce(v_claims ->> 'role', '') = 'service_role'
+     ) then
     raise exception 'only an admin may change a role' using errcode = 'JB004';
   end if;
   return new;
