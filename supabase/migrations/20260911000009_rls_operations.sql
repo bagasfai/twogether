@@ -65,12 +65,18 @@ create policy match_players_write on public.match_players
   ));
 
 -- announcements
+-- The `or public.is_admin()` disjunct exists because a community-wide draft
+-- (session_id is null, published_at is null) satisfies neither of the other
+-- two branches: the first requires published_at is not null, the second
+-- requires session_id is not null. Without it, an admin who writes a
+-- community draft could never read it back.
 create policy announcements_select on public.announcements
   for select to anon, authenticated
   using (
     (published_at is not null
       and (session_id is null or public.session_is_public(session_id)))
     or (session_id is not null and public.is_session_host(session_id))
+    or public.is_admin()
   );
 
 create policy announcements_write on public.announcements
