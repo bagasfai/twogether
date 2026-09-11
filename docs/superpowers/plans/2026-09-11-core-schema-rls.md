@@ -19,7 +19,9 @@
 - Checked in ⇔ `checked_in_at IS NOT NULL`. There is no `checked_in` boolean.
 - SQL keywords lowercase, one statement per line group, matching the style of the files as they are created in Task 1.
 - Migrations are append-only once committed. If a later task needs to change an earlier table, it adds a new migration file — it does not edit a committed one.
-- Local DB URL for scripts: `postgresql://postgres:postgres@127.0.0.1:54322/postgres`.
+- **Never hardcode the local DB port.** This machine runs more than one Supabase stack; port 54322 belongs to an unrelated project. This project's ports were remapped to the 5433x block in `supabase/config.toml` (db 54332, api 54331, studio 54333). Scripts derive the URL:
+  `DB_URL="$(npx --no-install supabase status -o env | sed -n 's/^DB_URL="\(.*\)"$/\1/p')"`
+  Any script that writes or deletes rows must first assert it is pointed at this project's database (see Task 12).
 
 ### Deviations from the spec (agreed during planning — the spec is being amended to match)
 
@@ -1917,7 +1919,21 @@ Create `scripts/test-concurrent-registration.sh`:
 # Requires a running local stack (npx supabase start).
 set -euo pipefail
 
-DB_URL="${DB_URL:-postgresql://postgres:postgres@127.0.0.1:54322/postgres}"
+# Derive the URL from the CLI — never hardcode a port. Another Supabase stack
+# on this machine owns 54322, and this script issues DELETEs.
+DB_URL="${DB_URL:-$(npx --no-install supabase status -o env | sed -n 's/^DB_URL="\(.*\)"$/\1/p')}"
+[ -n "$DB_URL" ] || { echo "FAIL: could not determine DB_URL; is the stack running?"; exit 1; }
+
+# Refuse to touch a database that is not this project's.
+GUARD=$(psql "$DB_URL" -At -c \
+  "select coalesce(to_regclass('public.participants') is not null
+                   and to_regproc('public.register_for_session') is not null, false)")
+[ "$GUARD" = "t" ] || {
+  echo "FAIL: $DB_URL is not this project's database (no participants table / register_for_session)."
+  echo "      Refusing to run destructive statements against it."
+  exit 1
+}
+
 RACERS=20
 SEATS=1
 WAITLIST=3
@@ -2113,6 +2129,11 @@ npx supabase db reset       # apply all migrations + seed
 npx supabase test db        # run the pgTAP suite
 ./scripts/test-concurrent-registration.sh   # prove registration is race-safe
 ```
+
+This project's local ports are remapped to the 5433x block (db 54332, API 54331,
+Studio 54333) so it can run alongside other Supabase projects on the same
+machine — the default 5432x block is not assumed to be free. Read the live URL
+with `npx supabase status -o env` rather than hardcoding a port.
 
 After changing the schema, regenerate types:
 
