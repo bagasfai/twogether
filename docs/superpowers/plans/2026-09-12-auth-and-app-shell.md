@@ -645,7 +645,9 @@ export default defineConfig({
     include: ["tests/unit/**/*.test.ts"],
   },
   resolve: {
-    alias: { "@": path.resolve(__dirname, ".") },
+    // __dirname does not exist in an ESM .mts module; import.meta.dirname is
+    // its equivalent (Node 20.11+).
+    alias: { "@": path.resolve(import.meta.dirname, ".") },
   },
 });
 ```
