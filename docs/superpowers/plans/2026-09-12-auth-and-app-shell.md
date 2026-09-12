@@ -17,7 +17,7 @@
 - Map RPC failures from `PostgrestError.code` only. Never string-match `error.message`.
 - Error code contract after Task 2: JB001 registration not open · JB002 session full · JB003 already registered / nothing to cancel · JB004 not authenticated · JB005 invalid match player · JB006 wrong transaction isolation · JB007 not authorized · JB008 session or participant not found.
 - RLS is the authorization layer. Use the user's session client. The service-role key is for admin scripts only and must never be imported by anything under `app/`.
-- Types are generated: `npx supabase gen types typescript --local > types/supabase.ts`. Regenerate after every schema change. Never hand-edit `types/supabase.ts`.
+- Types are generated: `npx supabase gen types typescript --local > types/supabase.ts`. Regenerate after every schema change. Never hand-edit `types/supabase.ts` — the only permitted post-generation edit is removing CLI diagnostic lines the command appends past the final `} as const` (observed in Task 1: `Connecting to db 5432`, a `MaxListenersExceededWarning`, and its trace hint). They appear intermittently. After every regeneration run `npx tsc --noEmit types/supabase.ts`; a clean result means the file is intact, and a parse error points straight at the trailing junk to delete.
 - One zod schema per entity in `lib/validation/`, imported by both the client `zodResolver` and the Server Action that handles the same form.
 - Server Actions + RLS is the default. No Realtime channels in this plan.
 - Local Supabase uses remapped ports (db 54332, API 54331, Studio 54333). Read the live URL with `npx supabase status -o env`. Never hardcode a port.
