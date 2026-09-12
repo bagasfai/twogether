@@ -357,7 +357,6 @@ export type Database = {
           created_at: string
           full_name: string | null
           id: string
-          phone: string | null
           role: Database["public"]["Enums"]["user_role"]
           updated_at: string
         }
@@ -366,7 +365,6 @@ export type Database = {
           created_at?: string
           full_name?: string | null
           id: string
-          phone?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
         }
@@ -375,11 +373,39 @@ export type Database = {
           created_at?: string
           full_name?: string | null
           id?: string
-          phone?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
         }
         Relationships: []
+      }
+      profiles_private: {
+        Row: {
+          created_at: string
+          phone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          phone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          phone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_private_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       session_hosts: {
         Row: {
@@ -704,3 +730,6 @@ export const Constants = {
     },
   },
 } as const
+Connecting to db 5432
+(node:1) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [BoundPool]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(Use `node --trace-warnings ...` to show where the warning was created)
