@@ -49,11 +49,6 @@ begin
 end;
 $$;
 
--- backfill rows for any profile that predates this migration
-insert into public.profiles_private (user_id)
-select id from public.profiles
-on conflict (user_id) do nothing;
-
 alter table public.profiles_private enable row level security;
 
 -- authoritative privilege set, not whatever Supabase's defaults granted.
@@ -65,6 +60,14 @@ grant select, update on public.profiles_private to authenticated;
 -- A cancelled participant drops out of host visibility immediately. A host who
 -- ran a session keeps access to that player's phone after it completes -- they
 -- need to reach no-shows after the fact.
+--
+-- This subquery reads public.participants, which runs under that table's own
+-- RLS (participants_select_self_host_or_public), not a bypass of it -- so
+-- host phone visibility here is implicitly coupled to whatever that policy
+-- currently allows a host to see. That coupling is safe today (it can only
+-- ever narrow this policy further, never widen it, since it's an additional
+-- filter on top of the status/host checks below), but a future tightening of
+-- the participants policy would silently narrow host phone access too.
 create policy profiles_private_select_self_admin_or_host on public.profiles_private
   for select to authenticated
   using (

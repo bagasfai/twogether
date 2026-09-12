@@ -1,5 +1,5 @@
 begin;
-select plan(13);
+select plan(18);
 
 select has_table('public', 'profiles_private', 'profiles_private table exists');
 
@@ -68,6 +68,29 @@ select lives_ok(
       where user_id = 'aaaaaaaa-0000-0000-0000-000000000001' $$,
   'a member can update their own phone'
 );
+-- lives_ok only proves the statement didn't error -- a policy-filtered
+-- UPDATE can affect zero rows and still "live". Confirm the value actually
+-- changed, or a deleted/degenerate USING clause would pass the check above
+-- for free.
+select is(
+  (select phone from public.profiles_private
+    where user_id = 'aaaaaaaa-0000-0000-0000-000000000001'),
+  '+628111000099',
+  'the self update actually landed'
+);
+
+-- the WITH CHECK half: a member may not reassign their row to someone
+-- else's user_id. USING alone would already stop this (the target row is
+-- still their own before the update), but WITH CHECK is what stops the new
+-- row from landing under a different owner if USING were ever loosened to
+-- something that still matches the caller's own row.
+select throws_ok(
+  $$ update public.profiles_private set user_id = 'aaaaaaaa-0000-0000-0000-000000000002'
+      where user_id = 'aaaaaaaa-0000-0000-0000-000000000001' $$,
+  '42501',
+  null,
+  'a member cannot reassign their profiles_private row to another user'
+);
 
 -- another member
 set local request.jwt.claims = '{"sub":"aaaaaaaa-0000-0000-0000-000000000002","role":"authenticated"}';
@@ -86,6 +109,22 @@ select is(
   1,
   'a host can read the phone of a participant in their session'
 );
+
+-- the grant is table-wide (`grant update ... to authenticated`), and this
+-- host can already SELECT this participant's row -- so the SELECT policy
+-- alone would not stop a write here. Only the UPDATE policy's own USING
+-- clause (owner-only) does. Assert via a before/after read-back, since a
+-- USING-excluded UPDATE silently matches zero rows instead of raising.
+update public.profiles_private set phone = '+62900000000'
+ where user_id = 'aaaaaaaa-0000-0000-0000-000000000001';
+
+select is(
+  (select phone from public.profiles_private
+    where user_id = 'aaaaaaaa-0000-0000-0000-000000000001'),
+  '+628111000099',
+  'a host cannot overwrite the phone of a participant in their session (the update silently no-ops)'
+);
+
 select is(
   (select count(*)::int from public.profiles_private
     where user_id = 'aaaaaaaa-0000-0000-0000-000000000002'),
@@ -119,8 +158,18 @@ select ok(
 );
 
 select ok(
+  not has_table_privilege('authenticated', 'public.profiles_private', 'delete'),
+  'authenticated has no DELETE grant on profiles_private'
+);
+
+select ok(
   not has_table_privilege('anon', 'public.profiles_private', 'select'),
   'anon has no SELECT grant on profiles_private'
+);
+
+select ok(
+  not has_table_privilege('anon', 'public.profiles_private', 'insert'),
+  'anon has no INSERT grant on profiles_private'
 );
 
 select * from finish();
