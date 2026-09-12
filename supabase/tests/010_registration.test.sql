@@ -1,5 +1,5 @@
 begin;
-select plan(40);
+select plan(42);
 
 insert into auth.users (id, email) values
   ('11111111-1111-1111-1111-111111111111', 'member@test.local'),
@@ -529,6 +529,31 @@ select results_eq(
         and user_id = '50505050-5050-5050-5050-505050505050' $$,
   $$ values ('confirmed'::text, null::timestamptz, null::uuid, null::timestamptz) $$,
   're-registering clears cancelled_at, added_by, and checked_in_at (the do-update branch that makes re-registration work at all, and keeps the checked-in pool distinct)'
+);
+
+-- === GAP (i): JB008 "not found" has coverage at both raise sites, not just
+-- the verbatim errcode-literal copy. The migration's diff proves the
+-- literal moved correctly; it proves nothing about the RPC actually
+-- surfacing JB008 end to end -- a later rewrite of either guard, a cast
+-- error on a malformed uuid, or an RLS interaction could substitute a
+-- different Postgres error and nothing would notice. Both calls
+-- authenticate as a real, existing user (not anon, and not
+-- authenticated-with-no-sub) so they run past the JB004 checks down to the
+-- not-found guard itself.
+set local request.jwt.claims = '{"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"}';
+select throws_ok(
+  $$ select public.register_for_session('ffffffff-0000-0000-0000-000000000001') $$,
+  'JB008',
+  null,
+  'registering for a nonexistent session raises JB008'
+);
+
+select throws_ok(
+  $$ select public.host_set_participant_status(
+       '00000000-0000-0000-0000-000000009999', 'cancelled') $$,
+  'JB008',
+  null,
+  'host_set_participant_status on a nonexistent participant raises JB008'
 );
 
 select * from finish();
