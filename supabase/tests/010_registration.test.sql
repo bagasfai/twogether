@@ -320,7 +320,7 @@ select is(
 set local request.jwt.claims = '{"sub":"44444444-4444-4444-4444-444444444444","role":"authenticated"}';
 select throws_ok(
   $$ select public.host_add_participant('aaaaaaaa-0000-0000-0000-000000000003', '44444444-4444-4444-4444-444444444444', 'confirmed') $$,
-  'JB004',
+  'JB007',
   null,
   'a non-host cannot host_add_participant'
 );
@@ -330,7 +330,7 @@ select throws_ok(
           where session_id = 'aaaaaaaa-0000-0000-0000-000000000003'
             and user_id = '88888888-8888-8888-8888-888888888888'),
        'cancelled') $$,
-  'JB004',
+  'JB007',
   null,
   'a non-host cannot host_set_participant_status'
 );

@@ -33,7 +33,7 @@ select lives_ok(
 select throws_ok(
   $$ update public.profiles set role = 'admin'
       where id = '11111111-1111-1111-1111-111111111111' $$,
-  'JB004',
+  'JB007',
   null,
   'member may not promote themselves'
 );
