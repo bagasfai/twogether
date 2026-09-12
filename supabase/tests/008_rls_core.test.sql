@@ -38,8 +38,15 @@ select ok(
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"}';
 
+-- Scoped to this file's own fixture ids rather than a raw table count:
+-- supabase/seed.sql (Task 13) inserts a real 'scheduled' session for local
+-- dev, and that seed data is not rolled back before this file's own
+-- begin/rollback runs, so an unscoped count(*) would be polluted by it.
 select is(
-  (select count(*)::int from public.sessions),
+  (select count(*)::int from public.sessions
+    where id in ('aaaaaaaa-0000-0000-0000-000000000001',
+                 'aaaaaaaa-0000-0000-0000-000000000002',
+                 'aaaaaaaa-0000-0000-0000-000000000003')),
   1,
   'a member sees the scheduled session but not the draft'
 );
@@ -85,7 +92,10 @@ select throws_ok(
 
 set local request.jwt.claims = '{"sub":"22222222-2222-2222-2222-222222222222","role":"authenticated"}';
 select is(
-  (select count(*)::int from public.sessions),
+  (select count(*)::int from public.sessions
+    where id in ('aaaaaaaa-0000-0000-0000-000000000001',
+                 'aaaaaaaa-0000-0000-0000-000000000002',
+                 'aaaaaaaa-0000-0000-0000-000000000003')),
   3,
   'the host sees their own draft and cancelled sessions too'
 );
@@ -97,7 +107,10 @@ set local role anon;
 set local request.jwt.claims = '{"role":"anon"}';
 
 select is(
-  (select count(*)::int from public.sessions),
+  (select count(*)::int from public.sessions
+    where id in ('aaaaaaaa-0000-0000-0000-000000000001',
+                 'aaaaaaaa-0000-0000-0000-000000000002',
+                 'aaaaaaaa-0000-0000-0000-000000000003')),
   1,
   'an anon visitor sees only the scheduled session, not draft or cancelled'
 );
