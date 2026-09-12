@@ -3126,10 +3126,11 @@ With the member now registered for the host's session, re-run the query from Tas
 - [ ] **Step 9: Confirm no direct participant writes exist**
 
 ```bash
-grep -rn "from(\"participants\")" lib app components | grep -v "select"
+grep -rnE "\.(insert|update|upsert|delete)\(" lib app components | grep -i participant
+grep -rn -A3 'from("participants")' lib app components | grep -E "\.(insert|update|upsert|delete)\("
 ```
 
-Expected: no results. Any `.insert()`, `.update()` or `.upsert()` on `participants` outside the RPCs is a defect — the advisory lock is airtight only because the RPCs are the sole write path.
+Expected: no results from either. The two forms catch a write reached through a variable and a write chained a few lines below the `.from()`. Any `.insert()`, `.update()`, `.upsert()` or `.delete()` on `participants` outside the RPCs is a defect — the advisory lock is airtight only because the RPCs are the sole write path.
 
 - [ ] **Step 10: Commit**
 
