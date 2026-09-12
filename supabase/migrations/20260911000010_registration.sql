@@ -12,6 +12,32 @@ as $$
   select hashtextextended(p_session_id::text, 0);
 $$;
 
+-- Extracted from register_for_session so the (registered_at, id) tie-break
+-- can be exercised directly in a test with two rows that have an identical
+-- registered_at -- position is otherwise only ever returned once, at
+-- insert time, for the row that is being inserted, which makes it
+-- impossible to observe what position a PRE-EXISTING tied row would get
+-- without a callable, argument-driven version of the same formula.
+create or replace function public.waitlist_position_of(
+  p_session_id uuid,
+  p_registered_at timestamptz,
+  p_id uuid
+)
+returns int
+language sql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+  -- Same total order as promote_from_waitlist's ORDER BY: registered_at,
+  -- then id as the deterministic tie-break.
+  select count(*) + 1
+    from public.participants
+   where session_id = p_session_id
+     and status = 'waiting_list'
+     and (registered_at, id) < (p_registered_at, p_id);
+$$;
+
 create or replace function public.register_for_session(p_session_id uuid)
 returns public.registration_result
 language plpgsql
@@ -33,6 +59,19 @@ declare
   v_participant_id uuid;
   v_result public.registration_result;
 begin
+  -- The advisory lock only serializes concurrent callers under READ
+  -- COMMITTED: a blocked caller re-reads current state once it acquires the
+  -- lock. Under REPEATABLE READ (or SERIALIZABLE), a caller that blocked on
+  -- the lock still sees its transaction-start snapshot after waking up, so
+  -- the capacity count below would silently pass on stale data -- write
+  -- skew the lock does nothing to prevent. Fail loudly instead of
+  -- oversubscribing silently if the isolation level is ever changed
+  -- (PostgREST defaults to READ COMMITTED today, but nothing else pins it).
+  if current_setting('transaction_isolation') <> 'read committed' then
+    raise exception 'register_for_session requires read committed isolation, got %',
+      current_setting('transaction_isolation') using errcode = 'JB006';
+  end if;
+
   if v_user is null then
     raise exception 'not authenticated' using errcode = 'JB004';
   end if;
@@ -79,21 +118,16 @@ begin
     set status = excluded.status,
         registered_at = excluded.registered_at,
         cancelled_at = null,
-        added_by = null
+        added_by = null,
+        -- re-entering the queue is not re-entering the checked-in pool
+        checked_in_at = null
   returning id into v_participant_id;
 
   v_result.status := v_status;
 
   if v_status = 'waiting_list' then
-    -- (registered_at, id) is the same total order the promotion trigger
-    -- uses (see promote_from_waitlist's ORDER BY). Row-value comparison
-    -- keeps the count consistent with that order even when two rows tie on
-    -- registered_at: id is the deterministic tie-break.
-    select count(*) + 1 into v_result.waitlist_position
-      from public.participants
-     where session_id = p_session_id
-       and status = 'waiting_list'
-       and (registered_at, id) < (v_registered_at, v_participant_id);
+    v_result.waitlist_position :=
+      public.waitlist_position_of(p_session_id, v_registered_at, v_participant_id);
   end if;
 
   return v_result;
@@ -118,7 +152,10 @@ begin
 
   update public.participants
      set status = 'cancelled',
-         cancelled_at = now()
+         cancelled_at = now(),
+         -- a cancelled registration leaves the checked-in pool too, not
+         -- just the registration list
+         checked_in_at = null
    where session_id = p_session_id
      and user_id = v_user
      and status in ('confirmed', 'waiting_list');
@@ -145,6 +182,15 @@ as $$
 declare
   v_row public.participants;
 begin
+  -- Same isolation guard as register_for_session -- this RPC takes the same
+  -- lock and re-reads the same tables under the same READ COMMITTED
+  -- assumption (host overrides skip the capacity check, but the lock still
+  -- needs to serialize against concurrent register_for_session callers).
+  if current_setting('transaction_isolation') <> 'read committed' then
+    raise exception 'host_add_participant requires read committed isolation, got %',
+      current_setting('transaction_isolation') using errcode = 'JB006';
+  end if;
+
   if not public.is_session_host(p_session_id) then
     raise exception 'not authorized' using errcode = 'JB004';
   end if;
@@ -158,7 +204,9 @@ begin
     set status = excluded.status,
         registered_at = excluded.registered_at,
         cancelled_at = null,
-        added_by = excluded.added_by
+        added_by = excluded.added_by,
+        -- re-entering the queue is not re-entering the checked-in pool
+        checked_in_at = null
   returning * into v_row;
 
   return v_row;
@@ -193,7 +241,9 @@ begin
 
   update public.participants
      set status = p_status,
-         cancelled_at = case when p_status = 'cancelled' then now() else null end
+         cancelled_at = case when p_status = 'cancelled' then now() else null end,
+         -- a host-cancelled participant leaves the checked-in pool too
+         checked_in_at = case when p_status = 'cancelled' then null else checked_in_at end
    where id = p_participant_id
   returning * into v_row;
 
@@ -214,6 +264,14 @@ declare
   v_session public.sessions;
   v_confirmed int;
 begin
+  -- Same isolation guard as register_for_session -- this trigger re-counts
+  -- confirmed participants under the same READ COMMITTED assumption after
+  -- acquiring the same lock.
+  if current_setting('transaction_isolation') <> 'read committed' then
+    raise exception 'promote_from_waitlist requires read committed isolation, got %',
+      current_setting('transaction_isolation') using errcode = 'JB006';
+  end if;
+
   perform pg_advisory_xact_lock(public.session_lock_key(new.session_id));
 
   select * into v_session from public.sessions where id = new.session_id;
