@@ -806,7 +806,10 @@ const PASSWORD_MIN = 8;
 
 export const signUpSchema = z.object({
   fullName: z.string().trim().min(2, "Enter your name").max(80, "Name is too long"),
-  email: z.email("Enter a valid email address").trim().toLowerCase(),
+  // zod 4 validates before it transforms, so `z.email().trim().toLowerCase()`
+  // rejects " Bagas@Example.com " before the trim ever runs. Pipe the
+  // normalisation in front of the validation instead.
+  email: z.string().trim().toLowerCase().pipe(z.email("Enter a valid email address")),
   password: z.string().min(PASSWORD_MIN, `Use at least ${PASSWORD_MIN} characters`),
 });
 
@@ -814,7 +817,7 @@ export const signUpSchema = z.object({
 // length floor, and rejecting it here would lock the owner out of their own
 // login form rather than letting Supabase answer.
 export const signInSchema = z.object({
-  email: z.email("Enter a valid email address").trim().toLowerCase(),
+  email: z.string().trim().toLowerCase().pipe(z.email("Enter a valid email address")),
   password: z.string().min(1, "Enter your password"),
 });
 
