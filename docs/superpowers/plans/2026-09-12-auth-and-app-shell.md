@@ -1801,8 +1801,7 @@ export function safeNext(value: string | null | undefined): string {
   // "https://evil.example.com/" — a protocol-relative URL a naive "//" check
   // never sees. The percent-encoded (%09) and space forms stay on-origin, so
   // tab/LF/CR are the live vectors.
-  // eslint-disable-next-line no-control-regex
-  if (/[\u0000-\u001F\u007F]/.test(value)) return DEFAULT_REDIRECT;
+  if (/[\x00-\x1f]/.test(value)) return DEFAULT_REDIRECT;
   if (!value.startsWith("/")) return DEFAULT_REDIRECT;
   if (value.startsWith("//") || value.startsWith("/\\")) return DEFAULT_REDIRECT;
   return value;
