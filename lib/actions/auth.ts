@@ -7,7 +7,17 @@ import { fail, failFromZod, ok, type ActionResult } from "@/lib/actions/result";
 import { safeNext } from "@/lib/auth/redirect";
 
 function siteUrl(): string {
-  return process.env.NEXT_PUBLIC_SITE_URL ?? "http://127.0.0.1:3000";
+  const configured = process.env.NEXT_PUBLIC_SITE_URL;
+  if (configured) return configured;
+  // Silently falling back in production would mail every confirmation link
+  // (and hand Google every OAuth redirectTo) to localhost, with no build
+  // failure and no error until a user reports a broken link. Fail loudly
+  // instead. Local dev is unaffected: NEXT_PUBLIC_SITE_URL is always set
+  // there via .env.local.
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("NEXT_PUBLIC_SITE_URL must be set in production");
+  }
+  return "http://127.0.0.1:3000";
 }
 
 export async function signIn(input: SignInInput, next?: string): Promise<ActionResult<null>> {

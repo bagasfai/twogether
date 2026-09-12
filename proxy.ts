@@ -3,7 +3,16 @@ import { updateSession } from "@/lib/supabase/middleware";
 
 // Routes in the (app) group. /sessions and /sessions/[id] are public, so this
 // cannot be a plain /sessions prefix.
-function isProtected(pathname: string): boolean {
+//
+// Trailing slash is deliberately NOT matched (e.g. "/sessions/new/" returns
+// false here). That's safe, not an oversight: Next's own trailing-slash
+// normalisation (trailingSlash: false is the default) issues a 308 to the
+// no-slash form before any page renders, so a request for "/sessions/new/"
+// while logged out ends up back through this same function as "/sessions/new"
+// on the very next hop -- confirmed against the dev server, which returns
+// 308 -> /sessions/new -> (this guard) -> 307 -> /login. No protected content
+// is ever served on the trailing-slash path.
+export function isProtected(pathname: string): boolean {
   if (pathname === "/dashboard" || pathname.startsWith("/dashboard/")) return true;
   if (pathname === "/profile" || pathname.startsWith("/profile/")) return true;
   if (pathname === "/sessions/new") return true;

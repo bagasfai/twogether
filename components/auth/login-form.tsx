@@ -27,8 +27,11 @@ export function LoginForm({ next }: { next?: string }) {
   const onSubmit = form.handleSubmit((values) =>
     startTransition(async () => {
       const result = await signIn(values, next);
-      // a successful sign-in redirects, so reaching here means failure
-      if (!result.ok) {
+      // A successful sign-in calls redirect(), which Next resolves this
+      // promise to `undefined` for rather than returning an ActionResult --
+      // so reaching here with a value means failure, and reaching here at
+      // all does not guarantee a value.
+      if (result && !result.ok) {
         for (const [field, messages] of Object.entries(result.fieldErrors ?? {})) {
           if (field !== "_form") form.setError(field as keyof SignInInput, { message: messages[0] });
         }

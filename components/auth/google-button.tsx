@@ -17,7 +17,9 @@ export function GoogleButton({ next }: { next?: string }) {
       onClick={() =>
         startTransition(async () => {
           const result = await signInWithGoogle(next);
-          if (!result.ok) toast.error(result.message);
+          // A successful call redirects, which resolves this promise to
+          // `undefined` instead of an ActionResult -- guard before reading `.ok`.
+          if (result && !result.ok) toast.error(result.message);
         })
       }
     >
