@@ -1176,7 +1176,7 @@ Three clients with non-overlapping jobs, and a `server-only` DAL so every RLS-fa
 
 **Files:**
 - Create: `lib/supabase/public.ts`
-- Modify: `lib/supabase/server.ts`, `lib/supabase/client.ts`, `lib/supabase/middleware.ts`
+- Modify: `lib/supabase/server.ts`, `lib/supabase/client.ts`, `lib/supabase/middleware.ts`, `proxy.ts`
 - Create: `lib/dal/user.ts`, `lib/dal/public-sessions.ts`, `lib/dal/sessions.ts`, `lib/dal/participants.ts`, `lib/dal/profile.ts`
 - Modify: `package.json`
 
@@ -1262,6 +1262,17 @@ export function createPublicClient(): SupabaseClient<Database> {
 ```
 
 and change the signature to `export async function updateSession(request: NextRequest): Promise<{ response: NextResponse; user: User | null }>`, importing `type User` from `@supabase/supabase-js`. In the early bail-out where Supabase is not configured, return `{ response: supabaseResponse, user: null }`.
+
+This is a breaking change to a function `proxy.ts` already calls, and Task 7 does not rewrite `proxy.ts` until later. TypeScript will not catch it — `proxy`'s return type is inferred, so returning the wrapper object type-checks while breaking every request at runtime. So in the same task, update `proxy.ts` to destructure:
+
+```ts
+export async function proxy(request: NextRequest) {
+  const { response } = await updateSession(request);
+  return response;
+}
+```
+
+Task 7 replaces this with the full version that also uses `user`. Leaving the tree runnable between tasks is worth the four-line edit.
 
 - [ ] **Step 5: Write the user DAL**
 
