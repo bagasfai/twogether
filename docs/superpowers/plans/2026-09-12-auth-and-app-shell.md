@@ -2815,7 +2815,10 @@ export async function GET(_request: NextRequest, ctx: RouteContext<"/api/session
 
   const user = await getCurrentUser();
   if (!user) {
-    return NextResponse.json({ registration: null }, { status: 401 });
+    return NextResponse.json(
+      { registration: null },
+      { status: 401, headers: { "Cache-Control": "private, no-store" } },
+    );
   }
 
   const registration = await getMyRegistration(id);
@@ -3054,6 +3057,16 @@ import { getPublicSession } from "@/lib/dal/public-sessions";
 import { RegisterPanel } from "@/components/sessions/register-panel";
 
 export const revalidate = 60;
+
+// `revalidate` ALONE does not give a dynamic segment ISR. Next requires
+// generateStaticParams to be exported — returning an empty array when no ids
+// are known at build time — or the route renders dynamically on every request
+// and `revalidate` is inert. Verified in the build output: without this the
+// route reports "f" with an empty Revalidate column instead of a cached entry.
+// See node_modules/next/dist/docs/01-app/03-api-reference/04-functions/generate-static-params.md
+export async function generateStaticParams() {
+  return [];
+}
 
 export async function generateMetadata({ params }: PageProps<"/sessions/[id]">): Promise<Metadata> {
   const { id } = await params;
