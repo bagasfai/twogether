@@ -23,8 +23,9 @@ values
    now() + interval '2 days', now() + interval '2 days 2 hours',
    'GOR Jakbar', 16, '22222222-2222-2222-2222-222222222222', 'scheduled');
 
-insert into public.courts (session_id, court_number)
-values ('aaaaaaaa-0000-0000-0000-000000000001', 1);
+insert into public.courts (id, session_id, court_number)
+values ('bbbbbbbb-0000-0000-0000-000000000001',
+        'aaaaaaaa-0000-0000-0000-000000000001', 1);
 
 -- Checked-in participant of session A, for the legitimate match_players insert.
 insert into public.participants (id, session_id, user_id, status, checked_in_at)
@@ -77,8 +78,13 @@ values ('ffffffff-0000-0000-0000-000000000002',
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"}';
 
+-- Scoped to this file's own fixture id rather than a raw count(*):
+-- supabase/seed.sql (Task 13) inserts real courts for local dev, and that
+-- seed data is not rolled back before this file's own begin/rollback runs,
+-- so an unscoped count would be polluted by it.
 select is(
-  (select count(*)::int from public.courts),
+  (select count(*)::int from public.courts
+    where id = 'bbbbbbbb-0000-0000-0000-000000000001'),
   1,
   'a member can read courts of a public session'
 );
@@ -274,8 +280,14 @@ select is(
 
 set local role anon;
 set local request.jwt.claims = '';
+-- Scoped to this file's own fixture ids rather than a raw count(*):
+-- supabase/seed.sql (Task 13) inserts real galleries for local dev, and
+-- that seed data is not rolled back before this file's own begin/rollback
+-- runs, so an unscoped count would be polluted by it.
 select is(
-  (select count(*)::int from public.galleries),
+  (select count(*)::int from public.galleries
+    where id in ('eeeeeeee-0000-0000-0000-000000000001',
+                 'eeeeeeee-0000-0000-0000-000000000002')),
   2,
   'an anonymous visitor can read galleries'
 );

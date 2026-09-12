@@ -1,5 +1,5 @@
 begin;
-select plan(17);
+select plan(24);
 
 insert into auth.users (id, email) values
   ('11111111-1111-1111-1111-111111111111', 'member@test.local'),
@@ -87,6 +87,43 @@ select is(public.is_session_host('aaaaaaaa-0000-0000-0000-000000000001'), true,
           'an admin who is not a host is still a session host');
 select is(public.is_session_owner('aaaaaaaa-0000-0000-0000-000000000001'), true,
           'an admin who is not the owner is still a session owner');
+
+-- F2 (final review): announcements_select is `to anon, authenticated` and
+-- its third disjunct calls is_admin() -- that dependency used to ride on
+-- Supabase's default per-function grant to anon, which migration 2's
+-- `revoke ... from public` never stripped. Pin it explicitly now that the
+-- invariant-fixes migration grants it on purpose, so a future accidental
+-- revoke is caught here instead of surfacing as a silent 42501 on
+-- anonymous announcement reads.
+select ok(has_function_privilege('anon', 'public.is_admin()', 'EXECUTE'),
+          'anon has EXECUTE on is_admin (announcements_select depends on it)');
+
+-- current_user_role() is used only by sessions_insert_host
+-- (`for insert to authenticated`) -- no anon-reachable policy depends on
+-- it, so the invariant-fixes migration revoked anon's accidental default
+-- grant. Pin the revocation the same way the grant above is pinned.
+select ok(not has_function_privilege('anon', 'public.current_user_role()', 'EXECUTE'),
+          'anon lacks EXECUTE on current_user_role');
+
+-- Negative half of the grant-surface pin: the registration/host-override
+-- RPCs and the waitlist-position helper are all SECURITY DEFINER and must
+-- stay unreachable by anon. Migration 10 revokes these explicitly, but
+-- nothing previously pinned that anon actually lacks them -- a pin that
+-- only ever asserted the positive grants (as this file did before) cannot
+-- detect a missing revoke.
+select ok(not has_function_privilege('anon', 'public.register_for_session(uuid)', 'EXECUTE'),
+          'anon lacks EXECUTE on register_for_session');
+select ok(not has_function_privilege('anon', 'public.cancel_registration(uuid)', 'EXECUTE'),
+          'anon lacks EXECUTE on cancel_registration');
+select ok(not has_function_privilege(
+            'anon', 'public.host_add_participant(uuid, uuid, public.participant_status)', 'EXECUTE'),
+          'anon lacks EXECUTE on host_add_participant');
+select ok(not has_function_privilege(
+            'anon', 'public.host_set_participant_status(uuid, public.participant_status)', 'EXECUTE'),
+          'anon lacks EXECUTE on host_set_participant_status');
+select ok(not has_function_privilege(
+            'anon', 'public.waitlist_position_of(uuid, timestamptz, uuid)', 'EXECUTE'),
+          'anon lacks EXECUTE on waitlist_position_of');
 
 select * from finish();
 rollback;
