@@ -146,10 +146,24 @@ in that same migration calls `is_admin()`.
 | session_hosts | authenticated | `is_session_owner(session_id)` | `is_session_owner(session_id)` | `is_session_owner(session_id)` |
 | participants | own row; OR `is_session_host(session_id)`; OR authenticated where status ≠ cancelled AND session public | **none** | `is_session_host(session_id)` | `is_session_host(session_id)` |
 | courts / matches / match_players | authenticated where parent session public or hosted | `is_session_host` | `is_session_host` | `is_session_host` |
-| announcements | anon + authenticated where `published_at IS NOT NULL` AND (community-wide OR session public); hosts see own drafts | session-scoped: `is_session_host`; community-wide: admin | same | same |
+| announcements | anon + authenticated where `published_at IS NOT NULL` AND (community-wide OR session public); hosts see own session's drafts; **plus an `is_admin()` disjunct** | session-scoped: `is_session_host`; community-wide: admin | same | same |
 | galleries / gallery_photos | public incl. anon | admin, or `is_session_host(session_id)` | same | same |
 
 `match_players` resolves its session through `matches`.
+
+Two corrections found during implementation review:
+
+1. **The announcements SELECT policy needs an explicit `or is_admin()` disjunct.** Without it, a
+   community-wide draft (`session_id IS NULL` *and* `published_at IS NULL`) satisfies neither of the
+   other two disjuncts and is invisible to everyone — including the admin who wrote it. Admins could
+   still UPDATE and DELETE such a row via the write policy but never read or list it, so a community
+   draft could be created and then never edited.
+2. **The `match_players` write policy does not constrain the participant.** Its subquery correlates
+   `m.id = match_id`, which restricts the *match* to one the caller hosts but places no condition on
+   the *participant*. A host of session A can therefore, as far as RLS is concerned, write a row
+   joining their match to a participant of session B. The `guard_match_player()` trigger (JB005) is
+   not a backstop for this case — it is the only enforcement. Any future change that weakens or
+   removes that trigger reopens a cross-session hole that RLS does not cover.
 
 ### Privilege-escalation guard
 RLS `WITH CHECK` cannot reference `OLD`, so "edit yourself but not your own
@@ -199,6 +213,23 @@ under the same lock so it cannot disagree with the row just written.
 8. RETURN (status, waitlist_position);
 ```
 
+**Ordering keys use `clock_timestamp()`, not `now()`.** `now()` returns the
+transaction start time, so every registration written inside a single
+transaction receives an identical `registered_at`. That is not only a test
+artefact: it breaks `waitlist_position` and the promotion trigger's FIFO
+tie-break for any batched or multi-statement write, and for two transactions
+that begin in the same microsecond. `registered_at` is therefore stamped with
+`clock_timestamp()`. `cancelled_at` and `updated_at` stay on `now()` — they are
+not ordering keys.
+
+**Every ordering by `registered_at` carries a deterministic tie-break on `id`.**
+Even with `clock_timestamp()` a tie is possible, and an untied ordering makes
+promotion arbitrary — the person who loses the coin flip has no way to know
+why. The promotion trigger orders by `(registered_at, id)`, and
+`waitlist_position` counts against the same total order via row-value
+comparison, so the position reported to a member always agrees with the order
+the trigger will actually promote in.
+
 Steps 5–7 are a read-then-write — the exact window where two people take the
 last slot. A function body is one transaction, so the lock from step 2 is held
 until commit and covers that window. Step 7's `ON CONFLICT DO UPDATE` is what
@@ -225,7 +256,10 @@ the host UPDATE policy. No capacity invariant is involved.
 ### Error codes
 Custom SQLSTATEs so Server Actions map to form errors without string-matching:
 `JB001` registration closed or session not found, `JB002` session full,
-`JB003` already registered / no active registration, `JB004` not authorized,
+`JB003` already registered / no active registration / participant not found
+(knowingly overloaded across three conditions — splitting it changes the error
+contract Server Actions map to form messages, so it is left for whoever builds
+those), `JB004` not authorized,
 `JB005` invalid match player (not checked in, or wrong session — raised by the
 `match_players` guard in §4).
 
