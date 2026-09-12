@@ -25,7 +25,12 @@ declare
   v_confirmed int;
   v_waiting int;
   v_status public.participant_status;
-  v_registered_at timestamptz := now();
+  -- clock_timestamp(), not now(): now() is transaction start time and is
+  -- identical for every statement in the same transaction, which would tie
+  -- registered_at (and therefore waitlist ordering) for any two calls that
+  -- happen to share a transaction.
+  v_registered_at timestamptz := clock_timestamp();
+  v_participant_id uuid;
   v_result public.registration_result;
 begin
   if v_user is null then
@@ -74,16 +79,21 @@ begin
     set status = excluded.status,
         registered_at = excluded.registered_at,
         cancelled_at = null,
-        added_by = null;
+        added_by = null
+  returning id into v_participant_id;
 
   v_result.status := v_status;
 
   if v_status = 'waiting_list' then
+    -- (registered_at, id) is the same total order the promotion trigger
+    -- uses (see promote_from_waitlist's ORDER BY). Row-value comparison
+    -- keeps the count consistent with that order even when two rows tie on
+    -- registered_at: id is the deterministic tie-break.
     select count(*) + 1 into v_result.waitlist_position
       from public.participants
      where session_id = p_session_id
        and status = 'waiting_list'
-       and registered_at < v_registered_at;
+       and (registered_at, id) < (v_registered_at, v_participant_id);
   end if;
 
   return v_result;
@@ -143,7 +153,7 @@ begin
 
   insert into public.participants
     (session_id, user_id, status, registered_at, added_by)
-  values (p_session_id, p_user_id, p_status, now(), auth.uid())
+  values (p_session_id, p_user_id, p_status, clock_timestamp(), auth.uid())
   on conflict (session_id, user_id) do update
     set status = excluded.status,
         registered_at = excluded.registered_at,
@@ -223,7 +233,7 @@ begin
        select id from public.participants
         where session_id = new.session_id
           and status = 'waiting_list'
-        order by registered_at
+        order by registered_at, id
         limit 1
      );
   end if;

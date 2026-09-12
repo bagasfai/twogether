@@ -1,5 +1,5 @@
 begin;
-select plan(21);
+select plan(23);
 
 insert into auth.users (id, email) values
   ('11111111-1111-1111-1111-111111111111', 'member@test.local'),
@@ -167,27 +167,22 @@ select is(
   'host_add_participant stamps added_by with the acting host id'
 );
 
--- Seed a participant who is already waiting_list, timestamped a minute in
--- the past. This is fixture setup (raw insert as postgres), not a new
--- production write path: it exists because the whole test file runs
--- inside one wrapping transaction, and register_for_session's ordering
--- uses now(), which is frozen for the life of a Postgres transaction.
--- Registering this "prior" participant through a second live RPC call
--- would give it the identical now() as the next call below, which is
--- exactly the tie this fixture avoids -- see the report for detail.
-set local role postgres;
-set local request.jwt.claims = '';
-insert into public.participants (session_id, user_id, status, registered_at)
-values ('aaaaaaaa-0000-0000-0000-000000000003', '77777777-7777-7777-7777-777777777777',
-        'waiting_list', now() - interval '1 minute');
+-- Two real, sequential RPC calls. register_for_session stamps registered_at
+-- with clock_timestamp() (actual wall-clock time), not now() (frozen for
+-- the whole transaction), so these two calls get distinct timestamps even
+-- though the entire test file runs inside one wrapping transaction.
+set local request.jwt.claims = '{"sub":"77777777-7777-7777-7777-777777777777","role":"authenticated"}';
+select results_eq(
+  $$ select status::text, waitlist_position from public.register_for_session('aaaaaaaa-0000-0000-0000-000000000003') $$,
+  $$ values ('waiting_list'::text, 1) $$,
+  'the first overflow registrant is waitlisted at position 1'
+);
 
-set local role authenticated;
 set local request.jwt.claims = '{"sub":"88888888-8888-8888-8888-888888888888","role":"authenticated"}';
-
 select results_eq(
   $$ select status::text, waitlist_position from public.register_for_session('aaaaaaaa-0000-0000-0000-000000000003') $$,
   $$ values ('waiting_list'::text, 2) $$,
-  'a registrant past capacity is waitlisted at position 2, accounting for the earlier waitlisted participant'
+  'the second overflow registrant is waitlisted at position 2'
 );
 
 -- host_set_participant_status actually changes the participant's status,
@@ -265,6 +260,56 @@ select is(
        and user_id in ('cccccccc-cccc-cccc-cccc-cccccccccccc', 'dddddddd-dddd-dddd-dddd-dddddddddddd')),
   2,
   'cancelling two confirmed participants in one statement promotes two waitlisted participants (FOR EACH ROW)'
+);
+
+-- === GAP (d): the promotion tie-break is deterministic, not arbitrary ===
+
+-- Two waitlisted participants with an IDENTICAL registered_at (forced by a
+-- direct insert with an explicit literal timestamp, in the privileged
+-- context) must still promote the same one every time: the trigger's
+-- ORDER BY registered_at, id makes id the deterministic tie-break.
+set local role postgres;
+set local request.jwt.claims = '';
+insert into auth.users (id, email) values
+  ('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee', 'member11@test.local'),
+  ('ffffffff-ffff-ffff-ffff-ffffffffffff', 'member12@test.local'),
+  ('12121212-1212-1212-1212-121212121212', 'member13@test.local');
+
+insert into public.sessions
+  (id, title, starts_at, ends_at, location, max_participants, waitlist_capacity,
+   created_by, status, registration_state)
+values
+  ('aaaaaaaa-0000-0000-0000-000000000005', 'Tie Break Test',
+   now() + interval '5 days', now() + interval '5 days 2 hours',
+   'GOR Jakbar', 1, 2, '22222222-2222-2222-2222-222222222222',
+   'scheduled', 'open');
+
+insert into public.participants (session_id, user_id, status, registered_at)
+values ('aaaaaaaa-0000-0000-0000-000000000005', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee',
+        'confirmed', now());
+
+-- both waitlisted rows share the exact same registered_at; only id differs
+insert into public.participants (id, session_id, user_id, status, registered_at)
+values
+  ('00000000-0000-0000-0000-000000000002', 'aaaaaaaa-0000-0000-0000-000000000005',
+   'ffffffff-ffff-ffff-ffff-ffffffffffff', 'waiting_list', '2026-01-01 00:00:00+00'),
+  ('00000000-0000-0000-0000-000000000001', 'aaaaaaaa-0000-0000-0000-000000000005',
+   '12121212-1212-1212-1212-121212121212', 'waiting_list', '2026-01-01 00:00:00+00');
+
+-- an admin's direct update (not the RPC) cancels the confirmed participant,
+-- freeing the one seat and firing the promotion trigger
+update public.participants
+   set status = 'cancelled', cancelled_at = now()
+ where session_id = 'aaaaaaaa-0000-0000-0000-000000000005'
+   and user_id = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'
+   and status = 'confirmed';
+
+select is(
+  (select user_id from public.participants
+     where session_id = 'aaaaaaaa-0000-0000-0000-000000000005'
+       and status = 'confirmed'),
+  '12121212-1212-1212-1212-121212121212'::uuid,
+  'a registered_at tie is broken deterministically by the lower participant id'
 );
 
 select * from finish();
