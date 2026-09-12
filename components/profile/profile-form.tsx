@@ -11,6 +11,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from "@/components/ui/input";
 import { updateProfile } from "@/lib/actions/profile";
 import { profileSchema, type ProfileInput } from "@/lib/validation/profile";
+import { applyFieldErrors } from "@/lib/forms/apply-field-errors";
 
 // The schema turns "" into null on output, so the form's input type and its
 // output type differ. react-hook-form takes both.
@@ -32,9 +33,7 @@ export function ProfileForm({ defaultValues }: { defaultValues: ProfileFormValue
         return;
       }
 
-      for (const [field, messages] of Object.entries(result.fieldErrors ?? {})) {
-        if (field !== "_form") form.setError(field as keyof ProfileFormValues, { message: messages[0] });
-      }
+      applyFieldErrors(form, result.fieldErrors);
       form.setError("root", { message: result.message });
     }),
   );

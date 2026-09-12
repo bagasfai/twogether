@@ -32,6 +32,12 @@ const FormFieldContext = React.createContext<FormFieldContextValue>(
 function FormField<
   TFieldValues extends FieldValues = FieldValues,
   TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
+  // Deliberate local addition, not upstream shadcn/ui: mirrors the third
+  // generic on react-hook-form's own ControllerProps/Control so a schema with
+  // an input/output transform (e.g. zod .transform()) can be typed here too.
+  // Defaults to TFieldValues, so every existing single-generic form is
+  // unaffected. `npx shadcn add form` will silently drop this on a re-sync
+  // and break every transform-schema form with no obvious error -- redo it.
   TTransformedValues = TFieldValues
 >({ ...props }: ControllerProps<TFieldValues, TName, TTransformedValues>) {
   return (

@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { signIn } from "@/lib/actions/auth";
 import { signInSchema, type SignInInput } from "@/lib/validation/auth";
 import { GoogleButton } from "@/components/auth/google-button";
+import { applyFieldErrors } from "@/lib/forms/apply-field-errors";
 
 export function LoginForm({ next }: { next?: string }) {
   const [pending, startTransition] = useTransition();
@@ -32,9 +33,7 @@ export function LoginForm({ next }: { next?: string }) {
       // so reaching here with a value means failure, and reaching here at
       // all does not guarantee a value.
       if (result && !result.ok) {
-        for (const [field, messages] of Object.entries(result.fieldErrors ?? {})) {
-          if (field !== "_form") form.setError(field as keyof SignInInput, { message: messages[0] });
-        }
+        applyFieldErrors(form, result.fieldErrors);
         form.setError("root", { message: result.message });
       }
     }),

@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { signUp } from "@/lib/actions/auth";
 import { signUpSchema, type SignUpInput } from "@/lib/validation/auth";
 import { GoogleButton } from "@/components/auth/google-button";
+import { applyFieldErrors } from "@/lib/forms/apply-field-errors";
 
 export function SignupForm() {
   // Signup does not redirect -- confirmation is required, so there is no session
@@ -36,9 +37,7 @@ export function SignupForm() {
         return;
       }
 
-      for (const [field, messages] of Object.entries(result.fieldErrors ?? {})) {
-        if (field !== "_form") form.setError(field as keyof SignUpInput, { message: messages[0] });
-      }
+      applyFieldErrors(form, result.fieldErrors);
       form.setError("root", { message: result.message });
     }),
   );
