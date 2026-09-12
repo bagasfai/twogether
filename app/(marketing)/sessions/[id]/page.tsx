@@ -5,6 +5,15 @@ import { RegisterPanel } from "@/components/sessions/register-panel";
 
 export const revalidate = 60;
 
+// Required for ISR on a dynamic segment: without this, `revalidate` above is
+// inert and the route renders dynamically on every request. An empty array
+// means no ids are known at build time -- the first request to each id
+// builds and caches it, and subsequent requests are served from that cache
+// until the next revalidation window.
+export async function generateStaticParams() {
+  return [];
+}
+
 export async function generateMetadata({ params }: PageProps<"/sessions/[id]">): Promise<Metadata> {
   const { id } = await params;
   const session = await getPublicSession(id);

@@ -6,18 +6,36 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cancelRegistration, registerForSession } from "@/lib/actions/registration";
+// Type-only: erased at compile time, so this never pulls the `server-only`
+// guard from lib/dal/participants.ts into the client bundle.
+import type { MyRegistration } from "@/lib/dal/participants";
 
-type Registration = {
-  id: string;
-  status: "confirmed" | "waiting_list" | "cancelled";
-  registeredAt: string;
-  waitlistPosition: number | null;
-};
+// The enum's runtime values, since a `type` import gives us nothing to check
+// against at runtime -- this is the one place that has to know them.
+const PARTICIPANT_STATUSES = ["confirmed", "waiting_list", "cancelled"] as const;
+
+function isMyRegistration(value: unknown): value is MyRegistration {
+  if (typeof value !== "object" || value === null) return false;
+  const row = value as Record<string, unknown>;
+  return (
+    typeof row.id === "string" &&
+    typeof row.status === "string" &&
+    (PARTICIPANT_STATUSES as readonly string[]).includes(row.status) &&
+    typeof row.registeredAt === "string" &&
+    (row.waitlistPosition === null || typeof row.waitlistPosition === "number")
+  );
+}
+
+function isMyRegistrationResponse(value: unknown): value is { registration: MyRegistration | null } {
+  if (typeof value !== "object" || value === null) return false;
+  const row = value as Record<string, unknown>;
+  return row.registration === null || isMyRegistration(row.registration);
+}
 
 type State =
   | { kind: "loading" }
   | { kind: "anonymous" }
-  | { kind: "ready"; registration: Registration | null };
+  | { kind: "ready"; registration: MyRegistration | null };
 
 export function RegisterPanel({
   sessionId,
@@ -39,7 +57,11 @@ export function RegisterPanel({
           setState({ kind: "anonymous" });
           return;
         }
-        const body = (await response.json()) as { registration: Registration | null };
+        const body: unknown = await response.json();
+        if (!isMyRegistrationResponse(body)) {
+          setState({ kind: "ready", registration: null });
+          return;
+        }
         setState({ kind: "ready", registration: body.registration });
       })
       .catch(() => {

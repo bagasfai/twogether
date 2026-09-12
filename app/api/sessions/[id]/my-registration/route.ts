@@ -11,7 +11,11 @@ export async function GET(_request: NextRequest, ctx: RouteContext<"/api/session
 
   const user = await getCurrentUser();
   if (!user) {
-    return NextResponse.json({ registration: null }, { status: 401 });
+    return NextResponse.json(
+      { registration: null },
+      // per-user answer: never store it in any shared cache, same as the 200 below
+      { status: 401, headers: { "Cache-Control": "private, no-store" } },
+    );
   }
 
   const registration = await getMyRegistration(id);
