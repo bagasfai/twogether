@@ -1,5 +1,5 @@
 begin;
-select plan(38);
+select plan(40);
 
 insert into auth.users (id, email) values
   ('11111111-1111-1111-1111-111111111111', 'member@test.local'),
@@ -446,6 +446,24 @@ select is(
     '2026-02-01 00:00:00+00'::timestamptz, '00000000-0000-0000-0000-000000000012'),
   2,
   'the higher-id row in the same registered_at tie reports position 2, not the same number'
+);
+
+-- Lock in the grant surface: waitlist_position_of is deliberately NOT
+-- security definer and has no EXECUTE grant for anon or authenticated. If
+-- it were reachable directly (e.g. via PostgREST's /rpc/waitlist_position_of)
+-- while still definer, it would read participants as the owner and bypass
+-- participants_select_self_host_or_public entirely -- a session uuid and a
+-- far-future timestamp would leak any session's waitlist size to anon.
+-- Nothing before this pinned that it stays revoked.
+select is(
+  has_function_privilege('anon', 'public.waitlist_position_of(uuid, timestamptz, uuid)', 'EXECUTE'),
+  false,
+  'anon has no EXECUTE on waitlist_position_of'
+);
+select is(
+  has_function_privilege('authenticated', 'public.waitlist_position_of(uuid, timestamptz, uuid)', 'EXECUTE'),
+  false,
+  'authenticated has no EXECUTE on waitlist_position_of'
 );
 
 -- === GAP (h): checked_in_at leaves the checked-in pool on cancellation,

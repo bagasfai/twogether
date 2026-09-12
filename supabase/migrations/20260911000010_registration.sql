@@ -18,6 +18,17 @@ $$;
 -- insert time, for the row that is being inserted, which makes it
 -- impossible to observe what position a PRE-EXISTING tied row would get
 -- without a callable, argument-driven version of the same formula.
+--
+-- Deliberately NOT security definer: its only caller is register_for_session,
+-- which is already definer and calls it while already running as the
+-- owner, so the nested read of participants happens with the owner's
+-- privileges regardless. Giving this function its own definer would only
+-- add a second, independently-callable way to read participants as the
+-- owner -- exactly the widening a prior version of this migration
+-- introduced (a session uuid and a far-future timestamp would let anon
+-- read the waitlist size of any session, bypassing
+-- participants_select_self_host_or_public entirely). Revoked from
+-- everyone below for the same reason the four RPCs are.
 create or replace function public.waitlist_position_of(
   p_session_id uuid,
   p_registered_at timestamptz,
@@ -26,7 +37,6 @@ create or replace function public.waitlist_position_of(
 returns int
 language sql
 stable
-security definer
 set search_path = public, pg_temp
 as $$
   -- Same total order as promote_from_waitlist's ORDER BY: registered_at,
@@ -37,6 +47,9 @@ as $$
      and status = 'waiting_list'
      and (registered_at, id) < (p_registered_at, p_id);
 $$;
+
+revoke execute on function public.waitlist_position_of(uuid, timestamptz, uuid)
+  from public, anon, authenticated;
 
 create or replace function public.register_for_session(p_session_id uuid)
 returns public.registration_result
