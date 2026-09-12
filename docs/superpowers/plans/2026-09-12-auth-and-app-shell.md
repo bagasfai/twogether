@@ -60,7 +60,7 @@
 - `components/profile/profile-form.tsx`
 
 **Tests**
-- `vitest.config.ts` · `tests/unit/validation.test.ts` · `tests/unit/rpc-errors.test.ts`
+- `vitest.config.mts` · `tests/unit/validation.test.ts` · `tests/unit/rpc-errors.test.ts`
 
 ---
 
@@ -607,7 +607,7 @@ git commit -m "feat(auth): require email confirmation, add token_hash template, 
 One schema per entity, imported by both the client form resolver and the Server Action that handles it. These are pure functions, so they get real tests.
 
 **Files:**
-- Create: `vitest.config.ts`, `tests/unit/validation.test.ts`
+- Create: `vitest.config.mts`, `tests/unit/validation.test.ts`
 - Create: `lib/validation/auth.ts`, `lib/validation/profile.ts`, `lib/validation/session.ts`
 - Modify: `package.json`
 
@@ -633,7 +633,7 @@ Add to `package.json` scripts:
 "test:unit:watch": "vitest"
 ```
 
-Create `vitest.config.ts`:
+Create `vitest.config.mts`. The `.mts` extension is deliberate: `package.json` has no `"type": "module"`, so a `.ts` config is loaded as CommonJS while its contents are ESM, and Vite's native config loader warns on every single run. `tsconfig.json` already includes `**/*.mts`. Adding `"type": "module"` project-wide would also silence it but changes module resolution for the whole Next.js app, which is not worth it for a test config.
 
 ```ts
 import { defineConfig } from "vitest/config";
@@ -908,7 +908,7 @@ Expected: all 17 tests pass.
 - [ ] **Step 6: Commit**
 
 ```bash
-git add vitest.config.ts package.json package-lock.json tests/unit/validation.test.ts lib/validation
+git add vitest.config.mts package.json package-lock.json tests/unit/validation.test.ts lib/validation
 git commit -m "feat(validation): add zod schemas for auth, profile and session with unit tests"
 ```
 
