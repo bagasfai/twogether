@@ -2039,9 +2039,7 @@ export function LoginForm({ next }: { next?: string }) {
       // return type says otherwise, so TypeScript cannot catch this: guard the
       // value itself or the happy path throws.
       if (result && !result.ok) {
-        for (const [field, messages] of Object.entries(result.fieldErrors ?? {})) {
-          if (field !== "_form") form.setError(field as keyof SignInInput, { message: messages[0] });
-        }
+        applyFieldErrors(form, result.fieldErrors);
         form.setError("root", { message: result.message });
       }
     }),
@@ -2143,9 +2141,7 @@ export function SignupForm() {
         return;
       }
 
-      for (const [field, messages] of Object.entries(result.fieldErrors ?? {})) {
-        if (field !== "_form") form.setError(field as keyof SignUpInput, { message: messages[0] });
-      }
+      applyFieldErrors(form, result.fieldErrors);
       form.setError("root", { message: result.message });
     }),
   );
@@ -2582,9 +2578,7 @@ export function ProfileForm({ defaultValues }: { defaultValues: ProfileFormValue
         return;
       }
 
-      for (const [field, messages] of Object.entries(result.fieldErrors ?? {})) {
-        if (field !== "_form") form.setError(field as keyof ProfileFormValues, { message: messages[0] });
-      }
+      applyFieldErrors(form, result.fieldErrors);
       form.setError("root", { message: result.message });
     }),
   );
@@ -3348,9 +3342,7 @@ export function SessionForm() {
         return;
       }
 
-      for (const [field, messages] of Object.entries(result.fieldErrors ?? {})) {
-        if (field !== "_form") form.setError(field as keyof SessionFormValues, { message: messages[0] });
-      }
+      applyFieldErrors(form, result.fieldErrors);
       form.setError("root", { message: result.message });
     }),
   );
