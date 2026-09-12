@@ -1796,6 +1796,13 @@ export const DEFAULT_REDIRECT = "/dashboard";
 // relative one.
 export function safeNext(value: string | null | undefined): string {
   if (!value) return DEFAULT_REDIRECT;
+  // Control characters must be rejected FIRST. The WHATWG URL parser strips raw
+  // tab, LF and CR before parsing, so "/\t/evil.example.com" resolves to
+  // "https://evil.example.com/" — a protocol-relative URL a naive "//" check
+  // never sees. The percent-encoded (%09) and space forms stay on-origin, so
+  // tab/LF/CR are the live vectors.
+  // eslint-disable-next-line no-control-regex
+  if (/[\u0000-\u001F\u007F]/.test(value)) return DEFAULT_REDIRECT;
   if (!value.startsWith("/")) return DEFAULT_REDIRECT;
   if (value.startsWith("//") || value.startsWith("/\\")) return DEFAULT_REDIRECT;
   return value;
@@ -1824,7 +1831,14 @@ import { fail, failFromZod, ok, type ActionResult } from "@/lib/actions/result";
 import { safeNext } from "@/lib/auth/redirect";
 
 function siteUrl(): string {
-  return process.env.NEXT_PUBLIC_SITE_URL ?? "http://127.0.0.1:3000";
+  const configured = process.env.NEXT_PUBLIC_SITE_URL;
+  if (configured) return configured;
+  // Falling back silently in production would mail every user a confirmation
+  // link pointing at localhost, with no error and no failing build.
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("NEXT_PUBLIC_SITE_URL must be set in production");
+  }
+  return "http://127.0.0.1:3000";
 }
 
 export async function signIn(input: SignInInput, next?: string): Promise<ActionResult<null>> {
@@ -2021,8 +2035,11 @@ export function LoginForm({ next }: { next?: string }) {
   const onSubmit = form.handleSubmit((values) =>
     startTransition(async () => {
       const result = await signIn(values, next);
-      // a successful sign-in redirects, so reaching here means failure
-      if (!result.ok) {
+      // A successful sign-in redirects, and Next resolves a redirecting Server
+      // Action's promise to `undefined` — not to an ActionResult. The declared
+      // return type says otherwise, so TypeScript cannot catch this: guard the
+      // value itself or the happy path throws.
+      if (result && !result.ok) {
         for (const [field, messages] of Object.entries(result.fieldErrors ?? {})) {
           if (field !== "_form") form.setError(field as keyof SignInInput, { message: messages[0] });
         }
