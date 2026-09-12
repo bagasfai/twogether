@@ -1542,7 +1542,9 @@ export async function listRoster(sessionId: string): Promise<RosterEntry[]> {
 
   const { data, error } = await supabase
     .from("participants")
-    .select("id, user_id, status, registered_at, checked_in_at, added_by, profiles!inner(full_name, avatar_url)")
+    // profiles!inner would be ambiguous: participants has TWO foreign keys to
+    // profiles (user_id and added_by). Name the constraint explicitly.
+    .select("id, user_id, status, registered_at, checked_in_at, added_by, profiles!participants_user_id_fkey(full_name, avatar_url)")
     .eq("session_id", sessionId)
     .order("registered_at", { ascending: true });
 
