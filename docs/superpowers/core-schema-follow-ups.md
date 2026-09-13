@@ -41,6 +41,16 @@ found by review, triaged, and deliberately left. Verdicts are from the final who
 - `010:518` ("cancel_registration clears checked_in_at") now passes even if the RPC's manual
   clearing were deleted, because the 0012 trigger does it. Invariant still proven by 012 F1a.
 
+## From Task 10 (host session creation and roster management)
+
+- Resend and React Email are unconfigured, so email confirmation works locally through
+  Inbucket but not in any deployed environment. Must be wired before the first real user.
+- Google OAuth ships disabled and has never been exercised end to end.
+- No password reset flow exists.
+- No admin UI: roles are changed by seed or by a service-role script.
+- `host_add_participant` has no UI; it needs a member picker.
+- No E2E coverage — signup, login, registration and override flows are verified by hand only.
+
 ## Process note
 
 The "delete the code, the suite still passes" gap was found **five** separate times across this
