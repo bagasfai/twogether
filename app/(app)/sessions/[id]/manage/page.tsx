@@ -17,6 +17,7 @@ export default async function ManageSessionPage({ params }: PageProps<"/sessions
   const roster = await listRoster(id);
   const confirmed = roster.filter((entry) => entry.status === "confirmed").length;
   const waiting = roster.filter((entry) => entry.status === "waiting_list").length;
+  const checkedIn = roster.filter((entry) => entry.checkedInAt !== null).length;
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6">
@@ -27,7 +28,7 @@ export default async function ManageSessionPage({ params }: PageProps<"/sessions
         </p>
         <p className="text-sm text-muted-foreground">
           {confirmed}/{session.maxParticipants} confirmed · {waiting}/{session.waitlistCapacity} waiting ·
-          registration {session.registrationState}
+          {checkedIn} checked in · registration {session.registrationState}
         </p>
       </header>
 

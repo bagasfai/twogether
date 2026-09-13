@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/dal/user";
 import { fail, failFromRpc, failFromZod, ok, type ActionResult } from "@/lib/actions/result";
-import { setParticipantStatusSchema } from "@/lib/validation/participants";
+import { setCheckedInSchema, setParticipantStatusSchema } from "@/lib/validation/participants";
 import type { Database } from "@/types/supabase";
 
 type ParticipantStatus = Database["public"]["Enums"]["participant_status"];
@@ -37,5 +37,33 @@ export async function setParticipantStatus(
 
   revalidatePath(`/sessions/${parsed.data.sessionId}/manage`);
   revalidatePath("/dashboard");
+  return ok(null);
+}
+
+// Check-in isn't a registration/waitlist decision, so unlike setParticipantStatus
+// it doesn't need the advisory-lock RPC -- there's no count to race. A direct
+// UPDATE is fine: participants_update_host gates it, and enforce_checkin_requires_active
+// nulls checked_in_at server-side the moment status isn't 'confirmed'.
+export async function setCheckedIn(
+  participantId: string,
+  sessionId: string,
+  checkedIn: boolean,
+): Promise<ActionResult<null>> {
+  const parsed = setCheckedInSchema.safeParse({ participantId, sessionId, checkedIn });
+  if (!parsed.success) return failFromZod(parsed.error);
+
+  const user = await getCurrentUser();
+  if (!user) return fail("not_authenticated");
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("participants")
+    .update({ checked_in_at: parsed.data.checkedIn ? new Date().toISOString() : null })
+    .eq("id", parsed.data.participantId)
+    .eq("session_id", parsed.data.sessionId);
+
+  if (error) return fail("unknown", "Could not update check-in.");
+
+  revalidatePath(`/sessions/${parsed.data.sessionId}/manage`);
   return ok(null);
 }

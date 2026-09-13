@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { setParticipantStatus } from "@/lib/actions/participants";
+import { setCheckedIn, setParticipantStatus } from "@/lib/actions/participants";
 // types/supabase.ts is a plain generated types module (no server-only guard),
 // safe to import for real (not type-only) in a client component. Deriving
 // from the enum here, rather than hand-copying the union, means a status
@@ -19,6 +19,7 @@ type Entry = {
   id: string;
   status: ParticipantStatus;
   registeredAt: string;
+  checkedInAt: string | null;
   fullName: string | null;
 };
 
@@ -29,6 +30,13 @@ export function RosterTable({ sessionId, entries }: { sessionId: string; entries
     startTransition(async () => {
       const result = await setParticipantStatus(participantId, sessionId, status);
       if (result.ok) toast.success("Participant updated");
+      else toast.error(result.message);
+    });
+
+  const toggleCheckedIn = (participantId: string, checkedIn: boolean) =>
+    startTransition(async () => {
+      const result = await setCheckedIn(participantId, sessionId, checkedIn);
+      if (result.ok) toast.success(checkedIn ? "Checked in" : "Check-in undone");
       else toast.error(result.message);
     });
 
@@ -43,6 +51,7 @@ export function RosterTable({ sessionId, entries }: { sessionId: string; entries
           <TableHead>Player</TableHead>
           <TableHead>Status</TableHead>
           <TableHead>Registered</TableHead>
+          <TableHead>Check-in</TableHead>
           <TableHead className="text-right">Override</TableHead>
         </TableRow>
       </TableHeader>
@@ -60,6 +69,19 @@ export function RosterTable({ sessionId, entries }: { sessionId: string; entries
               )}
             </TableCell>
             <TableCell>{new Date(entry.registeredAt).toLocaleString()}</TableCell>
+            <TableCell>
+              {entry.status !== "confirmed" ? (
+                <span className="text-sm text-muted-foreground">—</span>
+              ) : entry.checkedInAt ? (
+                <Button size="sm" variant="outline" disabled={pending} onClick={() => toggleCheckedIn(entry.id, false)}>
+                  Undo check-in
+                </Button>
+              ) : (
+                <Button size="sm" disabled={pending} onClick={() => toggleCheckedIn(entry.id, true)}>
+                  Check in
+                </Button>
+              )}
+            </TableCell>
             <TableCell className="flex justify-end gap-2">
               {entry.status !== "confirmed" ? (
                 <Button size="sm" variant="outline" disabled={pending} onClick={() => change(entry.id, "confirmed")}>

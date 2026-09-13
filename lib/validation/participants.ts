@@ -20,3 +20,11 @@ export const setParticipantStatusSchema = z.object({
 });
 
 export type SetParticipantStatusInput = z.infer<typeof setParticipantStatusSchema>;
+
+export const setCheckedInSchema = z.object({
+  participantId: z.uuid(),
+  sessionId: z.uuid(),
+  checkedIn: z.boolean(),
+});
+
+export type SetCheckedInInput = z.infer<typeof setCheckedInSchema>;

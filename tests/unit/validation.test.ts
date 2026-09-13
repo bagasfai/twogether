@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { signInSchema, signUpSchema } from "@/lib/validation/auth";
 import { profileSchema } from "@/lib/validation/profile";
 import { sessionSchema, isZonedInstant } from "@/lib/validation/session";
+import { setCheckedInSchema } from "@/lib/validation/participants";
 
 describe("signUpSchema", () => {
   const valid = {
@@ -229,6 +230,30 @@ describe("sessionSchema", () => {
       endsAt: "2026-10-02T12:00:00.000Z",
     });
     expect(result.success).toBe(false);
+  });
+});
+
+describe("setCheckedInSchema", () => {
+  const valid = {
+    participantId: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+    sessionId: "3fa85f64-5717-4562-b3fc-2c963f66afa7",
+    checkedIn: true,
+  };
+
+  it("accepts a valid check-in", () => {
+    expect(setCheckedInSchema.safeParse(valid).success).toBe(true);
+  });
+
+  it("accepts a valid check-out", () => {
+    expect(setCheckedInSchema.safeParse({ ...valid, checkedIn: false }).success).toBe(true);
+  });
+
+  it("rejects a non-uuid participantId", () => {
+    expect(setCheckedInSchema.safeParse({ ...valid, participantId: "nope" }).success).toBe(false);
+  });
+
+  it("rejects a non-boolean checkedIn", () => {
+    expect(setCheckedInSchema.safeParse({ ...valid, checkedIn: "true" }).success).toBe(false);
   });
 });
 
