@@ -8,6 +8,7 @@ import { getRotationQueue } from "@/lib/dal/rotation";
 import { RosterTable } from "@/components/sessions/roster-table";
 import { CourtPanel } from "@/components/sessions/court-panel";
 import { MatchPanel } from "@/components/sessions/match-panel";
+import { SessionRealtimeWatcher } from "@/components/sessions/session-realtime-watcher";
 
 export default async function ManageSessionPage({ params }: PageProps<"/sessions/[id]/manage">) {
   const { id } = await params;
@@ -29,6 +30,8 @@ export default async function ManageSessionPage({ params }: PageProps<"/sessions
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6">
+      <SessionRealtimeWatcher sessionId={session.id} />
+
       <header className="flex flex-col gap-1">
         <h1 className="text-xl font-semibold">{session.title}</h1>
         <p className="text-sm text-muted-foreground">
