@@ -41,7 +41,17 @@ export function SessionForm() {
 
   const onSubmit = form.handleSubmit((values) =>
     startTransition(async () => {
-      const result = await createSession(values);
+      // datetime-local has no zone. Convert HERE, in the browser, where the
+      // local zone is the user's own. The Server Action cannot do this: it
+      // would parse the bare string in the server process's zone (TZ=UTC on
+      // Vercel), not the host's.
+      const toInstant = (local: string) => new Date(local).toISOString();
+
+      const result = await createSession({
+        ...values,
+        startsAt: toInstant(values.startsAt),
+        endsAt: toInstant(values.endsAt),
+      });
 
       if (result.ok) {
         router.push(`/sessions/${result.data.id}/manage`);
@@ -159,9 +169,11 @@ export function SessionForm() {
                   <FormItem>
                     <FormLabel>Courts</FormLabel>
                     <FormControl>
-                      {/* z.coerce.number()'s input side types as unknown in zod 4; the
-                          form only ever puts a string here (defaultValues, keystrokes). */}
-                      <Input type="number" min={1} {...field} value={field.value as string} />
+                      {/* z.coerce.number()'s input side types as unknown in zod 4. String()
+                          converts at runtime instead of asserting, and degrades to "" rather
+                          than undefined if that invariant is ever broken by a refactor --
+                          same pattern as description/locationUrl's `?? ""` above. */}
+                      <Input type="number" min={1} {...field} value={String(field.value ?? "")} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -174,7 +186,7 @@ export function SessionForm() {
                   <FormItem>
                     <FormLabel>Capacity</FormLabel>
                     <FormControl>
-                      <Input type="number" min={1} {...field} value={field.value as string} />
+                      <Input type="number" min={1} {...field} value={String(field.value ?? "")} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -187,7 +199,7 @@ export function SessionForm() {
                   <FormItem>
                     <FormLabel>Waitlist</FormLabel>
                     <FormControl>
-                      <Input type="number" min={0} {...field} value={field.value as string} />
+                      <Input type="number" min={0} {...field} value={String(field.value ?? "")} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

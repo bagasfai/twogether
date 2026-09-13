@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/dal/user";
-import { sessionSchema, type SessionInput } from "@/lib/validation/session";
+import { sessionSchema, isZonedInstant, type SessionInput } from "@/lib/validation/session";
 import { fail, failFromZod, ok, type ActionResult } from "@/lib/actions/result";
 
 export async function createSession(input: SessionInput): Promise<ActionResult<{ id: string }>> {
@@ -13,8 +13,23 @@ export async function createSession(input: SessionInput): Promise<ActionResult<{
   const user = await getCurrentUser();
   if (!user) return fail("not_authenticated");
 
-  const supabase = await createClient();
   const values = parsed.data;
+
+  // A value without a zone designator is ambiguous and would be parsed in the
+  // server's zone (TZ=UTC on Vercel), not the host's. Refuse it rather than
+  // guess -- the client (session-form.tsx) is responsible for sending a
+  // zone-qualified instant, converted in the browser where the local zone is
+  // actually known.
+  const zoneless = (["startsAt", "endsAt"] as const).filter((key) => !isZonedInstant(values[key]));
+  if (zoneless.length > 0) {
+    return fail(
+      "validation",
+      "Please pick a start and end time.",
+      Object.fromEntries(zoneless.map((key) => [key, ["Missing time zone"]])),
+    );
+  }
+
+  const supabase = await createClient();
 
   // sessions_insert_host requires current_user_role() in ('host','admin') AND
   // created_by = auth.uid(). A member reaching this point is refused by RLS,
@@ -25,9 +40,10 @@ export async function createSession(input: SessionInput): Promise<ActionResult<{
     .insert({
       title: values.title,
       description: values.description,
-      // datetime-local has no zone; the browser's zone is the intended one
-      starts_at: new Date(values.startsAt).toISOString(),
-      ends_at: new Date(values.endsAt).toISOString(),
+      // Already a zone-qualified instant (the browser converted it, and the
+      // check above refused anything that wasn't) -- store it as-is.
+      starts_at: values.startsAt,
+      ends_at: values.endsAt,
       location: values.location,
       location_url: values.locationUrl,
       court_count: values.courtCount,

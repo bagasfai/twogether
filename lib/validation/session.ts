@@ -38,3 +38,17 @@ export const sessionSchema = z
   });
 
 export type SessionInput = z.infer<typeof sessionSchema>;
+
+// A datetime-local input has no zone designator, so a bare value like
+// "2026-10-02T19:00" is ambiguous once it reaches a Server Action: Date
+// parsing there happens in the SERVER process's zone (TZ=UTC on Vercel), not
+// the browser's. The client is responsible for converting to a zoned instant
+// (a "Z" suffix or a "+HH:MM"/"-HH:MM" offset) before it ever reaches the
+// action; this predicate lets the action refuse anything that skipped that
+// step instead of silently mis-storing it. Exported (rather than inlined in
+// the action) purely so it is unit-testable as plain logic.
+const ZONED_INSTANT = /([Zz]|[+-]\d{2}:\d{2})$/;
+
+export function isZonedInstant(value: string): boolean {
+  return ZONED_INSTANT.test(value);
+}

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { signInSchema, signUpSchema } from "@/lib/validation/auth";
 import { profileSchema } from "@/lib/validation/profile";
-import { sessionSchema } from "@/lib/validation/session";
+import { sessionSchema, isZonedInstant } from "@/lib/validation/session";
 
 describe("signUpSchema", () => {
   const valid = {
@@ -125,5 +125,75 @@ describe("sessionSchema", () => {
 
   it("rejects a status a host is not allowed to set directly", () => {
     expect(sessionSchema.safeParse({ ...valid, status: "completed" }).success).toBe(false);
+  });
+
+  // The .refine() comparing endsAt > startsAt must hold both before the
+  // browser converts datetime-local strings to zoned instants (client-side
+  // validation, run pre-conversion) and after (the server re-parses the
+  // already-converted, zone-qualified strings). Date parsing of two
+  // same-format strings preserves relative order either way -- bare
+  // datetime-local strings are parsed consistently in whichever zone is
+  // running, and "Z"/offset-suffixed strings are parsed as absolute instants
+  // regardless of zone -- so both forms are exercised here.
+  it("accepts a valid order for raw datetime-local strings (pre-conversion, client-side)", () => {
+    const result = sessionSchema.safeParse({
+      ...valid,
+      startsAt: "2026-10-02T19:00",
+      endsAt: "2026-10-02T22:00",
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects a bad order for raw datetime-local strings (pre-conversion, client-side)", () => {
+    const result = sessionSchema.safeParse({
+      ...valid,
+      startsAt: "2026-10-02T22:00",
+      endsAt: "2026-10-02T19:00",
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("accepts a valid order for zoned instants (post-conversion, server-side)", () => {
+    const result = sessionSchema.safeParse({
+      ...valid,
+      startsAt: "2026-10-02T12:00:00.000Z",
+      endsAt: "2026-10-02T15:00:00.000Z",
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects a bad order for zoned instants (post-conversion, server-side)", () => {
+    const result = sessionSchema.safeParse({
+      ...valid,
+      startsAt: "2026-10-02T15:00:00.000Z",
+      endsAt: "2026-10-02T12:00:00.000Z",
+    });
+    expect(result.success).toBe(false);
+  });
+});
+
+describe("isZonedInstant", () => {
+  it("accepts a Z-suffixed instant", () => {
+    expect(isZonedInstant("2026-10-02T12:00:00.000Z")).toBe(true);
+  });
+
+  it("accepts a lowercase z-suffixed instant", () => {
+    expect(isZonedInstant("2026-10-02T12:00:00.000z")).toBe(true);
+  });
+
+  it("accepts a positive offset instant", () => {
+    expect(isZonedInstant("2026-10-02T19:00:00+07:00")).toBe(true);
+  });
+
+  it("accepts a negative offset instant", () => {
+    expect(isZonedInstant("2026-10-02T08:00:00-05:00")).toBe(true);
+  });
+
+  it("rejects a bare datetime-local value with no seconds", () => {
+    expect(isZonedInstant("2026-10-02T19:00")).toBe(false);
+  });
+
+  it("rejects a bare value that includes seconds but still has no zone", () => {
+    expect(isZonedInstant("2026-10-02T19:00:00")).toBe(false);
   });
 });
