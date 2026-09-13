@@ -4,6 +4,7 @@ import { getHostSession } from "@/lib/dal/sessions";
 import { listRoster } from "@/lib/dal/participants";
 import { listCourts } from "@/lib/dal/courts";
 import { listMatches } from "@/lib/dal/matches";
+import { getRotationQueue } from "@/lib/dal/rotation";
 import { RosterTable } from "@/components/sessions/roster-table";
 import { CourtPanel } from "@/components/sessions/court-panel";
 import { MatchPanel } from "@/components/sessions/match-panel";
@@ -21,6 +22,7 @@ export default async function ManageSessionPage({ params }: PageProps<"/sessions
   const roster = await listRoster(id);
   const courts = await listCourts(id);
   const matches = await listMatches(id);
+  const rotationQueue = await getRotationQueue(id);
   const confirmed = roster.filter((entry) => entry.status === "confirmed").length;
   const waiting = roster.filter((entry) => entry.status === "waiting_list").length;
   const checkedIn = roster.filter((entry) => entry.checkedInAt !== null).length;
@@ -40,7 +42,7 @@ export default async function ManageSessionPage({ params }: PageProps<"/sessions
 
       <CourtPanel sessionId={session.id} courts={courts} courtCount={session.courtCount} />
 
-      <MatchPanel sessionId={session.id} matches={matches} courts={courts} roster={roster} />
+      <MatchPanel sessionId={session.id} matches={matches} courts={courts} rotationQueue={rotationQueue} />
 
       <RosterTable sessionId={session.id} entries={roster} />
     </div>

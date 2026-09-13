@@ -9,9 +9,16 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cancelMatch, completeMatch, createMatch, startMatch } from "@/lib/actions/matches";
 import type { MatchEntry, MatchStatus } from "@/lib/dal/matches";
+import type { RotationEntry } from "@/lib/dal/rotation";
 
 type Court = { id: string; courtNumber: number; status: "idle" | "in_use" | "unavailable" };
-type RosterPlayer = { id: string; fullName: string | null; checkedInAt: string | null };
+
+function waitLabel(entry: RotationEntry): string {
+  const since = entry.lastPlayedAt ?? entry.checkedInAt;
+  const minutes = Math.max(0, Math.round((Date.now() - new Date(since).getTime()) / 60000));
+  if (minutes < 1) return entry.lastPlayedAt ? "Last played just now" : "Just checked in";
+  return entry.lastPlayedAt ? `Last played ${minutes}m ago` : `Waiting ${minutes}m`;
+}
 
 const STATUS_LABEL: Record<MatchStatus, string> = {
   scheduled: "Scheduled",
@@ -35,12 +42,12 @@ export function MatchPanel({
   sessionId,
   matches,
   courts,
-  roster,
+  rotationQueue,
 }: {
   sessionId: string;
   matches: MatchEntry[];
   courts: Court[];
-  roster: RosterPlayer[];
+  rotationQueue: RotationEntry[];
 }) {
   const [pending, startTransition] = useTransition();
   const [courtId, setCourtId] = useState<string>("");
@@ -55,16 +62,6 @@ export function MatchPanel({
     [matches],
   );
   const availableCourts = courts.filter((c) => c.status === "idle" && !reservedCourtIds.has(c.id));
-
-  const busyPlayerIds = useMemo(() => {
-    const ids = new Set<string>();
-    for (const m of matches) {
-      if (m.status !== "scheduled" && m.status !== "in_progress") continue;
-      for (const p of [...m.team1, ...m.team2]) ids.add(p.participantId);
-    }
-    return ids;
-  }, [matches]);
-  const assignablePlayers = roster.filter((p) => p.checkedInAt !== null && !busyPlayerIds.has(p.id));
 
   const toggle = (team: 1 | 2, participantId: string) => {
     const [set, setSet, otherSet, setOtherSet] = team === 1 ? [team1, setTeam1, team2, setTeam2] : [team2, setTeam2, team1, setTeam1];
@@ -146,22 +143,23 @@ export function MatchPanel({
           {([1, 2] as const).map((team) => (
             <div key={team} className="flex flex-col gap-1.5">
               <Label>Team {team}</Label>
-              {assignablePlayers.length === 0 ? (
+              {rotationQueue.length === 0 ? (
                 <p className="text-sm text-muted-foreground">No checked-in players available.</p>
               ) : (
                 <ul className="flex flex-col gap-1">
-                  {assignablePlayers.map((p) => {
+                  {rotationQueue.map((p, index) => {
                     const selected = team === 1 ? team1 : team2;
                     return (
-                      <li key={p.id} className="flex items-center gap-2">
+                      <li key={p.participantId} className="flex items-center gap-2">
                         <Checkbox
-                          id={`team${team}-${p.id}`}
-                          checked={selected.has(p.id)}
-                          onCheckedChange={() => toggle(team, p.id)}
+                          id={`team${team}-${p.participantId}`}
+                          checked={selected.has(p.participantId)}
+                          onCheckedChange={() => toggle(team, p.participantId)}
                         />
-                        <Label htmlFor={`team${team}-${p.id}`} className="font-normal">
-                          {p.fullName ?? "Unnamed player"}
+                        <Label htmlFor={`team${team}-${p.participantId}`} className="flex-1 font-normal">
+                          <span className="text-muted-foreground">#{index + 1}</span> {p.fullName ?? "Unnamed player"}
                         </Label>
+                        <span className="text-xs text-muted-foreground">{waitLabel(p)}</span>
                       </li>
                     );
                   })}
