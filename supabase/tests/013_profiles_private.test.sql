@@ -1,5 +1,5 @@
 begin;
-select plan(18);
+select plan(19);
 
 select has_table('public', 'profiles_private', 'profiles_private table exists');
 
@@ -16,7 +16,8 @@ insert into auth.users (id, email) values
   ('aaaaaaaa-0000-0000-0000-000000000002', 'pp-other@test.local'),
   ('aaaaaaaa-0000-0000-0000-000000000003', 'pp-host@test.local'),
   ('aaaaaaaa-0000-0000-0000-000000000004', 'pp-otherhost@test.local'),
-  ('aaaaaaaa-0000-0000-0000-000000000005', 'pp-admin@test.local');
+  ('aaaaaaaa-0000-0000-0000-000000000005', 'pp-admin@test.local'),
+  ('aaaaaaaa-0000-0000-0000-000000000006', 'pp-waitlisted@test.local');
 
 select is(
   (select count(*)::int from public.profiles_private
@@ -33,6 +34,8 @@ update public.profiles set role = 'admin'
 
 update public.profiles_private set phone = '+628111000001'
  where user_id = 'aaaaaaaa-0000-0000-0000-000000000001';
+update public.profiles_private set phone = '+628111000006'
+ where user_id = 'aaaaaaaa-0000-0000-0000-000000000006';
 
 insert into public.sessions
   (id, title, starts_at, ends_at, location, max_participants, created_by,
@@ -51,7 +54,9 @@ insert into public.participants (session_id, user_id, status) values
   ('bbbbbbbb-0000-0000-0000-000000000001',
    'aaaaaaaa-0000-0000-0000-000000000001', 'confirmed'),
   ('bbbbbbbb-0000-0000-0000-000000000001',
-   'aaaaaaaa-0000-0000-0000-000000000002', 'cancelled');
+   'aaaaaaaa-0000-0000-0000-000000000002', 'cancelled'),
+  ('bbbbbbbb-0000-0000-0000-000000000001',
+   'aaaaaaaa-0000-0000-0000-000000000006', 'waiting_list');
 
 set local role authenticated;
 
@@ -108,6 +113,16 @@ select is(
     where user_id = 'aaaaaaaa-0000-0000-0000-000000000001'),
   1,
   'a host can read the phone of a participant in their session'
+);
+
+-- spec §3 case 7: the policy is `status <> 'cancelled'`, which implies
+-- waiting_list is visible too, but the spec calls it out explicitly, so it
+-- gets its own assertion rather than relying on the confirmed case as proof.
+select is(
+  (select count(*)::int from public.profiles_private
+    where user_id = 'aaaaaaaa-0000-0000-0000-000000000006'),
+  1,
+  'a host can read the phone of a waiting_list participant in their session'
 );
 
 -- the grant is table-wide (`grant update ... to authenticated`), and this

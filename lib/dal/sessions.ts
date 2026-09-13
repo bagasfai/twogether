@@ -65,9 +65,17 @@ export async function listMyHostedSessions(): Promise<HostedSession[]> {
   return (data ?? []).map((row) => toHostedSession(row as unknown as Row));
 }
 
-// Returns null when the caller is not a host of this session: sessions_select
-// hides drafts from non-hosts, and session_hosts is checked explicitly for the
-// rest. RLS is the enforcement; this shapes it into a 404.
+// Returns null when the caller is not a host of this session. For a DRAFT
+// session that is RLS: sessions_select_public_or_host hides drafts from
+// non-hosts outright. For scheduled/live/completed sessions it is NOT RLS --
+// sessions_select_public_or_host returns those rows to everyone, and
+// session_hosts_select_authenticated is `using (true)`, so the `!inner` join
+// against session_hosts matches for every host of every session, not just
+// this caller. The `.eq("session_hosts.user_id", user.id)` below is the only
+// thing scoping the result to the caller in that case -- it is
+// application-level, not RLS, and it is load-bearing. Do not remove it as a
+// "simplification": doing so would let any host read any other host's roster
+// for a non-draft session.
 export async function getHostSession(id: string): Promise<HostedSession | null> {
   const user = await getCurrentUser();
   if (!user) return null;

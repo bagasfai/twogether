@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/dal/user";
-import { fail, failFromRpc, ok, type ActionResult } from "@/lib/actions/result";
+import { fail, failFromRpc, failFromZod, ok, type ActionResult } from "@/lib/actions/result";
+import { setParticipantStatusSchema } from "@/lib/validation/participants";
 import type { Database } from "@/types/supabase";
 
 type ParticipantStatus = Database["public"]["Enums"]["participant_status"];
@@ -20,18 +21,21 @@ export async function setParticipantStatus(
   sessionId: string,
   status: ParticipantStatus,
 ): Promise<ActionResult<null>> {
+  const parsed = setParticipantStatusSchema.safeParse({ participantId, sessionId, status });
+  if (!parsed.success) return failFromZod(parsed.error);
+
   const user = await getCurrentUser();
   if (!user) return fail("not_authenticated");
 
   const supabase = await createClient();
   const { error } = await supabase.rpc("host_set_participant_status", {
-    p_participant_id: participantId,
-    p_status: status,
+    p_participant_id: parsed.data.participantId,
+    p_status: parsed.data.status,
   });
 
   if (error) return failFromRpc(error);
 
-  revalidatePath(`/sessions/${sessionId}/manage`);
+  revalidatePath(`/sessions/${parsed.data.sessionId}/manage`);
   revalidatePath("/dashboard");
   return ok(null);
 }

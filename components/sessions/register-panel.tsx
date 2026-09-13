@@ -9,10 +9,27 @@ import { cancelRegistration, registerForSession } from "@/lib/actions/registrati
 // Type-only: erased at compile time, so this never pulls the `server-only`
 // guard from lib/dal/participants.ts into the client bundle.
 import type { MyRegistration } from "@/lib/dal/participants";
+// types/supabase.ts is a plain generated types module (no server-only guard),
+// safe to import for real (not type-only) in a client component.
+import type { Database } from "@/types/supabase";
+
+type ParticipantStatus = Database["public"]["Enums"]["participant_status"];
 
 // The enum's runtime values, since a `type` import gives us nothing to check
-// against at runtime -- this is the one place that has to know them.
-const PARTICIPANT_STATUSES = ["confirmed", "waiting_list", "cancelled"] as const;
+// against at runtime -- this is the one place that has to know them. Derived
+// from a Record<ParticipantStatus, true> rather than hand-copied: if the
+// database enum ever grows or shrinks, this literal stops satisfying the
+// Record type and the file fails to COMPILE, instead of silently keeping a
+// stale array that would reject a real status at runtime (previously: a
+// member already registered under a new 4th status would see a "Register"
+// button and get JB003).
+const PARTICIPANT_STATUS_MEMBERSHIP = {
+  confirmed: true,
+  waiting_list: true,
+  cancelled: true,
+} satisfies Record<ParticipantStatus, true>;
+
+const PARTICIPANT_STATUSES = Object.keys(PARTICIPANT_STATUS_MEMBERSHIP) as ParticipantStatus[];
 
 function isMyRegistration(value: unknown): value is MyRegistration {
   if (typeof value !== "object" || value === null) return false;

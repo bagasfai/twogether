@@ -70,7 +70,8 @@ export function ProfileForm({ defaultValues }: { defaultValues: ProfileFormValue
                     <Input type="tel" autoComplete="tel" {...field} value={field.value ?? ""} />
                   </FormControl>
                   <FormDescription>
-                    Only you, an admin, and the hosts of sessions you join can see this.
+                    Visible to you, admins, and hosts of sessions you&apos;re added to as a
+                    participant — including if a host adds you without you registering yourself.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>

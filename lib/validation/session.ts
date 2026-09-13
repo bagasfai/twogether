@@ -1,15 +1,20 @@
 import { z } from "zod";
 
+// Each schema also accepts `null` so it is idempotent: react-hook-form is
+// typed on the transformed OUTPUT (see session-form.tsx), so the value the
+// Server Action re-parses already has "" turned into null. Without the null
+// arm, parse(parse(x)) rejects every blank optional field on the second pass.
 const optionalText = z
   .string()
   .trim()
   .max(2000, "Description is too long")
   .or(z.literal(""))
-  .transform((value) => (value === "" ? null : value));
+  .or(z.null())
+  .transform((value) => (value === "" || value === null ? null : value));
 
 const optionalUrl = z
-  .union([z.url("Enter a valid URL"), z.literal("")])
-  .transform((value) => (value === "" ? null : value));
+  .union([z.url("Enter a valid URL"), z.literal(""), z.null()])
+  .transform((value) => (value === "" || value === null ? null : value));
 
 export const sessionSchema = z
   .object({

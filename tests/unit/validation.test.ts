@@ -44,6 +44,66 @@ describe("signInSchema", () => {
   });
 });
 
+// The client→server convention is "one schema, client resolver plus server
+// re-parse": a Server Action re-parses the schema's own OUTPUT (react-hook-form
+// is typed on it, see profile-form.tsx / session-form.tsx). That is only sound
+// when parse(parse(x)) === parse(x). signUpSchema/signInSchema only trim/lowercase,
+// which are naturally idempotent, but the assertion is added here too so the
+// property is proven uniformly rather than assumed for this schema alone.
+describe("idempotence (parse(parse(x)) === parse(x))", () => {
+  it("signUpSchema round-trips", () => {
+    const input = { fullName: "Bagas Kara", email: "Bagas@Example.com ", password: "supersecret" };
+    const once = signUpSchema.parse(input);
+    expect(signUpSchema.parse(once)).toEqual(once);
+  });
+
+  it("signInSchema round-trips", () => {
+    const input = { email: "Bagas@Example.com ", password: "old" };
+    const once = signInSchema.parse(input);
+    expect(signInSchema.parse(once)).toEqual(once);
+  });
+
+  it("profileSchema round-trips with all optional fields blank", () => {
+    const input = { fullName: "Bagas", phone: "", avatarUrl: "" };
+    const once = profileSchema.parse(input);
+    expect(profileSchema.parse(once)).toEqual(once);
+  });
+
+  it("profileSchema round-trips with all optional fields filled", () => {
+    const input = { fullName: "Bagas", phone: "+62 812 3456 7890", avatarUrl: "https://example.com/a.png" };
+    const once = profileSchema.parse(input);
+    expect(profileSchema.parse(once)).toEqual(once);
+  });
+
+  const sessionValid = {
+    title: "Friday Night Badminton",
+    startsAt: "2026-10-02T19:00",
+    endsAt: "2026-10-02T22:00",
+    location: "GOR Jakarta Barat",
+    courtCount: "4",
+    maxParticipants: "16",
+    waitlistCapacity: "4",
+    registrationState: "open",
+    status: "scheduled",
+  };
+
+  it("sessionSchema round-trips with all optional fields blank", () => {
+    const input = { ...sessionValid, description: "", locationUrl: "" };
+    const once = sessionSchema.parse(input);
+    expect(sessionSchema.parse(once)).toEqual(once);
+  });
+
+  it("sessionSchema round-trips with all optional fields filled", () => {
+    const input = {
+      ...sessionValid,
+      description: "Bring your own shuttle",
+      locationUrl: "https://maps.example.com/x",
+    };
+    const once = sessionSchema.parse(input);
+    expect(sessionSchema.parse(once)).toEqual(once);
+  });
+});
+
 describe("profileSchema", () => {
   it("accepts a profile with no phone and no avatar", () => {
     const result = profileSchema.safeParse({ fullName: "Bagas", phone: "", avatarUrl: "" });

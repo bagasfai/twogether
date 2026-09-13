@@ -109,6 +109,14 @@ export async function listMyUpcomingRegistrations(): Promise<MyRegistrationRow[]
 }
 
 export async function listRoster(sessionId: string): Promise<RosterEntry[]> {
+  // Every lib/dal/* function performs its own auth check at the data source
+  // (see the design spec, §7). Not currently exploitable on its own -- the
+  // participants SELECT policy bounds this to a public/host-visible session,
+  // and the /manage page gates with requireHost -- but this function was the
+  // one place that silently skipped the invariant.
+  const user = await getCurrentUser();
+  if (!user) return [];
+
   const supabase = await createClient();
 
   const { data, error } = await supabase

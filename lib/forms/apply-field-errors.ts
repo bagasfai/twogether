@@ -11,10 +11,11 @@ type FieldErrorTarget<TFieldValues extends FieldValues> = {
   setError: UseFormSetError<TFieldValues>;
 };
 
-// field is narrowed to a real key of the form's own values before it is ever
-// handed to setError, so the one `as` below asserts something already
-// confirmed at runtime -- it does not assert the raw, unvalidated key a
-// Server Action returned.
+// field is narrowed to a real key of the form's own values via this type
+// predicate before it is ever handed to setError -- no `as` cast is needed
+// because the narrowing itself is what setError's call site relies on. The
+// raw, unvalidated key a Server Action returned never reaches setError
+// without passing through this check first.
 function isOwnField<TFieldValues extends FieldValues>(
   field: string,
   values: TFieldValues,

@@ -6,10 +6,18 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { setParticipantStatus } from "@/lib/actions/participants";
+// types/supabase.ts is a plain generated types module (no server-only guard),
+// safe to import for real (not type-only) in a client component. Deriving
+// from the enum here, rather than hand-copying the union, means a status
+// added or removed in the database fails this file at compile time instead of
+// silently drifting from lib/dal/participants.ts's RosterEntry type.
+import type { Database } from "@/types/supabase";
+
+type ParticipantStatus = Database["public"]["Enums"]["participant_status"];
 
 type Entry = {
   id: string;
-  status: "confirmed" | "waiting_list" | "cancelled";
+  status: ParticipantStatus;
   registeredAt: string;
   fullName: string | null;
 };

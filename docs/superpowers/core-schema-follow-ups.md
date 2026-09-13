@@ -13,6 +13,19 @@ found by review, triaged, and deliberately left. Verdicts are from the final who
   is registered for). ~1-2 hours now, dramatically cheaper than after any UI exists. Cheap
   stopgap: `revoke select (phone) on public.profiles from authenticated`.
 
+- **`host_add_participant` composed with the `profiles_private` phone policy is broader than
+  advertised.** `host_add_participant` lets a host insert an arbitrary `p_user_id` into a
+  session they host — a `draft` session works, so no other participant needs to see it — with
+  no consent check from the member being added. Once that participant row exists,
+  `profiles_private_select_self_admin_or_host` (status <> 'cancelled') grants that host the
+  member's phone. So `profiles.md`'s framing and the profile form's copy ("hosts of sessions
+  you join") understate the reality: it is effectively any host, any member, no opt-in required
+  from the member's side. Not a merge blocker — `host_add_participant` has no UI yet (see
+  "From Task 10" below) — but it must be resolved (e.g. requiring the member's own registration,
+  or an explicit consent/invite step) before the member picker ships. Also see the softened
+  `FormDescription` in `components/profile/profile-form.tsx`, changed alongside this note so
+  the visible copy stops overstating the protection.
+
 ## Should fix soon
 
 - `sessions.created_by` is `ON DELETE RESTRICT`, so `profiles_delete_admin` hits a bare FK
@@ -62,3 +75,12 @@ guard, and trigger in turn and confirm something actually goes red.
 transaction, so the advisory lock is never contended — the suite cannot distinguish the shipped
 code from the same code with every lock line deleted. `scripts/test-concurrent-registration.sh`
 is the only artefact proving the property this entire schema exists to guarantee. Keep it alive.
+
+## Deploy checklist
+
+- `supabase/migrations/20260910050037_initial_schema.sql` was removed on this branch, and its
+  timestamp precedes every surviving migration. Harmless for a fresh local reset. But if any
+  remote/hosted Supabase project ever recorded that migration as applied, `supabase db push`
+  will report a missing local migration (the remote's migration history table references a
+  filename that no longer exists locally) — reconcile with `supabase migration repair` (or
+  equivalent) before pushing to any such project, rather than assuming a clean push.
