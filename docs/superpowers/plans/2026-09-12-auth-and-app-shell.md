@@ -3229,9 +3229,13 @@ export async function createSession(input: SessionInput): Promise<ActionResult<{
     .insert({
       title: values.title,
       description: values.description,
-      // datetime-local has no zone; the browser's zone is the intended one
-      starts_at: new Date(values.startsAt).toISOString(),
-      ends_at: new Date(values.endsAt).toISOString(),
+      // Already a zone-qualified ISO instant: the CLIENT converted it, because
+      // datetime-local carries no zone and this action runs on the server, where
+      // the user's zone is unknown. Parsing a bare local string here would use
+      // the server process's zone (TZ=UTC on Vercel) and silently misdate every
+      // session -- a Jakarta host's 19:00 Friday becomes 02:00 Saturday.
+      starts_at: parsed.data.startsAt,
+      ends_at: parsed.data.endsAt,
       location: values.location,
       location_url: values.locationUrl,
       court_count: values.courtCount,
