@@ -87,10 +87,13 @@ export function SessionRealtimeWatcher({ sessionId }: { sessionId: string }) {
       ];
     }
 
-    subscribe();
+    subscribe().catch((error: unknown) => {
+      console.error("[session-realtime] failed to subscribe", error);
+    });
 
     return () => {
       cancelled = true;
+      refresh.cancel();
       for (const channel of channels) {
         supabase.removeChannel(channel);
       }

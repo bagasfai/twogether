@@ -5,14 +5,23 @@
 export function debounce<Args extends unknown[]>(
   fn: (...args: Args) => void,
   delayMs: number,
-): (...args: Args) => void {
+): ((...args: Args) => void) & { cancel: () => void } {
   let timeoutId: ReturnType<typeof setTimeout> | undefined;
 
-  return (...args: Args) => {
+  const debounced = (...args: Args) => {
     if (timeoutId !== undefined) clearTimeout(timeoutId);
     timeoutId = setTimeout(() => {
       timeoutId = undefined;
       fn(...args);
     }, delayMs);
   };
+
+  debounced.cancel = () => {
+    if (timeoutId !== undefined) {
+      clearTimeout(timeoutId);
+      timeoutId = undefined;
+    }
+  };
+
+  return debounced;
 }
