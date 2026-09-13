@@ -4,6 +4,7 @@ import { profileSchema } from "@/lib/validation/profile";
 import { sessionSchema, isZonedInstant } from "@/lib/validation/session";
 import { setCheckedInSchema } from "@/lib/validation/participants";
 import { createCourtSchema, deleteCourtSchema, setCourtStatusSchema } from "@/lib/validation/courts";
+import { createMatchSchema, matchIdSchema } from "@/lib/validation/matches";
 
 describe("signUpSchema", () => {
   const valid = {
@@ -303,6 +304,76 @@ describe("deleteCourtSchema", () => {
     const result = deleteCourtSchema.safeParse({
       courtId: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
       sessionId: "nope",
+    });
+    expect(result.success).toBe(false);
+  });
+});
+
+describe("createMatchSchema", () => {
+  const valid = {
+    sessionId: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+    courtId: "3fa85f64-5717-4562-b3fc-2c963f66afa7",
+    team1: ["3fa85f64-5717-4562-b3fc-2c963f66afa1"],
+    team2: ["3fa85f64-5717-4562-b3fc-2c963f66afa2"],
+  };
+
+  it("accepts a valid 1v1 match", () => {
+    expect(createMatchSchema.safeParse(valid).success).toBe(true);
+  });
+
+  it("accepts a valid 2v2 match", () => {
+    const result = createMatchSchema.safeParse({
+      ...valid,
+      team1: ["3fa85f64-5717-4562-b3fc-2c963f66afa1", "3fa85f64-5717-4562-b3fc-2c963f66afa3"],
+      team2: ["3fa85f64-5717-4562-b3fc-2c963f66afa2", "3fa85f64-5717-4562-b3fc-2c963f66afa4"],
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects an empty team1", () => {
+    expect(createMatchSchema.safeParse({ ...valid, team1: [] }).success).toBe(false);
+  });
+
+  it("rejects an empty team2", () => {
+    expect(createMatchSchema.safeParse({ ...valid, team2: [] }).success).toBe(false);
+  });
+
+  it("rejects mismatched team sizes", () => {
+    const result = createMatchSchema.safeParse({
+      ...valid,
+      team1: ["3fa85f64-5717-4562-b3fc-2c963f66afa1", "3fa85f64-5717-4562-b3fc-2c963f66afa3"],
+      team2: ["3fa85f64-5717-4562-b3fc-2c963f66afa2"],
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues.some((i) => i.path[0] === "team2")).toBe(true);
+    }
+  });
+
+  it("rejects a participant assigned to both teams", () => {
+    const shared = "3fa85f64-5717-4562-b3fc-2c963f66afa1";
+    const result = createMatchSchema.safeParse({ ...valid, team1: [shared], team2: [shared] });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects a non-uuid courtId", () => {
+    expect(createMatchSchema.safeParse({ ...valid, courtId: "nope" }).success).toBe(false);
+  });
+});
+
+describe("matchIdSchema", () => {
+  it("accepts a valid matchId and sessionId", () => {
+    const result = matchIdSchema.safeParse({
+      matchId: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+      sessionId: "3fa85f64-5717-4562-b3fc-2c963f66afa7",
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects a non-uuid matchId", () => {
+    const result = matchIdSchema.safeParse({
+      matchId: "nope",
+      sessionId: "3fa85f64-5717-4562-b3fc-2c963f66afa7",
     });
     expect(result.success).toBe(false);
   });

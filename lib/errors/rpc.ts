@@ -10,6 +10,8 @@
 //   JB006 wrong transaction isolation
 //   JB007 not authorized
 //   JB008 session or participant not found
+//   JB009 court not available for a new/starting match
+//   JB010 court has an active match, cannot delete
 
 export const RPC_CODE_MAP = {
   JB001: "registration_closed",
@@ -20,6 +22,8 @@ export const RPC_CODE_MAP = {
   JB006: "wrong_isolation",
   JB007: "not_authorized",
   JB008: "not_found",
+  JB009: "court_not_available",
+  JB010: "court_has_active_match",
 } as const;
 
 export type RpcErrorCode = (typeof RPC_CODE_MAP)[keyof typeof RPC_CODE_MAP];
@@ -40,6 +44,8 @@ const MESSAGES: Record<AppErrorCode, string> = {
   wrong_isolation: "Something went wrong on our side. Please try again.",
   not_authorized: "You do not have permission to do that.",
   not_found: "We could not find that.",
+  court_not_available: "That court isn't available right now.",
+  court_has_active_match: "Cancel or complete the match on this court before deleting it.",
   validation: "Please check the highlighted fields.",
   unknown: "Something went wrong. Please try again.",
 };

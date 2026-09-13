@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/dal/user";
-import { fail, failFromZod, ok, type ActionResult } from "@/lib/actions/result";
+import { fail, failFromRpc, failFromZod, ok, type ActionResult } from "@/lib/actions/result";
 import { createCourtSchema, deleteCourtSchema, setCourtStatusSchema } from "@/lib/validation/courts";
 import type { Database } from "@/types/supabase";
 
@@ -99,6 +99,10 @@ export async function deleteCourt(courtId: string, sessionId: string): Promise<A
     .eq("id", parsed.data.courtId)
     .eq("session_id", parsed.data.sessionId);
 
+  // JB010 comes from the courts_guard_delete trigger (a court with a
+  // scheduled/in_progress match cannot be deleted) -- match scheduling's
+  // fix for the court-deletion gap noted in core-schema-follow-ups.md.
+  if (error?.code === "JB010") return failFromRpc(error);
   if (error) return fail("unknown", "Could not delete the court.");
 
   revalidatePath(`/sessions/${parsed.data.sessionId}/manage`);

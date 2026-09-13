@@ -515,6 +515,51 @@ export type Database = {
         Args: { p_session_id: string }
         Returns: undefined
       }
+      complete_match: {
+        Args: { p_match_id: string }
+        Returns: {
+          completed_at: string | null
+          court_id: string | null
+          created_at: string
+          id: string
+          queue_position: number | null
+          session_id: string
+          started_at: string | null
+          status: Database["public"]["Enums"]["match_status"]
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "matches"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      create_match: {
+        Args: {
+          p_court_id: string
+          p_session_id: string
+          p_team1: string[]
+          p_team2: string[]
+        }
+        Returns: {
+          completed_at: string | null
+          court_id: string | null
+          created_at: string
+          id: string
+          queue_position: number | null
+          session_id: string
+          started_at: string | null
+          status: Database["public"]["Enums"]["match_status"]
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "matches"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       current_user_role: {
         Args: never
         Returns: Database["public"]["Enums"]["user_role"]
@@ -583,6 +628,26 @@ export type Database = {
       }
       session_is_public: { Args: { p_session_id: string }; Returns: boolean }
       session_lock_key: { Args: { p_session_id: string }; Returns: number }
+      start_match: {
+        Args: { p_match_id: string }
+        Returns: {
+          completed_at: string | null
+          court_id: string | null
+          created_at: string
+          id: string
+          queue_position: number | null
+          session_id: string
+          started_at: string | null
+          status: Database["public"]["Enums"]["match_status"]
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "matches"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       waitlist_position_of: {
         Args: { p_id: string; p_registered_at: string; p_session_id: string }
         Returns: number
