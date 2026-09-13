@@ -80,17 +80,17 @@ When building any feature, identify which of these four roles touches it and wha
 
 ---
 
-## 5. Core Data Model (starting point — refine as we build)
+## 5. Core Data Model
 
-Treat this as the initial shape, not final DDL:
+The schema is built. Read it from the source of truth rather than from a summary
+here — a summary drifts, and this one already had: it described `participants.checked_in`
+as a bool when the column is `checked_in_at timestamptz`, omitted `session_hosts`
+entirely, and listed `phone` on `profiles` after it moved to `profiles_private`.
 
-- `profiles` (extends `auth.users`) — role, playing level (future), profile photo
-- `sessions` — title, date, start/end time, location, court count, max participants, waitlist capacity, registration status, session status
-- `participants` — session_id, user_id, status (`confirmed` / `waiting_list` / `cancelled`), registered_at, checked_in (bool)
-- `courts` — session_id, court number, current status
-- `matches` — session_id, court_id, players (or a join table `match_players`), status (`scheduled`/`in_progress`/`completed`), started_at, completed_at
-- `announcements` — session_id (nullable for community-wide), title, body, created_by
-- `galleries` / `gallery_photos` — session_id, storage path, caption
+- `supabase/migrations/` — the DDL, RLS policies, and registration RPCs
+- `types/supabase.ts` — generated types, regenerated after every schema change
+- `docs/superpowers/specs/2026-09-11-core-schema-rls-design.md` — why the schema is shaped this way
+- `docs/superpowers/core-schema-follow-ups.md` — known gaps, triaged
 
 Payment status and no-show tracking are additive fields/tables for the "Important" tier — don't build a payment gateway integration; MVP is manual status tracking only.
 
