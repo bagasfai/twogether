@@ -2,7 +2,9 @@ import { notFound } from "next/navigation";
 import { requireHost } from "@/lib/dal/user";
 import { getHostSession } from "@/lib/dal/sessions";
 import { listRoster } from "@/lib/dal/participants";
+import { listCourts } from "@/lib/dal/courts";
 import { RosterTable } from "@/components/sessions/roster-table";
+import { CourtPanel } from "@/components/sessions/court-panel";
 
 export default async function ManageSessionPage({ params }: PageProps<"/sessions/[id]/manage">) {
   const { id } = await params;
@@ -15,6 +17,7 @@ export default async function ManageSessionPage({ params }: PageProps<"/sessions
   if (!session) notFound();
 
   const roster = await listRoster(id);
+  const courts = await listCourts(id);
   const confirmed = roster.filter((entry) => entry.status === "confirmed").length;
   const waiting = roster.filter((entry) => entry.status === "waiting_list").length;
   const checkedIn = roster.filter((entry) => entry.checkedInAt !== null).length;
@@ -31,6 +34,8 @@ export default async function ManageSessionPage({ params }: PageProps<"/sessions
           {checkedIn} checked in · registration {session.registrationState}
         </p>
       </header>
+
+      <CourtPanel sessionId={session.id} courts={courts} courtCount={session.courtCount} />
 
       <RosterTable sessionId={session.id} entries={roster} />
     </div>

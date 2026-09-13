@@ -3,6 +3,7 @@ import { signInSchema, signUpSchema } from "@/lib/validation/auth";
 import { profileSchema } from "@/lib/validation/profile";
 import { sessionSchema, isZonedInstant } from "@/lib/validation/session";
 import { setCheckedInSchema } from "@/lib/validation/participants";
+import { createCourtSchema, deleteCourtSchema, setCourtStatusSchema } from "@/lib/validation/courts";
 
 describe("signUpSchema", () => {
   const valid = {
@@ -254,6 +255,56 @@ describe("setCheckedInSchema", () => {
 
   it("rejects a non-boolean checkedIn", () => {
     expect(setCheckedInSchema.safeParse({ ...valid, checkedIn: "true" }).success).toBe(false);
+  });
+});
+
+describe("createCourtSchema", () => {
+  it("accepts a valid sessionId", () => {
+    expect(createCourtSchema.safeParse({ sessionId: "3fa85f64-5717-4562-b3fc-2c963f66afa6" }).success).toBe(true);
+  });
+
+  it("rejects a non-uuid sessionId", () => {
+    expect(createCourtSchema.safeParse({ sessionId: "nope" }).success).toBe(false);
+  });
+});
+
+describe("setCourtStatusSchema", () => {
+  const valid = {
+    courtId: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+    sessionId: "3fa85f64-5717-4562-b3fc-2c963f66afa7",
+    status: "in_use",
+  };
+
+  it("accepts each valid court_status value", () => {
+    for (const status of ["idle", "in_use", "unavailable"]) {
+      expect(setCourtStatusSchema.safeParse({ ...valid, status }).success).toBe(true);
+    }
+  });
+
+  it("rejects a status outside the court_status enum", () => {
+    expect(setCourtStatusSchema.safeParse({ ...valid, status: "closed" }).success).toBe(false);
+  });
+
+  it("rejects a non-uuid courtId", () => {
+    expect(setCourtStatusSchema.safeParse({ ...valid, courtId: "nope" }).success).toBe(false);
+  });
+});
+
+describe("deleteCourtSchema", () => {
+  it("accepts a valid courtId and sessionId", () => {
+    const result = deleteCourtSchema.safeParse({
+      courtId: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+      sessionId: "3fa85f64-5717-4562-b3fc-2c963f66afa7",
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects a non-uuid sessionId", () => {
+    const result = deleteCourtSchema.safeParse({
+      courtId: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+      sessionId: "nope",
+    });
+    expect(result.success).toBe(false);
   });
 });
 
