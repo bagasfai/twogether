@@ -157,6 +157,51 @@ here since there's no dedicated "refresh" UI action, just the browser's own.
 
 No DAL, Server Action, migration, or existing panel component changes.
 
+## Implementation notes (post-design)
+
+Two real bugs surfaced during manual verification, both fixed and re-verified
+live across two browser tabs. The actual component
+(`components/sessions/session-realtime-watcher.tsx`) is the source of truth;
+this section exists so a reader of this spec isn't misled by the snippets
+above, which still show the originally-designed (and since-superseded) shape.
+
+**Four channels, not one.** The single-channel design above (one channel,
+four `.on()` registrations) triggers a real Supabase Realtime server error —
+`invalid column for filter session_id` — specifically when the `matches`
+table's filter is combined with the other three on the same channel, even
+though `matches.session_id` is a real, granted, published column. A
+standalone single-table channel for `matches` subscribes cleanly. The fix
+splits into four single-table channels
+(`session:${sessionId}:dashboard:sessions|participants|courts|matches`),
+each independently `.subscribe()`d, all sharing the same debounced `refresh`
+callback and all torn down together in cleanup. This preserves the section
+above's actual intent (page-level, shared debounce, not per-panel) — only the
+channel *count* changed, not the architecture.
+
+**Realtime must authenticate before subscribing.** Supabase's realtime socket
+starts as the `anon` role and only upgrades to the signed-in user's JWT
+asynchronously, in reaction to an auth-state event — which has not fired by
+the time a subscribe call issued synchronously on mount would run. Since
+`anon` has no SELECT grant on `participants`/`courts`/`matches` (correct, by
+this app's RLS design), every subscribe on those three tables was silently
+rejected; only `sessions` (anon-readable, for the public marketing site)
+appeared to work, which is precisely the wrong table to have looked healthy —
+none of this dashboard's UI even surfaces a `sessions`-level change. The fix:
+await `supabase.auth.getSession()` and call
+`supabase.realtime.setAuth(session.access_token)` before the first
+`.subscribe()` call, guarded by a `cancelled` flag against the component
+unmounting while that lookup is still in flight. Confirmed this does not
+widen access — `postgres_changes` still evaluates every change against the
+same RLS policies as a normal query, scoped to whichever user's JWT was set;
+a member with no access to a session's data still receives nothing.
+
+**Cleanup section above is stale.** Cleanup now unsubscribes all four
+channels (`supabase.removeChannel()` per channel) and cancels the pending
+debounced call (`refresh.cancel()`, added after a later review found the
+original debounce had no way to stop a call already in flight when the
+component unmounts) — not the single `channel.unsubscribe()` the section
+above describes.
+
 ## Future cost callouts (🟢 Future territory)
 
 None of this locks in anything that would need to change for a 🟢 Future
