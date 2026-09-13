@@ -126,7 +126,7 @@ export function MatchPanel({
         <div className="flex flex-col gap-1.5">
           <Label>Court</Label>
           <Select value={courtId} onValueChange={setCourtId}>
-            <SelectTrigger className="w-full">
+            <SelectTrigger className="h-11 w-full">
               <SelectValue placeholder={availableCourts.length === 0 ? "No idle courts" : "Pick a court"} />
             </SelectTrigger>
             <SelectContent>
@@ -139,7 +139,9 @@ export function MatchPanel({
           </Select>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        {/* Stacked on mobile so each roster row has full width for a
+            comfortable tap target; side-by-side once there's room. */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {([1, 2] as const).map((team) => (
             <div key={team} className="flex flex-col gap-1.5">
               <Label>Team {team}</Label>
@@ -150,16 +152,23 @@ export function MatchPanel({
                   {rotationQueue.map((p, index) => {
                     const selected = team === 1 ? team1 : team2;
                     return (
-                      <li key={p.participantId} className="flex items-center gap-2">
-                        <Checkbox
-                          id={`team${team}-${p.participantId}`}
-                          checked={selected.has(p.participantId)}
-                          onCheckedChange={() => toggle(team, p.participantId)}
-                        />
-                        <Label htmlFor={`team${team}-${p.participantId}`} className="flex-1 font-normal">
-                          <span className="text-muted-foreground">#{index + 1}</span> {p.fullName ?? "Unnamed player"}
+                      <li key={p.participantId}>
+                        {/* The whole row is the label, not just the checkbox,
+                            so the tap target is the full row width. */}
+                        <Label
+                          htmlFor={`team${team}-${p.participantId}`}
+                          className="min-h-11 cursor-pointer items-center gap-2 rounded-md px-2 font-normal hover:bg-accent/50"
+                        >
+                          <Checkbox
+                            id={`team${team}-${p.participantId}`}
+                            checked={selected.has(p.participantId)}
+                            onCheckedChange={() => toggle(team, p.participantId)}
+                          />
+                          <span className="flex-1">
+                            <span className="text-muted-foreground">#{index + 1}</span> {p.fullName ?? "Unnamed player"}
+                          </span>
+                          <span className="text-xs text-muted-foreground">{waitLabel(p)}</span>
                         </Label>
-                        <span className="text-xs text-muted-foreground">{waitLabel(p)}</span>
                       </li>
                     );
                   })}
@@ -169,7 +178,7 @@ export function MatchPanel({
           ))}
         </div>
 
-        <Button size="sm" disabled={pending || !canCreate} onClick={create} className="self-start">
+        <Button size="sm" disabled={pending || !canCreate} onClick={create} className="h-11 w-full sm:w-auto sm:self-start">
           Create match
         </Button>
       </div>
@@ -181,8 +190,11 @@ export function MatchPanel({
           {matches
             .filter((m) => m.status !== "cancelled")
             .map((m) => (
-              <li key={m.id} className="flex items-center justify-between gap-2 rounded-md border p-3">
-                <div className="flex items-center gap-2">
+              <li
+                key={m.id}
+                className="flex flex-col gap-2 rounded-md border p-3 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div className="flex flex-wrap items-center gap-2">
                   <span className="text-sm font-medium">
                     {m.courtNumber !== null ? `Court ${m.courtNumber}` : "No court"}
                   </span>
@@ -194,16 +206,22 @@ export function MatchPanel({
                 <div className="flex gap-2">
                   {m.status === "scheduled" && (
                     <>
-                      <Button size="sm" disabled={pending} onClick={() => start(m.id)}>
+                      <Button size="sm" className="h-11 flex-1 sm:h-9 sm:flex-none" disabled={pending} onClick={() => start(m.id)}>
                         Start
                       </Button>
-                      <Button size="sm" variant="ghost" disabled={pending} onClick={() => cancel(m.id)}>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-11 flex-1 sm:h-9 sm:flex-none"
+                        disabled={pending}
+                        onClick={() => cancel(m.id)}
+                      >
                         Cancel
                       </Button>
                     </>
                   )}
                   {m.status === "in_progress" && (
-                    <Button size="sm" disabled={pending} onClick={() => complete(m.id)}>
+                    <Button size="sm" className="h-11 flex-1 sm:h-9 sm:flex-none" disabled={pending} onClick={() => complete(m.id)}>
                       Complete
                     </Button>
                   )}

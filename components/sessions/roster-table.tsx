@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { setCheckedIn, setParticipantStatus } from "@/lib/actions/participants";
+import { cn } from "@/lib/utils";
 // types/supabase.ts is a plain generated types module (no server-only guard),
 // safe to import for real (not type-only) in a client component. Deriving
 // from the enum here, rather than hand-copying the union, means a status
@@ -22,6 +23,12 @@ type Entry = {
   checkedInAt: string | null;
   fullName: string | null;
 };
+
+function StatusBadge({ status }: { status: ParticipantStatus }) {
+  if (status === "confirmed") return <Badge>Confirmed</Badge>;
+  if (status === "waiting_list") return <Badge variant="secondary">Waitlist</Badge>;
+  return <Badge variant="outline">Cancelled</Badge>;
+}
 
 export function RosterTable({ sessionId, entries }: { sessionId: string; entries: Entry[] }) {
   const [pending, startTransition] = useTransition();
@@ -45,63 +52,144 @@ export function RosterTable({ sessionId, entries }: { sessionId: string; entries
   }
 
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Player</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead>Registered</TableHead>
-          <TableHead>Check-in</TableHead>
-          <TableHead className="text-right">Override</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
+    <div className="flex flex-col gap-3">
+      <h2 className="text-sm font-medium">Roster ({entries.length})</h2>
+
+      {/* Mobile / tablet: one card per participant, all columns re-flowed
+          into stacked rows so nothing needs horizontal scrolling. A left
+          accent bar marks the checked-in pool without merging it into the
+          registration-status column. */}
+      <ul className="flex flex-col gap-2 md:hidden">
         {entries.map((entry) => (
-          <TableRow key={entry.id}>
-            <TableCell>{entry.fullName ?? "Unnamed player"}</TableCell>
-            <TableCell>
+          <li
+            key={entry.id}
+            className={cn(
+              "flex flex-col gap-2 rounded-lg border p-3",
+              entry.checkedInAt && "border-l-4 border-l-primary"
+            )}
+          >
+            <div className="flex items-start justify-between gap-2">
+              <span className="text-sm font-medium">{entry.fullName ?? "Unnamed player"}</span>
+              <StatusBadge status={entry.status} />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Registered {new Date(entry.registeredAt).toLocaleString()}
+            </p>
+
+            <div className="flex flex-wrap gap-2">
               {entry.status === "confirmed" ? (
-                <Badge>Confirmed</Badge>
-              ) : entry.status === "waiting_list" ? (
-                <Badge variant="secondary">Waitlist</Badge>
-              ) : (
-                <Badge variant="outline">Cancelled</Badge>
-              )}
-            </TableCell>
-            <TableCell>{new Date(entry.registeredAt).toLocaleString()}</TableCell>
-            <TableCell>
+                entry.checkedInAt ? (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={pending}
+                    className="h-11 flex-1 basis-32"
+                    onClick={() => toggleCheckedIn(entry.id, false)}
+                  >
+                    Undo check-in
+                  </Button>
+                ) : (
+                  <Button
+                    size="sm"
+                    disabled={pending}
+                    className="h-11 flex-1 basis-32"
+                    onClick={() => toggleCheckedIn(entry.id, true)}
+                  >
+                    Check in
+                  </Button>
+                )
+              ) : null}
               {entry.status !== "confirmed" ? (
-                <span className="text-sm text-muted-foreground">—</span>
-              ) : entry.checkedInAt ? (
-                <Button size="sm" variant="outline" disabled={pending} onClick={() => toggleCheckedIn(entry.id, false)}>
-                  Undo check-in
-                </Button>
-              ) : (
-                <Button size="sm" disabled={pending} onClick={() => toggleCheckedIn(entry.id, true)}>
-                  Check in
-                </Button>
-              )}
-            </TableCell>
-            <TableCell className="flex justify-end gap-2">
-              {entry.status !== "confirmed" ? (
-                <Button size="sm" variant="outline" disabled={pending} onClick={() => change(entry.id, "confirmed")}>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={pending}
+                  className="h-11 flex-1 basis-32"
+                  onClick={() => change(entry.id, "confirmed")}
+                >
                   Confirm
                 </Button>
               ) : null}
               {entry.status !== "waiting_list" ? (
-                <Button size="sm" variant="outline" disabled={pending} onClick={() => change(entry.id, "waiting_list")}>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={pending}
+                  className="h-11 flex-1 basis-32"
+                  onClick={() => change(entry.id, "waiting_list")}
+                >
                   Waitlist
                 </Button>
               ) : null}
               {entry.status !== "cancelled" ? (
-                <Button size="sm" variant="ghost" disabled={pending} onClick={() => change(entry.id, "cancelled")}>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  disabled={pending}
+                  className="h-11 flex-1 basis-32"
+                  onClick={() => change(entry.id, "cancelled")}
+                >
                   Cancel
                 </Button>
               ) : null}
-            </TableCell>
-          </TableRow>
+            </div>
+          </li>
         ))}
-      </TableBody>
-    </Table>
+      </ul>
+
+      {/* Desktop: the original table, unchanged. */}
+      <Table className="hidden md:table">
+        <TableHeader>
+          <TableRow>
+            <TableHead>Player</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Registered</TableHead>
+            <TableHead>Check-in</TableHead>
+            <TableHead className="text-right">Override</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {entries.map((entry) => (
+            <TableRow key={entry.id} className={entry.checkedInAt ? "bg-primary/5" : undefined}>
+              <TableCell>{entry.fullName ?? "Unnamed player"}</TableCell>
+              <TableCell>
+                <StatusBadge status={entry.status} />
+              </TableCell>
+              <TableCell>{new Date(entry.registeredAt).toLocaleString()}</TableCell>
+              <TableCell>
+                {entry.status !== "confirmed" ? (
+                  <span className="text-sm text-muted-foreground">—</span>
+                ) : entry.checkedInAt ? (
+                  <Button size="sm" variant="outline" disabled={pending} onClick={() => toggleCheckedIn(entry.id, false)}>
+                    Undo check-in
+                  </Button>
+                ) : (
+                  <Button size="sm" disabled={pending} onClick={() => toggleCheckedIn(entry.id, true)}>
+                    Check in
+                  </Button>
+                )}
+              </TableCell>
+              <TableCell className="flex justify-end gap-2">
+                {entry.status !== "confirmed" ? (
+                  <Button size="sm" variant="outline" disabled={pending} onClick={() => change(entry.id, "confirmed")}>
+                    Confirm
+                  </Button>
+                ) : null}
+                {entry.status !== "waiting_list" ? (
+                  <Button size="sm" variant="outline" disabled={pending} onClick={() => change(entry.id, "waiting_list")}>
+                    Waitlist
+                  </Button>
+                ) : null}
+                {entry.status !== "cancelled" ? (
+                  <Button size="sm" variant="ghost" disabled={pending} onClick={() => change(entry.id, "cancelled")}>
+                    Cancel
+                  </Button>
+                ) : null}
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
   );
 }

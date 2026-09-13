@@ -61,11 +61,11 @@ export function CourtPanel({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2">
         <h2 className="text-sm font-medium">
           Courts ({courts.length}/{courtCount})
         </h2>
-        <Button size="sm" disabled={pending || courts.length >= courtCount} onClick={addCourt}>
+        <Button size="sm" className="h-11 sm:h-9" disabled={pending || courts.length >= courtCount} onClick={addCourt}>
           Add court
         </Button>
       </div>
@@ -77,13 +77,13 @@ export function CourtPanel({
           {courts.map((court) => (
             <li
               key={court.id}
-              className="flex items-center justify-between gap-2 rounded-md border p-3"
+              className="flex flex-col gap-2 rounded-md border p-3 sm:flex-row sm:items-center sm:justify-between"
             >
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium">Court {court.courtNumber}</span>
                 <Badge variant={STATUS_VARIANT[court.status]}>{STATUS_LABEL[court.status]}</Badge>
               </div>
-              <div className="flex gap-2">
+              <div className="grid grid-cols-3 gap-2 sm:flex sm:w-auto">
                 {(["idle", "in_use", "unavailable"] as const)
                   .filter((status) => status !== court.status)
                   .map((status) => (
@@ -91,13 +91,14 @@ export function CourtPanel({
                       key={status}
                       size="sm"
                       variant="outline"
+                      className="h-11 sm:h-8"
                       disabled={pending}
                       onClick={() => changeStatus(court.id, status)}
                     >
                       {STATUS_LABEL[status]}
                     </Button>
                   ))}
-                <Button size="sm" variant="ghost" disabled={pending} onClick={() => remove(court.id)}>
+                <Button size="sm" variant="ghost" className="h-11 sm:h-8" disabled={pending} onClick={() => remove(court.id)}>
                   Delete
                 </Button>
               </div>
