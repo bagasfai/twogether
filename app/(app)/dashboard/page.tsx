@@ -11,53 +11,63 @@ export default async function DashboardPage() {
   const hosted = user.role === "member" ? [] : await listMyHostedSessions();
 
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-8">
+    <div className="mx-auto flex max-w-3xl flex-col gap-10">
       <section className="flex flex-col gap-3">
-        <h1 className="text-xl font-semibold">Your upcoming sessions</h1>
+        <h1 className="text-xl font-semibold tracking-tight">Your upcoming sessions</h1>
         {registrations.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            Nothing yet. <Link href="/sessions" className="underline">Browse sessions</Link>.
+            Nothing yet.{" "}
+            <Link href="/sessions" className="font-medium text-accent hover:underline">
+              Browse sessions
+            </Link>
+            .
           </p>
         ) : (
-          registrations.map((row) => (
-            <Card key={row.id}>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Link href={`/sessions/${row.sessionId}`}>{row.title}</Link>
-                  {row.status === "confirmed" ? (
-                    <Badge>Confirmed</Badge>
-                  ) : (
-                    <Badge variant="secondary">Waitlist #{row.waitlistPosition}</Badge>
-                  )}
-                </CardTitle>
-                <CardDescription>
-                  {new Date(row.startsAt).toLocaleString()} · {row.location}
-                </CardDescription>
-              </CardHeader>
-            </Card>
-          ))
+          <div className="flex flex-col gap-3">
+            {registrations.map((row) => (
+              <Card key={row.id}>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Link href={`/sessions/${row.sessionId}`}>{row.title}</Link>
+                    {row.status === "confirmed" ? (
+                      <Badge variant="success">Confirmed</Badge>
+                    ) : (
+                      <Badge variant="warning" className="font-mono tabular-nums">
+                        Waitlist #{row.waitlistPosition}
+                      </Badge>
+                    )}
+                  </CardTitle>
+                  <CardDescription>
+                    {new Date(row.startsAt).toLocaleString()} · {row.location}
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+            ))}
+          </div>
         )}
       </section>
 
       {hosted.length > 0 ? (
         <section className="flex flex-col gap-3">
-          <h2 className="text-lg font-semibold">Sessions you host</h2>
-          {hosted.map((session) => (
-            <Card key={session.id}>
-              <CardHeader>
-                <CardTitle>
-                  <Link href={`/sessions/${session.id}/manage`}>{session.title}</Link>
-                </CardTitle>
-                <CardDescription>
-                  {new Date(session.startsAt).toLocaleString()} · {session.location} ·{" "}
-                  {session.status} · registration {session.registrationState}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="text-sm text-muted-foreground">
-                Capacity {session.maxParticipants} · waitlist {session.waitlistCapacity}
-              </CardContent>
-            </Card>
-          ))}
+          <h2 className="text-lg font-semibold tracking-tight">Sessions you host</h2>
+          <div className="flex flex-col gap-3">
+            {hosted.map((session) => (
+              <Card key={session.id}>
+                <CardHeader>
+                  <CardTitle>
+                    <Link href={`/sessions/${session.id}/manage`}>{session.title}</Link>
+                  </CardTitle>
+                  <CardDescription>
+                    {new Date(session.startsAt).toLocaleString()} · {session.location} ·{" "}
+                    {session.status} · registration {session.registrationState}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="font-mono text-sm tabular-nums text-muted-foreground">
+                  {session.maxParticipants} capacity · {session.waitlistCapacity} waitlist
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </section>
       ) : null}
     </div>

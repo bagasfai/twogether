@@ -36,7 +36,7 @@ export default async function ManageSessionPage({ params }: PageProps<"/sessions
       <SessionRealtimeWatcher sessionId={session.id} />
 
       <header className="flex flex-col gap-1">
-        <h1 className="text-xl font-semibold">{session.title}</h1>
+        <h1 className="text-xl font-semibold tracking-tight">{session.title}</h1>
         <p className="text-sm text-muted-foreground">
           {new Date(session.startsAt).toLocaleString()} · {session.location}
         </p>
@@ -46,16 +46,19 @@ export default async function ManageSessionPage({ params }: PageProps<"/sessions
           the host scrolls through courts/matches/roster on a phone. */}
       <div className="sticky top-0 z-10 flex flex-wrap items-center gap-2 rounded-lg border bg-background/95 px-3 py-2.5 backdrop-blur supports-[backdrop-filter]:bg-background/80">
         <span className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-          <span className="size-1.5 shrink-0 rounded-full bg-emerald-500 motion-safe:animate-pulse" aria-hidden="true" />
+          <span className="size-1.5 shrink-0 rounded-full bg-success motion-safe:animate-pulse" aria-hidden="true" />
           Live
         </span>
-        <Badge variant="secondary" className="text-xs sm:text-sm">
+        <Badge variant="success" className="font-mono text-xs tabular-nums sm:text-sm">
           {confirmed}/{session.maxParticipants} confirmed
         </Badge>
-        <Badge variant="secondary" className="text-xs sm:text-sm">
+        <Badge variant="warning" className="font-mono text-xs tabular-nums sm:text-sm">
           {waiting}/{session.waitlistCapacity} waiting
         </Badge>
-        <Badge variant="secondary" className="text-xs sm:text-sm">
+        {/* Checked-in is a distinct pool from registration status (courts/matches/
+            rotation read from it, not the roster) -- accent-outline keeps it
+            visually separate from the confirmed/waiting registration badges. */}
+        <Badge variant="outline" className="font-mono text-xs tabular-nums text-accent sm:text-sm">
           {checkedIn} checked in
         </Badge>
         <Badge variant="outline" className="text-xs capitalize sm:text-sm">

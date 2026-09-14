@@ -25,8 +25,8 @@ type Entry = {
 };
 
 function StatusBadge({ status }: { status: ParticipantStatus }) {
-  if (status === "confirmed") return <Badge>Confirmed</Badge>;
-  if (status === "waiting_list") return <Badge variant="secondary">Waitlist</Badge>;
+  if (status === "confirmed") return <Badge variant="success">Confirmed</Badge>;
+  if (status === "waiting_list") return <Badge variant="warning">Waitlist</Badge>;
   return <Badge variant="outline">Cancelled</Badge>;
 }
 
@@ -53,7 +53,9 @@ export function RosterTable({ sessionId, entries }: { sessionId: string; entries
 
   return (
     <div className="flex flex-col gap-3">
-      <h2 className="text-sm font-medium">Roster ({entries.length})</h2>
+      <h2 className="text-sm font-medium">
+        Roster <span className="font-mono tabular-nums text-muted-foreground">({entries.length})</span>
+      </h2>
 
       {/* Mobile / tablet: one card per participant, all columns re-flowed
           into stacked rows so nothing needs horizontal scrolling. A left
@@ -65,7 +67,7 @@ export function RosterTable({ sessionId, entries }: { sessionId: string; entries
             key={entry.id}
             className={cn(
               "flex flex-col gap-2 rounded-lg border p-3",
-              entry.checkedInAt && "border-l-4 border-l-primary"
+              entry.checkedInAt && "border-l-4 border-l-accent"
             )}
           >
             <div className="flex items-start justify-between gap-2">
@@ -150,7 +152,7 @@ export function RosterTable({ sessionId, entries }: { sessionId: string; entries
         </TableHeader>
         <TableBody>
           {entries.map((entry) => (
-            <TableRow key={entry.id} className={entry.checkedInAt ? "bg-primary/5" : undefined}>
+            <TableRow key={entry.id} className={entry.checkedInAt ? "bg-accent/5" : undefined}>
               <TableCell>{entry.fullName ?? "Unnamed player"}</TableCell>
               <TableCell>
                 <StatusBadge status={entry.status} />

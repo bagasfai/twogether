@@ -110,9 +110,11 @@ export function RegisterPanel({
     return (
       <div className="flex items-center gap-3">
         {registration.status === "confirmed" ? (
-          <Badge>Confirmed</Badge>
+          <Badge variant="success">Confirmed</Badge>
         ) : (
-          <Badge variant="secondary">Waitlist #{registration.waitlistPosition}</Badge>
+          <Badge variant="warning" className="font-mono tabular-nums">
+            Waitlist #{registration.waitlistPosition}
+          </Badge>
         )}
         <Button
           variant="outline"

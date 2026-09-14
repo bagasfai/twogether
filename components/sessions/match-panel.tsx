@@ -27,10 +27,10 @@ const STATUS_LABEL: Record<MatchStatus, string> = {
   cancelled: "Cancelled",
 };
 
-const STATUS_VARIANT: Record<MatchStatus, "default" | "secondary" | "outline"> = {
-  scheduled: "secondary",
-  in_progress: "default",
-  completed: "outline",
+const STATUS_VARIANT: Record<MatchStatus, "default" | "secondary" | "outline" | "success"> = {
+  scheduled: "outline",
+  in_progress: "success",
+  completed: "secondary",
   cancelled: "outline",
 };
 

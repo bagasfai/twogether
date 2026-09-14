@@ -63,7 +63,7 @@ export function CourtPanel({
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between gap-2">
         <h2 className="text-sm font-medium">
-          Courts ({courts.length}/{courtCount})
+          Courts <span className="font-mono tabular-nums text-muted-foreground">({courts.length}/{courtCount})</span>
         </h2>
         <Button size="sm" className="h-11 sm:h-9" disabled={pending || courts.length >= courtCount} onClick={addCourt}>
           Add court

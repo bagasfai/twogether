@@ -15,12 +15,21 @@ export default async function SessionsPage() {
   const sessions = await listUpcomingPublicSessions();
 
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-4 p-6">
-      <h1 className="text-xl font-semibold">Upcoming sessions</h1>
+    <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-6 py-12">
+      <header className="flex flex-col gap-1">
+        <h1 className="text-2xl font-semibold tracking-tight">Upcoming sessions</h1>
+        <p className="text-sm text-muted-foreground">
+          Open registration, waitlist status, and courts — all in one place.
+        </p>
+      </header>
       {sessions.length === 0 ? (
         <p className="text-sm text-muted-foreground">No sessions scheduled right now.</p>
       ) : (
-        sessions.map((session) => <SessionCard key={session.id} session={session} />)
+        <div className="flex flex-col gap-4">
+          {sessions.map((session) => (
+            <SessionCard key={session.id} session={session} />
+          ))}
+        </div>
       )}
     </div>
   );

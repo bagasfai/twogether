@@ -55,7 +55,7 @@ export function ManageTabs({
             aria-controls={`panel-${tab.id}`}
             onClick={() => setActive(tab.id)}
             className={cn(
-              "flex min-h-11 flex-col items-center justify-center gap-0.5 rounded-md px-2 py-1.5 text-sm font-medium transition-colors",
+              "flex min-h-11 flex-col items-center justify-center gap-0.5 rounded-md px-2 py-1.5 text-sm font-medium transition-colors duration-[var(--dur-short)] ease-[var(--ease-out)]",
               active === tab.id
                 ? "bg-background text-foreground shadow-sm"
                 : "text-muted-foreground hover:text-foreground"

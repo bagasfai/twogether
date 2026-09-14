@@ -5,14 +5,14 @@ import type { PublicSession } from "@/lib/dal/public-sessions";
 
 export function SessionCard({ session }: { session: PublicSession }) {
   return (
-    <Card>
+    <Card className="transition-[transform,border-color] duration-[var(--dur-short)] ease-[var(--ease-out)] hover:-translate-y-0.5 hover:border-accent/40">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Link href={`/sessions/${session.id}`} className="hover:underline">
             {session.title}
           </Link>
           {session.registrationState === "open" ? (
-            <Badge>Registration open</Badge>
+            <Badge variant="success">Registration open</Badge>
           ) : (
             <Badge variant="outline">Registration closed</Badge>
           )}
@@ -23,7 +23,9 @@ export function SessionCard({ session }: { session: PublicSession }) {
       </CardHeader>
       <CardContent className="text-sm text-muted-foreground">
         {/* capacity, not spots remaining -- see the comment on the detail page */}
-        Capacity {session.maxParticipants} · waitlist {session.waitlistCapacity} · {session.courtCount} courts
+        <span className="font-mono tabular-nums">
+          {session.maxParticipants} spots · {session.waitlistCapacity} waitlist · {session.courtCount} courts
+        </span>
       </CardContent>
     </Card>
   );

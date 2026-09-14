@@ -8,7 +8,7 @@ export default async function NewSessionPage() {
 
   return (
     <div className="mx-auto max-w-xl">
-      <h1 className="mb-6 text-xl font-semibold">New session</h1>
+      <h1 className="mb-6 text-xl font-semibold tracking-tight">New session</h1>
       <SessionForm />
     </div>
   );

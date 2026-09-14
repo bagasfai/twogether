@@ -35,15 +35,20 @@ export default async function SessionDetailPage({ params }: PageProps<"/sessions
   if (!session) notFound();
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col gap-6 p-6">
-      <header className="flex flex-col gap-1">
-        <h1 className="text-2xl font-semibold">{session.title}</h1>
+    <div className="mx-auto flex w-full max-w-2xl flex-col gap-8 px-6 py-12">
+      <header className="flex flex-col gap-2">
+        <h1 className="text-3xl font-semibold tracking-tight text-balance">{session.title}</h1>
         <p className="text-muted-foreground">
           {new Date(session.startsAt).toLocaleString()} – {new Date(session.endsAt).toLocaleTimeString()}
         </p>
         <p className="text-muted-foreground">
           {session.locationUrl ? (
-            <a href={session.locationUrl} className="underline" rel="noreferrer noopener" target="_blank">
+            <a
+              href={session.locationUrl}
+              className="text-accent underline-offset-4 hover:underline"
+              rel="noreferrer noopener"
+              target="_blank"
+            >
               {session.location}
             </a>
           ) : (
@@ -52,15 +57,21 @@ export default async function SessionDetailPage({ params }: PageProps<"/sessions
         </p>
       </header>
 
-      {session.description ? <p>{session.description}</p> : null}
+      {session.description ? <p className="max-w-[65ch] text-base">{session.description}</p> : null}
 
-      <dl className="grid grid-cols-2 gap-2 text-sm">
-        <dt className="text-muted-foreground">Courts</dt>
-        <dd>{session.courtCount}</dd>
-        <dt className="text-muted-foreground">Capacity</dt>
-        <dd>{session.maxParticipants}</dd>
-        <dt className="text-muted-foreground">Waitlist</dt>
-        <dd>{session.waitlistCapacity}</dd>
+      <dl className="grid grid-cols-3 gap-4 rounded-xl border bg-card p-4 text-sm">
+        <div className="flex flex-col gap-1">
+          <dt className="text-muted-foreground">Courts</dt>
+          <dd className="font-mono text-lg tabular-nums">{session.courtCount}</dd>
+        </div>
+        <div className="flex flex-col gap-1">
+          <dt className="text-muted-foreground">Capacity</dt>
+          <dd className="font-mono text-lg tabular-nums">{session.maxParticipants}</dd>
+        </div>
+        <div className="flex flex-col gap-1">
+          <dt className="text-muted-foreground">Waitlist</dt>
+          <dd className="font-mono text-lg tabular-nums">{session.waitlistCapacity}</dd>
+        </div>
       </dl>
 
       {/* Spots remaining is deliberately absent: a live count here would force a

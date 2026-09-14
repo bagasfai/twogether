@@ -27,17 +27,40 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex flex-1 flex-col">
-      <header className="flex items-center gap-4 border-b px-6 py-3">
-        <Link href="/dashboard" className="font-semibold">Jakbar Twogether</Link>
-        <nav className="flex items-center gap-4 text-sm">
-          <Link href="/sessions">Sessions</Link>
-          {canHost ? <Link href="/sessions/new">New session</Link> : null}
-          <Link href="/profile">Profile</Link>
-        </nav>
-        <div className="ml-auto flex items-center gap-3 text-sm">
-          <span className="text-muted-foreground">{user.fullName ?? user.email}</span>
-          <SignOutButton />
+      <header className="flex flex-col gap-2 border-b bg-background px-4 py-3 sm:px-6">
+        <div className="flex items-center gap-4">
+          <Link href="/dashboard" className="whitespace-nowrap text-sm font-semibold tracking-tight">
+            Jakbar Twogether
+          </Link>
+          <div className="ml-auto flex min-w-0 items-center gap-3 text-sm">
+            <span className="hidden truncate text-muted-foreground sm:inline">
+              {user.fullName ?? user.email}
+            </span>
+            <SignOutButton />
+          </div>
         </div>
+        <nav className="-mx-1 flex items-center gap-1 overflow-x-auto text-sm text-muted-foreground">
+          <Link
+            href="/sessions"
+            className="whitespace-nowrap rounded-full px-3 py-1.5 transition-colors hover:bg-accent/10 hover:text-foreground"
+          >
+            Sessions
+          </Link>
+          {canHost ? (
+            <Link
+              href="/sessions/new"
+              className="whitespace-nowrap rounded-full px-3 py-1.5 transition-colors hover:bg-accent/10 hover:text-foreground"
+            >
+              New session
+            </Link>
+          ) : null}
+          <Link
+            href="/profile"
+            className="whitespace-nowrap rounded-full px-3 py-1.5 transition-colors hover:bg-accent/10 hover:text-foreground"
+          >
+            Profile
+          </Link>
+        </nav>
       </header>
       <main className="flex-1 p-6">{children}</main>
     </div>
