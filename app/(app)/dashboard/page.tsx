@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { ConfirmParticipationBanner } from "@/components/sessions/confirm-participation-banner";
 import { requireUser } from "@/lib/dal/user";
 import { listMyUpcomingRegistrations } from "@/lib/dal/participants";
 import { listMyHostedSessions } from "@/lib/dal/sessions";
@@ -41,6 +42,11 @@ export default async function DashboardPage() {
                     {new Date(row.startsAt).toLocaleString()} · {row.location}
                   </CardDescription>
                 </CardHeader>
+                {row.needsConfirmation ? (
+                  <CardContent>
+                    <ConfirmParticipationBanner sessionId={row.sessionId} title={row.title} />
+                  </CardContent>
+                ) : null}
               </Card>
             ))}
           </div>

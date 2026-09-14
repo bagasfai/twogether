@@ -296,6 +296,7 @@ export type Database = {
           added_by: string | null
           cancelled_at: string | null
           checked_in_at: string | null
+          consented_at: string | null
           created_at: string
           id: string
           registered_at: string
@@ -308,6 +309,7 @@ export type Database = {
           added_by?: string | null
           cancelled_at?: string | null
           checked_in_at?: string | null
+          consented_at?: string | null
           created_at?: string
           id?: string
           registered_at?: string
@@ -320,6 +322,7 @@ export type Database = {
           added_by?: string | null
           cancelled_at?: string | null
           checked_in_at?: string | null
+          consented_at?: string | null
           created_at?: string
           id?: string
           registered_at?: string
@@ -574,6 +577,7 @@ export type Database = {
           added_by: string | null
           cancelled_at: string | null
           checked_in_at: string | null
+          consented_at: string | null
           created_at: string
           id: string
           registered_at: string
@@ -598,6 +602,7 @@ export type Database = {
           added_by: string | null
           cancelled_at: string | null
           checked_in_at: string | null
+          consented_at: string | null
           created_at: string
           id: string
           registered_at: string
@@ -616,6 +621,28 @@ export type Database = {
       is_admin: { Args: never; Returns: boolean }
       is_session_host: { Args: { p_session_id: string }; Returns: boolean }
       is_session_owner: { Args: { p_session_id: string }; Returns: boolean }
+      member_confirm_participation: {
+        Args: { p_session_id: string }
+        Returns: {
+          added_by: string | null
+          cancelled_at: string | null
+          checked_in_at: string | null
+          consented_at: string | null
+          created_at: string
+          id: string
+          registered_at: string
+          session_id: string
+          status: Database["public"]["Enums"]["participant_status"]
+          updated_at: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "participants"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       register_for_session: {
         Args: { p_session_id: string }
         Returns: Database["public"]["CompositeTypes"]["registration_result"]

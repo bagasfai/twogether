@@ -1,5 +1,5 @@
 begin;
-select plan(19);
+select plan(20);
 
 select has_table('public', 'profiles_private', 'profiles_private table exists');
 
@@ -17,7 +17,8 @@ insert into auth.users (id, email) values
   ('aaaaaaaa-0000-0000-0000-000000000003', 'pp-host@test.local'),
   ('aaaaaaaa-0000-0000-0000-000000000004', 'pp-otherhost@test.local'),
   ('aaaaaaaa-0000-0000-0000-000000000005', 'pp-admin@test.local'),
-  ('aaaaaaaa-0000-0000-0000-000000000006', 'pp-waitlisted@test.local');
+  ('aaaaaaaa-0000-0000-0000-000000000006', 'pp-waitlisted@test.local'),
+  ('aaaaaaaa-0000-0000-0000-000000000007', 'pp-unconsented@test.local');
 
 select is(
   (select count(*)::int from public.profiles_private
@@ -50,13 +51,18 @@ values
 
 -- direct insert: this test runs as the table owner, which bypasses RLS.
 -- Application code must never do this (the RPCs are the only write path).
-insert into public.participants (session_id, user_id, status) values
+-- consented_at is set for 000001 and 000006 to test the ordinary
+-- already-consented case; 000007 is left null (as host_add_participant
+-- would leave it) to test the new consent gate below.
+insert into public.participants (session_id, user_id, status, consented_at) values
   ('bbbbbbbb-0000-0000-0000-000000000001',
-   'aaaaaaaa-0000-0000-0000-000000000001', 'confirmed'),
+   'aaaaaaaa-0000-0000-0000-000000000001', 'confirmed', now()),
   ('bbbbbbbb-0000-0000-0000-000000000001',
-   'aaaaaaaa-0000-0000-0000-000000000002', 'cancelled'),
+   'aaaaaaaa-0000-0000-0000-000000000002', 'cancelled', now()),
   ('bbbbbbbb-0000-0000-0000-000000000001',
-   'aaaaaaaa-0000-0000-0000-000000000006', 'waiting_list');
+   'aaaaaaaa-0000-0000-0000-000000000006', 'waiting_list', now()),
+  ('bbbbbbbb-0000-0000-0000-000000000001',
+   'aaaaaaaa-0000-0000-0000-000000000007', 'confirmed', null);
 
 set local role authenticated;
 
@@ -123,6 +129,16 @@ select is(
     where user_id = 'aaaaaaaa-0000-0000-0000-000000000006'),
   1,
   'a host can read the phone of a waiting_list participant in their session'
+);
+
+-- consent gate: a non-cancelled row alone is not enough once
+-- host_add_participant can leave consented_at null (see migration
+-- 20260914000001_participant_consent.sql).
+select is(
+  (select count(*)::int from public.profiles_private
+    where user_id = 'aaaaaaaa-0000-0000-0000-000000000007'),
+  0,
+  'a host cannot read the phone of a participant who has not consented yet'
 );
 
 -- the grant is table-wide (`grant update ... to authenticated`), and this

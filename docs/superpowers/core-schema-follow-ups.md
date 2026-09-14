@@ -5,26 +5,29 @@ found by review, triaged, and deliberately left. Verdicts are from the final who
 
 ## Must decide (product call)
 
-- **`profiles.phone` is readable by every signed-up account.** `profiles_select_authenticated`
+- **`profiles.phone` is readable by every signed-up account.** ~~`profiles_select_authenticated`
   is `using (true)` and the participant policy exposes full rosters, so any member can walk
-  roster → profile and harvest phone numbers for the whole community. Both clauses are
-  spec-faithful; the composition is the problem. Recommended fix: move `phone` to a 1:1
-  `profiles_private` table with its own policy (self, admin, and hosts of a session the person
-  is registered for). ~1-2 hours now, dramatically cheaper than after any UI exists. Cheap
-  stopgap: `revoke select (phone) on public.profiles from authenticated`.
+  roster → profile and harvest phone numbers for the whole community.~~ **Resolved** by the
+  `profiles_private` table (migration `20260912000014_profiles_private.sql`): phone moved off
+  `profiles` into its own table with its own policy (self, admin, hosts of a session the person
+  is a non-cancelled participant in).
 
 - **`host_add_participant` composed with the `profiles_private` phone policy is broader than
-  advertised.** `host_add_participant` lets a host insert an arbitrary `p_user_id` into a
+  advertised.** ~~`host_add_participant` lets a host insert an arbitrary `p_user_id` into a
   session they host — a `draft` session works, so no other participant needs to see it — with
   no consent check from the member being added. Once that participant row exists,
   `profiles_private_select_self_admin_or_host` (status <> 'cancelled') grants that host the
-  member's phone. So `profiles.md`'s framing and the profile form's copy ("hosts of sessions
-  you join") understate the reality: it is effectively any host, any member, no opt-in required
-  from the member's side. Not a merge blocker — `host_add_participant` has no UI yet (see
-  "From Task 10" below) — but it must be resolved (e.g. requiring the member's own registration,
-  or an explicit consent/invite step) before the member picker ships. Also see the softened
-  `FormDescription` in `components/profile/profile-form.tsx`, changed alongside this note so
-  the visible copy stops overstating the protection.
+  member's phone.~~ **Resolved** by migration `20260914000001_participant_consent.sql`: a new
+  `participants.consented_at` column distinguishes "a row exists" from "the member knows about
+  it". `register_for_session` stamps it immediately (self-registration is consent by
+  construction); `host_add_participant` leaves it null. `profiles_private_select_self_admin_or_host`
+  now additionally requires `consented_at is not null` for the host branch. The member sees a
+  "confirm your spot" / "decline" prompt on their dashboard
+  (`components/sessions/confirm-participation-banner.tsx`, wired to the new
+  `member_confirm_participation` RPC and the existing `cancel_registration` RPC) until they act.
+  The member picker shipped alongside this fix, not before it —
+  `components/sessions/add-participant-dialog.tsx`, wired to `lib/actions/participants.ts`'s
+  `hostAddParticipant` and `searchMembers`.
 
 ## Should fix soon
 
@@ -60,8 +63,15 @@ found by review, triaged, and deliberately left. Verdicts are from the final who
   Inbucket but not in any deployed environment. Must be wired before the first real user.
 - Google OAuth ships disabled and has never been exercised end to end.
 - No password reset flow exists.
-- No admin UI: roles are changed by seed or by a service-role script.
-- `host_add_participant` has no UI; it needs a member picker.
+- ~~No admin UI: roles are changed by seed or by a service-role script.~~ **Resolved**:
+  `/admin` (`app/(app)/admin/page.tsx`, gated by the new `requireAdmin`) lists every member
+  and lets an admin change roles via `lib/actions/admin.ts`'s `setUserRole`, enforced by the
+  existing `profiles_update_self_or_admin` policy and `guard_profile_role_change` trigger — no
+  schema change needed. An admin cannot change their own role (avoids a self-lockout with no
+  UI path back); there is still no protection against demoting the *last* admin via someone
+  else's account, which was judged out of scope for a first pass.
+- ~~`host_add_participant` has no UI; it needs a member picker.~~ **Resolved** together with
+  the consent fix above — see that entry.
 - No E2E coverage — signup, login, registration and override flows are verified by hand only.
 
 ## Process note

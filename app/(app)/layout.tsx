@@ -60,6 +60,14 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
           >
             Profile
           </Link>
+          {user.role === "admin" ? (
+            <Link
+              href="/admin"
+              className="whitespace-nowrap rounded-full px-3 py-1.5 transition-colors hover:bg-accent/10 hover:text-foreground"
+            >
+              Admin
+            </Link>
+          ) : null}
         </nav>
       </header>
       <main className="flex-1 p-6">{children}</main>

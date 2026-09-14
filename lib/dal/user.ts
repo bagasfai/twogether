@@ -56,3 +56,12 @@ export async function requireHost(nextPath: string): Promise<CurrentUser> {
   if (user.role === "member") redirect("/dashboard");
   return user;
 }
+
+// Same caveat as requireHost: UX only. profiles_update_self_or_admin and
+// guard_profile_role_change are what actually stop a non-admin from writing
+// another profile's role.
+export async function requireAdmin(nextPath: string): Promise<CurrentUser> {
+  const user = await requireUser(nextPath);
+  if (user.role !== "admin") redirect("/dashboard");
+  return user;
+}

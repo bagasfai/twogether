@@ -54,3 +54,21 @@ export async function cancelRegistration(sessionId: string): Promise<ActionResul
   revalidatePath("/dashboard");
   return ok(null);
 }
+
+// Member-only acknowledgement of a host_add_participant registration --
+// see docs/superpowers/core-schema-follow-ups.md's "must decide" entry.
+// Declining is just cancelRegistration above; there is no separate "decline"
+// RPC because cancel_registration already cancels any participant row the
+// caller owns regardless of who created it.
+export async function confirmParticipation(sessionId: string): Promise<ActionResult<null>> {
+  const user = await getCurrentUser();
+  if (!user) return fail("not_authenticated");
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("member_confirm_participation", { p_session_id: sessionId });
+
+  if (error) return failFromRpc(error);
+
+  revalidatePath("/dashboard");
+  return ok(null);
+}
