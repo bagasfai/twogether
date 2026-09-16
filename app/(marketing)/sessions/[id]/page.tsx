@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getPublicSession } from "@/lib/dal/public-sessions";
 import { RegisterPanel } from "@/components/sessions/register-panel";
+import { RegisteredParticipants } from "@/components/sessions/registered-participants";
 
 export const revalidate = 60;
 
@@ -77,6 +78,8 @@ export default async function SessionDetailPage({ params }: PageProps<"/sessions
       {/* Spots remaining is deliberately absent: a live count here would force a
           revalidatePath on every registration and defeat the ISR cache. */}
       <RegisterPanel sessionId={session.id} registrationOpen={session.registrationState === "open"} />
+
+      <RegisteredParticipants sessionId={session.id} />
     </div>
   );
 }

@@ -32,6 +32,12 @@ export type RosterEntry = {
   avatarUrl: string | null;
 };
 
+export type PublicRosterEntry = {
+  status: ParticipantStatus;
+  registeredAt: string;
+  fullName: string | null;
+};
+
 // waitlist_position_of() exists in the database but EXECUTE is revoked from
 // authenticated, so count ahead-of-me rows instead. The participants SELECT
 // policy makes non-cancelled rows of a public session readable, so this counts
@@ -138,5 +144,31 @@ export async function listRoster(sessionId: string): Promise<RosterEntry[]> {
     addedBy: row.added_by,
     fullName: row.profiles.full_name,
     avatarUrl: row.profiles.avatar_url,
+  }));
+}
+
+// Member-facing view of a session's roster: names only, no ids or check-in
+// state a regular participant has no business seeing. RLS still does the
+// real work (participants_select_self_host_or_public), this just narrows
+// the columns for a non-host caller.
+export async function listPublicRoster(sessionId: string): Promise<PublicRosterEntry[]> {
+  const user = await getCurrentUser();
+  if (!user) return [];
+
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("participants")
+    .select("status, registered_at, profiles!participants_user_id_fkey(full_name)")
+    .eq("session_id", sessionId)
+    .neq("status", "cancelled")
+    .order("registered_at", { ascending: true });
+
+  if (error) throw error;
+
+  return (data ?? []).map((row) => ({
+    status: row.status,
+    registeredAt: row.registered_at,
+    fullName: row.profiles.full_name,
   }));
 }
