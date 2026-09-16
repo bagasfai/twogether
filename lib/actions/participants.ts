@@ -3,8 +3,14 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/dal/user";
+import { searchAddableMembers, type AddableMember } from "@/lib/dal/participants";
 import { fail, failFromRpc, failFromZod, ok, type ActionResult } from "@/lib/actions/result";
-import { setCheckedInSchema, setParticipantStatusSchema } from "@/lib/validation/participants";
+import {
+  hostAddParticipantSchema,
+  searchMembersSchema,
+  setCheckedInSchema,
+  setParticipantStatusSchema,
+} from "@/lib/validation/participants";
 import type { Database } from "@/types/supabase";
 
 type ParticipantStatus = Database["public"]["Enums"]["participant_status"];
@@ -66,4 +72,46 @@ export async function setCheckedIn(
 
   revalidatePath(`/sessions/${parsed.data.sessionId}/manage`);
   return ok(null);
+}
+
+// Host override, same rule-3 rationale as setParticipantStatus above. Unlike
+// that action this can create a participant row, not just change one -- see
+// docs/superpowers/core-schema-follow-ups.md's "must decide" entry on
+// host_add_participant. The RPC deliberately leaves the new row's
+// consented_at null; the member sees a "confirm your spot" prompt on their
+// dashboard (confirmParticipation in lib/actions/registration.ts) before any
+// host can read their phone number through profiles_private.
+export async function hostAddParticipant(
+  sessionId: string,
+  userId: string,
+  status: Exclude<ParticipantStatus, "cancelled">,
+): Promise<ActionResult<null>> {
+  const parsed = hostAddParticipantSchema.safeParse({ sessionId, userId, status });
+  if (!parsed.success) return failFromZod(parsed.error);
+
+  const user = await getCurrentUser();
+  if (!user) return fail("not_authenticated");
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("host_add_participant", {
+    p_session_id: parsed.data.sessionId,
+    p_user_id: parsed.data.userId,
+    p_status: parsed.data.status,
+  });
+
+  if (error) return failFromRpc(error);
+
+  revalidatePath(`/sessions/${parsed.data.sessionId}/manage`);
+  return ok(null);
+}
+
+export async function searchMembers(sessionId: string, query: string): Promise<ActionResult<AddableMember[]>> {
+  const parsed = searchMembersSchema.safeParse({ sessionId, query });
+  if (!parsed.success) return failFromZod(parsed.error);
+
+  const user = await getCurrentUser();
+  if (!user) return fail("not_authenticated");
+
+  const results = await searchAddableMembers(parsed.data.sessionId, parsed.data.query);
+  return ok(results);
 }

@@ -39,7 +39,8 @@ function isMyRegistration(value: unknown): value is MyRegistration {
     typeof row.status === "string" &&
     (PARTICIPANT_STATUSES as readonly string[]).includes(row.status) &&
     typeof row.registeredAt === "string" &&
-    (row.waitlistPosition === null || typeof row.waitlistPosition === "number")
+    (row.waitlistPosition === null || typeof row.waitlistPosition === "number") &&
+    typeof row.needsConfirmation === "boolean"
   );
 }
 
@@ -157,6 +158,9 @@ export function RegisterPanel({
                 status: result.data.status,
                 registeredAt: new Date().toISOString(),
                 waitlistPosition: result.data.waitlistPosition,
+                // self-registration is consent by construction -- see
+                // member_confirm_participation in the participant-consent migration
+                needsConfirmation: false,
               },
             });
             toast.success(

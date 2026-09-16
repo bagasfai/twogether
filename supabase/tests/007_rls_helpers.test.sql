@@ -1,5 +1,5 @@
 begin;
-select plan(24);
+select plan(25);
 
 insert into auth.users (id, email) values
   ('11111111-1111-1111-1111-111111111111', 'member@test.local'),
@@ -124,6 +124,9 @@ select ok(not has_function_privilege(
 select ok(not has_function_privilege(
             'anon', 'public.waitlist_position_of(uuid, timestamptz, uuid)', 'EXECUTE'),
           'anon lacks EXECUTE on waitlist_position_of');
+select ok(not has_function_privilege(
+            'anon', 'public.member_confirm_participation(uuid)', 'EXECUTE'),
+          'anon lacks EXECUTE on member_confirm_participation');
 
 select * from finish();
 rollback;

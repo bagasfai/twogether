@@ -28,3 +28,20 @@ export const setCheckedInSchema = z.object({
 });
 
 export type SetCheckedInInput = z.infer<typeof setCheckedInSchema>;
+
+export const hostAddParticipantSchema = z.object({
+  sessionId: z.uuid(),
+  userId: z.uuid(),
+  status: z
+    .enum(Object.keys(PARTICIPANT_STATUS_VALUES) as [ParticipantStatus, ...ParticipantStatus[]])
+    .exclude(["cancelled"]),
+});
+
+export type HostAddParticipantInput = z.infer<typeof hostAddParticipantSchema>;
+
+export const searchMembersSchema = z.object({
+  sessionId: z.uuid(),
+  query: z.string().trim().min(1).max(100),
+});
+
+export type SearchMembersInput = z.infer<typeof searchMembersSchema>;
