@@ -5,7 +5,8 @@ import { getCurrentUser } from "@/lib/dal/user";
 import { getHostSession } from "@/lib/dal/sessions";
 import type { Database } from "@/types/supabase";
 
-export type ParticipantStatus = Database["public"]["Enums"]["participant_status"];
+export type ParticipantStatus =
+  Database["public"]["Enums"]["participant_status"];
 
 export type MyRegistration = {
   id: string;
@@ -67,7 +68,9 @@ async function waitlistPosition(
   return (count ?? 0) + 1;
 }
 
-export async function getMyRegistration(sessionId: string): Promise<MyRegistration | null> {
+export async function getMyRegistration(
+  sessionId: string,
+): Promise<MyRegistration | null> {
   const user = await getCurrentUser();
   if (!user) return null;
 
@@ -93,7 +96,9 @@ export async function getMyRegistration(sessionId: string): Promise<MyRegistrati
   };
 }
 
-export async function listMyUpcomingRegistrations(): Promise<MyRegistrationRow[]> {
+export async function listMyUpcomingRegistrations(): Promise<
+  MyRegistrationRow[]
+> {
   const user = await getCurrentUser();
   if (!user) return [];
 
@@ -162,6 +167,32 @@ export async function listRoster(sessionId: string): Promise<RosterEntry[]> {
   }));
 }
 
+export async function listPublicRoster(
+  sessionId: string,
+): Promise<PublicRosterEntry[]> {
+  const user = await getCurrentUser();
+  if (!user) return [];
+
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("participants")
+    .select(
+      "status, registered_at, profiles!participants_user_id_fkey(full_name)",
+    )
+    .eq("session_id", sessionId)
+    .neq("status", "cancelled")
+    .order("registered_at", { ascending: true });
+
+  if (error) throw error;
+
+  return (data ?? []).map((row) => ({
+    status: row.status,
+    registeredAt: row.registered_at,
+    fullName: row.profiles.full_name,
+  }));
+}
+
 // Host-only: candidates for host_add_participant. Scoped to sessions the
 // caller actually hosts (checked via getHostSession, same as the /manage
 // page itself) rather than relying on profiles' own `using (true)` SELECT
@@ -169,7 +200,10 @@ export async function listRoster(sessionId: string): Promise<RosterEntry[]> {
 // avatar_url are non-sensitive), but this function's whole purpose is
 // picking someone to register, so it should not double as a general member
 // directory for a session a caller doesn't host.
-export async function searchAddableMembers(sessionId: string, query: string): Promise<AddableMember[]> {
+export async function searchAddableMembers(
+  sessionId: string,
+  query: string,
+): Promise<AddableMember[]> {
   const user = await getCurrentUser();
   if (!user) return [];
 
