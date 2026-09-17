@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ConfirmParticipationBanner } from "@/components/sessions/confirm-participation-banner";
+import { SessionActionsMenu } from "@/components/sessions/session-actions-menu";
 import { requireUser } from "@/lib/dal/user";
 import { listMyUpcomingRegistrations } from "@/lib/dal/participants";
 import { listMyHostedSessions } from "@/lib/dal/sessions";
@@ -60,9 +61,12 @@ export default async function DashboardPage() {
             {hosted.map((session) => (
               <Card key={session.id}>
                 <CardHeader>
-                  <CardTitle>
-                    <Link href={`/sessions/${session.id}/manage`}>{session.title}</Link>
-                  </CardTitle>
+                  <div className="flex items-start justify-between gap-2">
+                    <CardTitle>
+                      <Link href={`/sessions/${session.id}/manage`}>{session.title}</Link>
+                    </CardTitle>
+                    <SessionActionsMenu session={session} />
+                  </div>
                   <CardDescription>
                     {new Date(session.startsAt).toLocaleString()} · {session.location} ·{" "}
                     {session.status} · registration {session.registrationState}

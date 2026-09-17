@@ -10,6 +10,7 @@ import { CourtPanel } from "@/components/sessions/court-panel";
 import { MatchPanel } from "@/components/sessions/match-panel";
 import { ManageTabs } from "@/components/sessions/manage-tabs";
 import { SessionRealtimeWatcher } from "@/components/sessions/session-realtime-watcher";
+import { SessionActionsMenu } from "@/components/sessions/session-actions-menu";
 import { Badge } from "@/components/ui/badge";
 
 export default async function ManageSessionPage({ params }: PageProps<"/sessions/[id]/manage">) {
@@ -35,11 +36,14 @@ export default async function ManageSessionPage({ params }: PageProps<"/sessions
     <div className="flex flex-col gap-4 sm:gap-6 lg:mx-auto lg:max-w-6xl">
       <SessionRealtimeWatcher sessionId={session.id} />
 
-      <header className="flex flex-col gap-1">
-        <h1 className="text-xl font-semibold tracking-tight">{session.title}</h1>
-        <p className="text-sm text-muted-foreground">
-          {new Date(session.startsAt).toLocaleString()} · {session.location}
-        </p>
+      <header className="flex items-start justify-between gap-2">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-xl font-semibold tracking-tight">{session.title}</h1>
+          <p className="text-sm text-muted-foreground">
+            {new Date(session.startsAt).toLocaleString()} · {session.location}
+          </p>
+        </div>
+        <SessionActionsMenu session={session} showManageLink={false} />
       </header>
 
       {/* Sticky so confirmed/waiting/checked-in counts stay visible while
