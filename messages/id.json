@@ -1,0 +1,66 @@
+{
+  "nav": {
+    "brand": "Jakbar Twogether",
+    "sessions": "Sesi",
+    "dashboard": "Dashboard",
+    "login": "Masuk"
+  },
+  "footer": {
+    "tagline": "Badminton, dikelola dengan benar.",
+    "copyright": "© {year}"
+  },
+  "home": {
+    "kicker": "Jakarta Barat · komunitas badminton",
+    "title": "Jadwal lapangan beres sebelum kamu datang.",
+    "subtitle": "Pendaftaran, waiting list, check-in, dan rotasi untuk sesi Jakbar Twogether — tidak perlu lagi menghitung nama di grup WhatsApp.",
+    "ctaBrowse": "Lihat sesi mendatang",
+    "ctaJoin": "Gabung komunitas",
+    "runningTitle": "Yang sedang berjalan",
+    "runningBody": "Setiap sesi — status pendaftaran, waiting list, lapangan — ada di satu halaman.",
+    "runningLink": "Lihat sesi mendatang →"
+  },
+  "sessionsList": {
+    "title": "Sesi mendatang",
+    "subtitle": "Status pendaftaran, waiting list, dan lapangan — semua di satu tempat.",
+    "empty": "Belum ada sesi terjadwal.",
+    "hostedTitle": "Sesi yang kamu host",
+    "metaTitle": "Sesi mendatang — Jakbar Twogether",
+    "metaDescription": "Sesi badminton yang membuka pendaftaran di Jakarta Barat."
+  },
+  "sessionCard": {
+    "meta": "{spots} slot · {waitlist} waiting list · {courts} lapangan"
+  },
+  "badge": {
+    "open": "Pendaftaran dibuka",
+    "closed": "Pendaftaran ditutup"
+  },
+  "sessionDetail": {
+    "courts": "Lapangan",
+    "capacity": "Kapasitas",
+    "waitlist": "Waiting list",
+    "notFound": "Sesi tidak ditemukan"
+  },
+  "register": {
+    "loginToRegister": "Masuk untuk daftar",
+    "confirmed": "Terkonfirmasi",
+    "waitlistPosition": "Waiting list #{position}",
+    "cancel": "Batalkan pendaftaran",
+    "registrationClosed": "Pendaftaran untuk sesi ini belum dibuka.",
+    "register": "Daftar",
+    "toastRegistered": "Kamu terdaftar.",
+    "toastWaitlisted": "Masuk waiting list di posisi #{position}.",
+    "toastCancelled": "Pendaftaran dibatalkan"
+  },
+  "participants": {
+    "loginToView": "Masuk untuk melihat siapa saja yang terdaftar.",
+    "empty": "Belum ada yang mendaftar.",
+    "registered": "Terdaftar",
+    "confirmedBadge": "Terkonfirmasi",
+    "waitlistBadge": "Waiting list",
+    "unnamed": "Pemain tanpa nama"
+  },
+  "languageSwitcher": {
+    "id": "ID",
+    "en": "EN"
+  }
+}

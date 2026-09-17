@@ -8,6 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cancelMatch, completeMatch, createMatch, startMatch } from "@/lib/actions/matches";
+import { courtLabel } from "@/lib/court-label";
 import type { MatchEntry, MatchStatus } from "@/lib/dal/matches";
 import type { RotationEntry } from "@/lib/dal/rotation";
 
@@ -132,7 +133,7 @@ export function MatchPanel({
             <SelectContent>
               {availableCourts.map((c) => (
                 <SelectItem key={c.id} value={c.id}>
-                  Court {c.courtNumber}
+                  {courtLabel(c.courtNumber)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -196,7 +197,7 @@ export function MatchPanel({
               >
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="text-sm font-medium">
-                    {m.courtNumber !== null ? `Court ${m.courtNumber}` : "No court"}
+                    {m.courtNumber !== null ? courtLabel(m.courtNumber) : "No court"}
                   </span>
                   <Badge variant={STATUS_VARIANT[m.status]}>{STATUS_LABEL[m.status]}</Badge>
                   <span className="text-sm text-muted-foreground">

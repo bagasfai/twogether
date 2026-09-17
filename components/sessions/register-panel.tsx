@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -62,6 +63,7 @@ export function RegisterPanel({
   sessionId: string;
   registrationOpen: boolean;
 }) {
+  const t = useTranslations("register");
   const [state, setState] = useState<State>({ kind: "loading" });
   const [pending, startTransition] = useTransition();
 
@@ -99,7 +101,7 @@ export function RegisterPanel({
     return (
       <Button asChild>
         <Link href={`/login?next=${encodeURIComponent(`/sessions/${sessionId}`)}`}>
-          Log in to register
+          {t("loginToRegister")}
         </Link>
       </Button>
     );
@@ -111,10 +113,10 @@ export function RegisterPanel({
     return (
       <div className="flex items-center gap-3">
         {registration.status === "confirmed" ? (
-          <Badge variant="success">Confirmed</Badge>
+          <Badge variant="success">{t("confirmed")}</Badge>
         ) : (
           <Badge variant="warning" className="font-mono tabular-nums">
-            Waitlist #{registration.waitlistPosition}
+            {t("waitlistPosition", { position: registration.waitlistPosition ?? 0 })}
           </Badge>
         )}
         <Button
@@ -125,21 +127,21 @@ export function RegisterPanel({
               const result = await cancelRegistration(sessionId);
               if (result.ok) {
                 setState({ kind: "ready", registration: null });
-                toast.success("Registration cancelled");
+                toast.success(t("toastCancelled"));
               } else {
                 toast.error(result.message);
               }
             })
           }
         >
-          Cancel registration
+          {t("cancel")}
         </Button>
       </div>
     );
   }
 
   if (!registrationOpen) {
-    return <p className="text-sm text-muted-foreground">Registration is not open for this session.</p>;
+    return <p className="text-sm text-muted-foreground">{t("registrationClosed")}</p>;
   }
 
   return (
@@ -165,8 +167,8 @@ export function RegisterPanel({
             });
             toast.success(
               result.data.status === "confirmed"
-                ? "You are in."
-                : `Added to the waitlist at #${result.data.waitlistPosition}.`,
+                ? t("toastRegistered")
+                : t("toastWaitlisted", { position: result.data.waitlistPosition ?? 0 }),
             );
             return;
           }
@@ -180,7 +182,7 @@ export function RegisterPanel({
         })
       }
     >
-      Register
+      {t("register")}
     </Button>
   );
 }

@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { createCourt, deleteCourt, setCourtStatus } from "@/lib/actions/courts";
+import { courtLabel } from "@/lib/court-label";
 import type { Database } from "@/types/supabase";
 
 type CourtStatus = Database["public"]["Enums"]["court_status"];
@@ -80,7 +81,7 @@ export function CourtPanel({
               className="flex flex-col gap-2 rounded-md border p-3 sm:flex-row sm:items-center sm:justify-between"
             >
               <div className="flex items-center gap-2">
-                <span className="text-sm font-medium">Court {court.courtNumber}</span>
+                <span className="text-sm font-medium">{courtLabel(court.courtNumber)}</span>
                 <Badge variant={STATUS_VARIANT[court.status]}>{STATUS_LABEL[court.status]}</Badge>
               </div>
               <div className="grid grid-cols-3 gap-2 sm:flex sm:w-auto">

@@ -1,5 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
+import createMiddleware from "next-intl/middleware";
 import { updateSession } from "@/lib/supabase/middleware";
+import { routing } from "@/i18n/routing";
+
+const handleI18nRouting = createMiddleware(routing);
 
 // Routes in the (app) group. /sessions and /sessions/[id] are public, so this
 // cannot be a plain /sessions prefix.
@@ -20,6 +24,18 @@ export function isProtected(pathname: string): boolean {
   return false;
 }
 
+// Only app/[locale]/(marketing) is localized: "/", "/sessions", "/sessions/[id]"
+// (and their /en counterparts). (app)/(auth)/auth/api share the /sessions
+// prefix with host-only routes ("/sessions/new", "/sessions/[id]/manage"), so
+// this stays a safelist -- a missed exclusion here would let next-intl rewrite
+// a host-only route. Adding a new marketing page requires updating this too.
+function isMarketingPath(pathname: string): boolean {
+  const unprefixed = pathname === "/en" ? "/" : pathname.startsWith("/en/") ? pathname.slice(3) : pathname;
+  if (unprefixed === "/" || unprefixed === "/sessions") return true;
+  const match = /^\/sessions\/([^/]+)$/.exec(unprefixed);
+  return match !== null && match[1] !== "new";
+}
+
 export async function proxy(request: NextRequest) {
   const { response, user } = await updateSession(request);
 
@@ -37,6 +53,13 @@ export async function proxy(request: NextRequest) {
     // starts from a stale session
     for (const cookie of response.cookies.getAll()) redirectResponse.cookies.set(cookie);
     return redirectResponse;
+  }
+
+  if (isMarketingPath(request.nextUrl.pathname)) {
+    const i18nResponse = handleI18nRouting(request);
+    // same reasoning as the redirect branch above: carry refreshed auth cookies
+    for (const cookie of response.cookies.getAll()) i18nResponse.cookies.set(cookie);
+    return i18nResponse;
   }
 
   return response;

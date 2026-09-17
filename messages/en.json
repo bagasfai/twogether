@@ -1,0 +1,66 @@
+{
+  "nav": {
+    "brand": "Jakbar Twogether",
+    "sessions": "Sessions",
+    "dashboard": "Dashboard",
+    "login": "Log in"
+  },
+  "footer": {
+    "tagline": "Badminton, run properly.",
+    "copyright": "© {year}"
+  },
+  "home": {
+    "kicker": "West Jakarta · badminton community",
+    "title": "Court time, sorted before you show up.",
+    "subtitle": "Registration, waitlist, check-in, and rotation for Jakbar Twogether sessions — no more counting names in a WhatsApp thread.",
+    "ctaBrowse": "See upcoming sessions",
+    "ctaJoin": "Join the community",
+    "runningTitle": "What’s running",
+    "runningBody": "Every session — open registration, waitlist status, courts — lives on one page.",
+    "runningLink": "Browse upcoming sessions →"
+  },
+  "sessionsList": {
+    "title": "Upcoming sessions",
+    "subtitle": "Open registration, waitlist status, and courts — all in one place.",
+    "empty": "No sessions scheduled right now.",
+    "hostedTitle": "Sessions you’re hosting",
+    "metaTitle": "Upcoming sessions — Jakbar Twogether",
+    "metaDescription": "Badminton sessions open for registration in West Jakarta."
+  },
+  "sessionCard": {
+    "meta": "{spots} spots · {waitlist} waitlist · {courts} courts"
+  },
+  "badge": {
+    "open": "Registration open",
+    "closed": "Registration closed"
+  },
+  "sessionDetail": {
+    "courts": "Courts",
+    "capacity": "Capacity",
+    "waitlist": "Waitlist",
+    "notFound": "Session not found"
+  },
+  "register": {
+    "loginToRegister": "Log in to register",
+    "confirmed": "Confirmed",
+    "waitlistPosition": "Waitlist #{position}",
+    "cancel": "Cancel registration",
+    "registrationClosed": "Registration is not open for this session.",
+    "register": "Register",
+    "toastRegistered": "You are in.",
+    "toastWaitlisted": "Added to the waitlist at #{position}.",
+    "toastCancelled": "Registration cancelled"
+  },
+  "participants": {
+    "loginToView": "Log in to see who's registered.",
+    "empty": "Nobody has registered yet.",
+    "registered": "Registered",
+    "confirmedBadge": "Confirmed",
+    "waitlistBadge": "Waitlist",
+    "unnamed": "Unnamed player"
+  },
+  "languageSwitcher": {
+    "id": "ID",
+    "en": "EN"
+  }
+}

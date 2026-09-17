@@ -62,6 +62,17 @@ export async function createSession(input: SessionInput): Promise<ActionResult<{
     return fail("unknown", "Could not create the session.");
   }
 
+  // Best-effort: the sessions_add_owner trigger has already written the
+  // session_hosts row by the time this runs, so the host can insert courts.
+  // A failure here isn't fatal -- the host still has the manual "Add court"
+  // control on the manage page (see lib/actions/courts.ts) as the override.
+  await supabase.from("courts").insert(
+    Array.from({ length: values.courtCount }, (_, i) => ({
+      session_id: data.id,
+      court_number: i + 1,
+    })),
+  );
+
   revalidatePath("/dashboard");
   revalidatePath("/sessions");
   return ok({ id: data.id });

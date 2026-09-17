@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { getPublicSession } from "@/lib/dal/public-sessions";
 import { RegisterPanel } from "@/components/sessions/register-panel";
 import { RegisteredParticipants } from "@/components/sessions/registered-participants";
@@ -15,10 +16,12 @@ export async function generateStaticParams() {
   return [];
 }
 
-export async function generateMetadata({ params }: PageProps<"/sessions/[id]">): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: PageProps<"/[locale]/sessions/[id]">): Promise<Metadata> {
   const { id } = await params;
-  const session = await getPublicSession(id);
-  if (!session) return { title: "Session not found" };
+  const [session, t] = await Promise.all([getPublicSession(id), getTranslations("sessionDetail")]);
+  if (!session) return { title: t("notFound") };
 
   const description = `${new Date(session.startsAt).toLocaleString()} · ${session.location}`;
 
@@ -30,9 +33,11 @@ export async function generateMetadata({ params }: PageProps<"/sessions/[id]">):
   };
 }
 
-export default async function SessionDetailPage({ params }: PageProps<"/sessions/[id]">) {
+export default async function SessionDetailPage({
+  params,
+}: PageProps<"/[locale]/sessions/[id]">) {
   const { id } = await params;
-  const session = await getPublicSession(id);
+  const [session, t] = await Promise.all([getPublicSession(id), getTranslations("sessionDetail")]);
   if (!session) notFound();
 
   return (
@@ -62,15 +67,15 @@ export default async function SessionDetailPage({ params }: PageProps<"/sessions
 
       <dl className="grid grid-cols-3 gap-4 rounded-xl border bg-card p-4 text-sm">
         <div className="flex flex-col gap-1">
-          <dt className="text-muted-foreground">Courts</dt>
+          <dt className="text-muted-foreground">{t("courts")}</dt>
           <dd className="font-mono text-lg tabular-nums">{session.courtCount}</dd>
         </div>
         <div className="flex flex-col gap-1">
-          <dt className="text-muted-foreground">Capacity</dt>
+          <dt className="text-muted-foreground">{t("capacity")}</dt>
           <dd className="font-mono text-lg tabular-nums">{session.maxParticipants}</dd>
         </div>
         <div className="flex flex-col gap-1">
-          <dt className="text-muted-foreground">Waitlist</dt>
+          <dt className="text-muted-foreground">{t("waitlist")}</dt>
           <dd className="font-mono text-lg tabular-nums">{session.waitlistCapacity}</dd>
         </div>
       </dl>

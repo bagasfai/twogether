@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import type { PublicRosterEntry } from "@/lib/dal/participants";
 import type { Database } from "@/types/supabase";
@@ -38,6 +39,7 @@ type State =
   | { kind: "ready"; entries: PublicRosterEntry[] };
 
 export function RegisteredParticipants({ sessionId }: { sessionId: string }) {
+  const t = useTranslations("participants");
   const [state, setState] = useState<State>({ kind: "loading" });
 
   useEffect(() => {
@@ -71,11 +73,11 @@ export function RegisteredParticipants({ sessionId }: { sessionId: string }) {
   }
 
   if (state.kind === "anonymous") {
-    return <p className="text-sm text-muted-foreground">Log in to see who&apos;s registered.</p>;
+    return <p className="text-sm text-muted-foreground">{t("loginToView")}</p>;
   }
 
   if (state.entries.length === 0) {
-    return <p className="text-sm text-muted-foreground">Nobody has registered yet.</p>;
+    return <p className="text-sm text-muted-foreground">{t("empty")}</p>;
   }
 
   const confirmed = state.entries.filter((entry) => entry.status === "confirmed");
@@ -84,19 +86,19 @@ export function RegisteredParticipants({ sessionId }: { sessionId: string }) {
   return (
     <div className="flex flex-col gap-3">
       <h2 className="text-sm font-medium">
-        Registered <span className="font-mono tabular-nums text-muted-foreground">({confirmed.length})</span>
+        {t("registered")} <span className="font-mono tabular-nums text-muted-foreground">({confirmed.length})</span>
       </h2>
       <ul className="flex flex-col gap-2">
         {confirmed.map((entry, index) => (
           <li key={index} className="flex items-center justify-between rounded-lg border p-3">
-            <span className="text-sm font-medium">{entry.fullName ?? "Unnamed player"}</span>
-            <Badge variant="success">Confirmed</Badge>
+            <span className="text-sm font-medium">{entry.fullName ?? t("unnamed")}</span>
+            <Badge variant="success">{t("confirmedBadge")}</Badge>
           </li>
         ))}
         {waitlisted.map((entry, index) => (
           <li key={confirmed.length + index} className="flex items-center justify-between rounded-lg border p-3">
-            <span className="text-sm font-medium">{entry.fullName ?? "Unnamed player"}</span>
-            <Badge variant="warning">Waitlist</Badge>
+            <span className="text-sm font-medium">{entry.fullName ?? t("unnamed")}</span>
+            <Badge variant="warning">{t("waitlistBadge")}</Badge>
           </li>
         ))}
       </ul>

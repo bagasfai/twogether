@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { DateTimePicker } from "@/components/sessions/datetime-picker";
 import { createSession } from "@/lib/actions/sessions";
 import { sessionSchema, type SessionInput } from "@/lib/validation/session";
 import { applyFieldErrors } from "@/lib/forms/apply-field-errors";
@@ -104,7 +105,7 @@ export function SessionForm() {
               )}
             />
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <FormField
                 control={form.control}
                 name="startsAt"
@@ -112,7 +113,7 @@ export function SessionForm() {
                   <FormItem>
                     <FormLabel>Starts</FormLabel>
                     <FormControl>
-                      <Input type="datetime-local" {...field} />
+                      <DateTimePicker value={field.value} onChange={field.onChange} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -125,7 +126,7 @@ export function SessionForm() {
                   <FormItem>
                     <FormLabel>Ends</FormLabel>
                     <FormControl>
-                      <Input type="datetime-local" {...field} />
+                      <DateTimePicker value={field.value} onChange={field.onChange} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -236,9 +237,6 @@ export function SessionForm() {
                         <option value="scheduled">Scheduled</option>
                       </select>
                     </FormControl>
-                    <FormDescription>
-                      Draft sessions are visible only to you. Scheduled sessions appear publicly.
-                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -248,9 +246,13 @@ export function SessionForm() {
             {form.formState.errors.root ? (
               <p className="text-sm text-destructive">{form.formState.errors.root.message}</p>
             ) : null}
+
+            <FormDescription>
+              Status: Draft is visible only to you. Scheduled appears publicly.
+            </FormDescription>
           </CardContent>
           <CardFooter>
-            <Button type="submit" disabled={pending}>
+            <Button type="submit" disabled={pending} className="w-full">
               {pending ? "Creating…" : "Create session"}
             </Button>
           </CardFooter>
