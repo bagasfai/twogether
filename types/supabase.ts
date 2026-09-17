@@ -298,12 +298,16 @@ export type Database = {
           checked_in_at: string | null
           consented_at: string | null
           created_at: string
+          guest_name: string | null
+          guest_phone: string | null
           id: string
+          paid_at: string | null
           registered_at: string
+          registered_by: string | null
           session_id: string
           status: Database["public"]["Enums"]["participant_status"]
           updated_at: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           added_by?: string | null
@@ -311,12 +315,16 @@ export type Database = {
           checked_in_at?: string | null
           consented_at?: string | null
           created_at?: string
+          guest_name?: string | null
+          guest_phone?: string | null
           id?: string
+          paid_at?: string | null
           registered_at?: string
+          registered_by?: string | null
           session_id: string
           status: Database["public"]["Enums"]["participant_status"]
           updated_at?: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           added_by?: string | null
@@ -324,17 +332,28 @@ export type Database = {
           checked_in_at?: string | null
           consented_at?: string | null
           created_at?: string
+          guest_name?: string | null
+          guest_phone?: string | null
           id?: string
+          paid_at?: string | null
           registered_at?: string
+          registered_by?: string | null
           session_id?: string
           status?: Database["public"]["Enums"]["participant_status"]
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: [
           {
             foreignKeyName: "participants_added_by_fkey"
             columns: ["added_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "participants_registered_by_fkey"
+            columns: ["registered_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -458,6 +477,7 @@ export type Database = {
           location: string
           location_url: string | null
           max_participants: number
+          price: number | null
           registration_state: Database["public"]["Enums"]["registration_state"]
           starts_at: string
           status: Database["public"]["Enums"]["session_status"]
@@ -475,6 +495,7 @@ export type Database = {
           location: string
           location_url?: string | null
           max_participants: number
+          price?: number | null
           registration_state?: Database["public"]["Enums"]["registration_state"]
           starts_at: string
           status?: Database["public"]["Enums"]["session_status"]
@@ -492,6 +513,7 @@ export type Database = {
           location?: string
           location_url?: string | null
           max_participants?: number
+          price?: number | null
           registration_state?: Database["public"]["Enums"]["registration_state"]
           starts_at?: string
           status?: Database["public"]["Enums"]["session_status"]
@@ -514,6 +536,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cancel_guest_registration: {
+        Args: { p_participant_id: string }
+        Returns: undefined
+      }
       cancel_registration: {
         Args: { p_session_id: string }
         Returns: undefined
@@ -579,12 +605,16 @@ export type Database = {
           checked_in_at: string | null
           consented_at: string | null
           created_at: string
+          guest_name: string | null
+          guest_phone: string | null
           id: string
+          paid_at: string | null
           registered_at: string
+          registered_by: string | null
           session_id: string
           status: Database["public"]["Enums"]["participant_status"]
           updated_at: string
-          user_id: string
+          user_id: string | null
         }
         SetofOptions: {
           from: "*"
@@ -604,12 +634,16 @@ export type Database = {
           checked_in_at: string | null
           consented_at: string | null
           created_at: string
+          guest_name: string | null
+          guest_phone: string | null
           id: string
+          paid_at: string | null
           registered_at: string
+          registered_by: string | null
           session_id: string
           status: Database["public"]["Enums"]["participant_status"]
           updated_at: string
-          user_id: string
+          user_id: string | null
         }
         SetofOptions: {
           from: "*"
@@ -629,12 +663,16 @@ export type Database = {
           checked_in_at: string | null
           consented_at: string | null
           created_at: string
+          guest_name: string | null
+          guest_phone: string | null
           id: string
+          paid_at: string | null
           registered_at: string
+          registered_by: string | null
           session_id: string
           status: Database["public"]["Enums"]["participant_status"]
           updated_at: string
-          user_id: string
+          user_id: string | null
         }
         SetofOptions: {
           from: "*"
@@ -645,6 +683,20 @@ export type Database = {
       }
       register_for_session: {
         Args: { p_session_id: string }
+        Returns: Database["public"]["CompositeTypes"]["registration_result"]
+        SetofOptions: {
+          from: "*"
+          to: "registration_result"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      register_guest_for_session: {
+        Args: {
+          p_guest_name: string
+          p_guest_phone?: string
+          p_session_id: string
+        }
         Returns: Database["public"]["CompositeTypes"]["registration_result"]
         SetofOptions: {
           from: "*"
