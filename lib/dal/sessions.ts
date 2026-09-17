@@ -9,28 +9,34 @@ export type SessionStatus = Database["public"]["Enums"]["session_status"];
 export type HostedSession = {
   id: string;
   title: string;
+  description: string | null;
   startsAt: string;
   endsAt: string;
   location: string;
+  locationUrl: string | null;
   maxParticipants: number;
   waitlistCapacity: number;
   courtCount: number;
+  price: number | null;
   status: SessionStatus;
   registrationState: "closed" | "open";
 };
 
 const COLUMNS =
-  "id, title, starts_at, ends_at, location, max_participants, waitlist_capacity, court_count, status, registration_state";
+  "id, title, description, starts_at, ends_at, location, location_url, max_participants, waitlist_capacity, court_count, price, status, registration_state";
 
 type Row = {
   id: string;
   title: string;
+  description: string | null;
   starts_at: string;
   ends_at: string;
   location: string;
+  location_url: string | null;
   max_participants: number;
   waitlist_capacity: number;
   court_count: number;
+  price: number | null;
   status: SessionStatus;
   registration_state: "closed" | "open";
 };
@@ -39,12 +45,15 @@ function toHostedSession(row: Row): HostedSession {
   return {
     id: row.id,
     title: row.title,
+    description: row.description,
     startsAt: row.starts_at,
     endsAt: row.ends_at,
     location: row.location,
+    locationUrl: row.location_url,
     maxParticipants: row.max_participants,
     waitlistCapacity: row.waitlist_capacity,
     courtCount: row.court_count,
+    price: row.price,
     status: row.status,
     registrationState: row.registration_state,
   };

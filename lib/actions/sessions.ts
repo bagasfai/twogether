@@ -46,6 +46,7 @@ export async function createSession(input: SessionInput): Promise<ActionResult<{
       ends_at: values.endsAt,
       location: values.location,
       location_url: values.locationUrl,
+      price: values.price,
       court_count: values.courtCount,
       max_participants: values.maxParticipants,
       waitlist_capacity: values.waitlistCapacity,

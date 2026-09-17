@@ -155,6 +155,7 @@ describe("sessionSchema", () => {
     waitlistCapacity: "4",
     registrationState: "open",
     status: "scheduled",
+    price: "",
   };
 
   it("accepts a valid session and coerces the numeric fields", () => {
@@ -232,6 +233,22 @@ describe("sessionSchema", () => {
       endsAt: "2026-10-02T12:00:00.000Z",
     });
     expect(result.success).toBe(false);
+  });
+
+  it("treats a blank price as null", () => {
+    const result = sessionSchema.safeParse(valid);
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data.price).toBeNull();
+  });
+
+  it("coerces a numeric price string", () => {
+    const result = sessionSchema.safeParse({ ...valid, price: "45000" });
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data.price).toBe(45000);
+  });
+
+  it("rejects a negative price", () => {
+    expect(sessionSchema.safeParse({ ...valid, price: "-1" }).success).toBe(false);
   });
 });
 

@@ -16,6 +16,22 @@ const optionalUrl = z
   .union([z.url("Enter a valid URL"), z.literal(""), z.null()])
   .transform((value) => (value === "" || value === null ? null : value));
 
+// Note: a plain `z.coerce.number().or(z.literal("")).or(z.null())` union
+// does NOT work here the way it does for optionalText/optionalUrl above --
+// z.coerce.number() coerces "" to 0 via Number(""), so the numeric branch
+// silently succeeds on "" before the union ever reaches the literal("")
+// arm, turning a blank price into 0 instead of null. Preprocessing "" and
+// null to null *before* coercion runs avoids that trap.
+const optionalPrice = z.preprocess(
+  (value) => (value === "" || value === null || value === undefined ? null : value),
+  z
+    .coerce.number()
+    .int()
+    .min(0, "Cannot be negative")
+    .max(10_000_000, "That can't be right")
+    .nullable(),
+);
+
 export const sessionSchema = z
   .object({
     title: z.string().trim().min(3, "Give the session a title").max(120, "Title is too long"),
@@ -25,6 +41,7 @@ export const sessionSchema = z
     endsAt: z.string().min(1, "Pick an end time"),
     location: z.string().trim().min(3, "Where is it?").max(200, "Location is too long"),
     locationUrl: optionalUrl,
+    price: optionalPrice,
     // mirrors the court_count > 0 CHECK
     courtCount: z.coerce.number().int().min(1, "At least one court").max(20, "That is a lot of courts"),
     // mirrors the max_participants > 0 CHECK
