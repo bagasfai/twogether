@@ -6,7 +6,7 @@ import { AddParticipantDialog } from "@/components/sessions/add-participant-dial
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { setCheckedIn, setParticipantStatus } from "@/lib/actions/participants";
+import { setCheckedIn, setPaid, setParticipantStatus } from "@/lib/actions/participants";
 import { cn } from "@/lib/utils";
 // types/supabase.ts is a plain generated types module (no server-only guard),
 // safe to import for real (not type-only) in a client component. Deriving
@@ -22,6 +22,7 @@ type Entry = {
   status: ParticipantStatus;
   registeredAt: string;
   checkedInAt: string | null;
+  paidAt: string | null;
   addedBy: string | null;
   consentedAt: string | null;
   fullName: string | null;
@@ -56,6 +57,13 @@ export function RosterTable({ sessionId, entries }: { sessionId: string; entries
     startTransition(async () => {
       const result = await setCheckedIn(participantId, sessionId, checkedIn);
       if (result.ok) toast.success(checkedIn ? "Checked in" : "Check-in undone");
+      else toast.error(result.message);
+    });
+
+  const togglePaid = (participantId: string, paid: boolean) =>
+    startTransition(async () => {
+      const result = await setPaid(participantId, sessionId, paid);
+      if (result.ok) toast.success(paid ? "Marked paid" : "Payment undone");
       else toast.error(result.message);
     });
 
@@ -117,6 +125,28 @@ export function RosterTable({ sessionId, entries }: { sessionId: string; entries
                   </Button>
                 )
               ) : null}
+              {entry.status === "confirmed" ? (
+                entry.paidAt ? (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={pending}
+                    className="h-11 flex-1 basis-32"
+                    onClick={() => togglePaid(entry.id, false)}
+                  >
+                    Undo paid
+                  </Button>
+                ) : (
+                  <Button
+                    size="sm"
+                    disabled={pending}
+                    className="h-11 flex-1 basis-32"
+                    onClick={() => togglePaid(entry.id, true)}
+                  >
+                    Mark paid
+                  </Button>
+                )
+              ) : null}
               {entry.status !== "confirmed" ? (
                 <Button
                   size="sm"
@@ -163,6 +193,7 @@ export function RosterTable({ sessionId, entries }: { sessionId: string; entries
             <TableHead>Status</TableHead>
             <TableHead>Registered</TableHead>
             <TableHead>Check-in</TableHead>
+            <TableHead>Paid</TableHead>
             <TableHead className="text-right">Override</TableHead>
           </TableRow>
         </TableHeader>
@@ -187,6 +218,19 @@ export function RosterTable({ sessionId, entries }: { sessionId: string; entries
                 ) : (
                   <Button size="sm" disabled={pending} onClick={() => toggleCheckedIn(entry.id, true)}>
                     Check in
+                  </Button>
+                )}
+              </TableCell>
+              <TableCell>
+                {entry.status !== "confirmed" ? (
+                  <span className="text-sm text-muted-foreground">—</span>
+                ) : entry.paidAt ? (
+                  <Button size="sm" variant="outline" disabled={pending} onClick={() => togglePaid(entry.id, false)}>
+                    Undo paid
+                  </Button>
+                ) : (
+                  <Button size="sm" disabled={pending} onClick={() => togglePaid(entry.id, true)}>
+                    Mark paid
                   </Button>
                 )}
               </TableCell>
