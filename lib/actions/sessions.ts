@@ -3,7 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/dal/user";
-import { sessionSchema, isZonedInstant, type SessionInput } from "@/lib/validation/session";
+import { sessionSchema, sessionIdSchema, isZonedInstant, type SessionInput } from "@/lib/validation/session";
+import { getHostSession } from "@/lib/dal/sessions";
+import { listRoster } from "@/lib/dal/participants";
+import { buildWhatsAppShareText } from "@/lib/format/whatsapp-share";
 import { fail, failFromZod, ok, type ActionResult } from "@/lib/actions/result";
 
 export async function createSession(input: SessionInput): Promise<ActionResult<{ id: string }>> {
@@ -77,4 +80,127 @@ export async function createSession(input: SessionInput): Promise<ActionResult<{
   revalidatePath("/dashboard");
   revalidatePath("/sessions");
   return ok({ id: data.id });
+}
+
+// Same RLS as createSession (sessions_update_host is column-unrestricted),
+// so a plain UPDATE is enough -- no RPC. courtCount is deliberately never
+// written here even though it's part of SessionInput: courts are reconciled
+// through the manage page's add/delete controls (guard_court_delete
+// trigger), and writing court_count here without touching the courts table
+// would desync the two.
+export async function updateSession(id: string, input: SessionInput): Promise<ActionResult<null>> {
+  const idParsed = sessionIdSchema.safeParse({ id });
+  if (!idParsed.success) return fail("validation", "Invalid session id.");
+
+  const parsed = sessionSchema.safeParse(input);
+  if (!parsed.success) return failFromZod(parsed.error);
+
+  const user = await getCurrentUser();
+  if (!user) return fail("not_authenticated");
+
+  const values = parsed.data;
+
+  const zoneless = (["startsAt", "endsAt"] as const).filter((key) => !isZonedInstant(values[key]));
+  if (zoneless.length > 0) {
+    return fail(
+      "validation",
+      "Please pick a start and end time.",
+      Object.fromEntries(zoneless.map((key) => [key, ["Missing time zone"]])),
+    );
+  }
+
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from("sessions")
+    .update({
+      title: values.title,
+      description: values.description,
+      starts_at: values.startsAt,
+      ends_at: values.endsAt,
+      location: values.location,
+      location_url: values.locationUrl,
+      price: values.price,
+      max_participants: values.maxParticipants,
+      waitlist_capacity: values.waitlistCapacity,
+      registration_state: values.registrationState,
+      status: values.status,
+    })
+    .eq("id", idParsed.data.id);
+
+  if (error) {
+    if (error.code === "42501") return fail("not_authorized");
+    return fail("unknown", "Could not update the session.");
+  }
+
+  revalidatePath(`/sessions/${idParsed.data.id}/manage`);
+  revalidatePath("/dashboard");
+  revalidatePath("/sessions");
+  return ok(null);
+}
+
+// A distinct action rather than a value in sessionSchema's status enum
+// (which only offers draft/scheduled -- see that schema's comment) so
+// ending a session stays a deliberate, separately-confirmed action instead
+// of a dropdown option a host could pick by accident while editing the
+// title. sessions_select_public_or_host already excludes 'cancelled' from
+// the public list, so no extra visibility change is needed here.
+export async function cancelSession(id: string): Promise<ActionResult<null>> {
+  const idParsed = sessionIdSchema.safeParse({ id });
+  if (!idParsed.success) return fail("validation", "Invalid session id.");
+
+  const user = await getCurrentUser();
+  if (!user) return fail("not_authenticated");
+
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from("sessions")
+    .update({ status: "cancelled" })
+    .eq("id", idParsed.data.id);
+
+  if (error) {
+    if (error.code === "42501") return fail("not_authorized");
+    return fail("unknown", "Could not cancel the session.");
+  }
+
+  revalidatePath(`/sessions/${idParsed.data.id}/manage`);
+  revalidatePath("/dashboard");
+  revalidatePath("/sessions");
+  return ok(null);
+}
+
+// Read-only. getHostSession already scopes to sessions this caller hosts
+// (see its comment in lib/dal/sessions.ts) -- returning null there means
+// "not a host of this session", surfaced here as not_authorized rather than
+// leaking whether the session exists.
+export async function getSessionShareText(sessionId: string): Promise<ActionResult<{ text: string }>> {
+  const idParsed = sessionIdSchema.safeParse({ id: sessionId });
+  if (!idParsed.success) return fail("validation", "Invalid session id.");
+
+  const user = await getCurrentUser();
+  if (!user) return fail("not_authenticated");
+
+  const session = await getHostSession(idParsed.data.id);
+  if (!session) return fail("not_authorized");
+
+  const roster = await listRoster(idParsed.data.id);
+
+  const text = buildWhatsAppShareText(
+    {
+      title: session.title,
+      startsAt: session.startsAt,
+      endsAt: session.endsAt,
+      location: session.location,
+      courtCount: session.courtCount,
+      price: session.price,
+    },
+    roster.map((entry) => ({
+      fullName: entry.fullName ?? "Unnamed player",
+      status: entry.status,
+      paidAt: entry.paidAt,
+    })),
+  );
+
+  return ok({ text });
 }

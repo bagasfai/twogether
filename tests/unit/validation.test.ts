@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { signInSchema, signUpSchema } from "@/lib/validation/auth";
 import { profileSchema } from "@/lib/validation/profile";
-import { sessionSchema, isZonedInstant } from "@/lib/validation/session";
+import { sessionSchema, sessionIdSchema, isZonedInstant } from "@/lib/validation/session";
 import { setCheckedInSchema, setPaidSchema } from "@/lib/validation/participants";
 import { createCourtSchema, deleteCourtSchema, setCourtStatusSchema } from "@/lib/validation/courts";
 import { createMatchSchema, matchIdSchema } from "@/lib/validation/matches";
@@ -249,6 +249,16 @@ describe("sessionSchema", () => {
 
   it("rejects a negative price", () => {
     expect(sessionSchema.safeParse({ ...valid, price: "-1" }).success).toBe(false);
+  });
+});
+
+describe("sessionIdSchema", () => {
+  it("accepts a valid uuid", () => {
+    expect(sessionIdSchema.safeParse({ id: "11111111-1111-4111-8111-111111111111" }).success).toBe(true);
+  });
+
+  it("rejects a non-uuid", () => {
+    expect(sessionIdSchema.safeParse({ id: "not-a-uuid" }).success).toBe(false);
   });
 });
 

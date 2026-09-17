@@ -61,6 +61,8 @@ export const sessionSchema = z
 
 export type SessionInput = z.infer<typeof sessionSchema>;
 
+export const sessionIdSchema = z.object({ id: z.uuid() });
+
 // A datetime-local input has no zone designator, so a bare value like
 // "2026-10-02T19:00" is ambiguous once it reaches a Server Action: Date
 // parsing there happens in the SERVER process's zone (TZ=UTC on Vercel), not
