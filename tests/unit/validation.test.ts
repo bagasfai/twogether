@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { signInSchema, signUpSchema } from "@/lib/validation/auth";
 import { profileSchema } from "@/lib/validation/profile";
 import { sessionSchema, isZonedInstant } from "@/lib/validation/session";
-import { setCheckedInSchema } from "@/lib/validation/participants";
+import { setCheckedInSchema, setPaidSchema } from "@/lib/validation/participants";
 import { createCourtSchema, deleteCourtSchema, setCourtStatusSchema } from "@/lib/validation/courts";
 import { createMatchSchema, matchIdSchema } from "@/lib/validation/matches";
 
@@ -273,6 +273,26 @@ describe("setCheckedInSchema", () => {
 
   it("rejects a non-boolean checkedIn", () => {
     expect(setCheckedInSchema.safeParse({ ...valid, checkedIn: "true" }).success).toBe(false);
+  });
+});
+
+describe("setPaidSchema", () => {
+  it("accepts a valid payload", () => {
+    const result = setPaidSchema.safeParse({
+      participantId: "3fa85f64-5717-4562-b3fc-2c963f66afa8",
+      sessionId: "3fa85f64-5717-4562-b3fc-2c963f66afa9",
+      paid: true,
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects a non-uuid participantId", () => {
+    const result = setPaidSchema.safeParse({
+      participantId: "not-a-uuid",
+      sessionId: "3fa85f64-5717-4562-b3fc-2c963f66afa9",
+      paid: true,
+    });
+    expect(result.success).toBe(false);
   });
 });
 

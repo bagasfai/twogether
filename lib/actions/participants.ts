@@ -9,6 +9,7 @@ import {
   hostAddParticipantSchema,
   searchMembersSchema,
   setCheckedInSchema,
+  setPaidSchema,
   setParticipantStatusSchema,
 } from "@/lib/validation/participants";
 import type { Database } from "@/types/supabase";
@@ -69,6 +70,33 @@ export async function setCheckedIn(
     .eq("session_id", parsed.data.sessionId);
 
   if (error) return fail("unknown", "Could not update check-in.");
+
+  revalidatePath(`/sessions/${parsed.data.sessionId}/manage`);
+  return ok(null);
+}
+
+// Same reasoning as setCheckedIn immediately above: not a capacity-racing
+// decision, so a direct UPDATE gated by participants_update_host's row scope
+// plus the paid_at column grant (20260917000006) is enough -- no RPC.
+export async function setPaid(
+  participantId: string,
+  sessionId: string,
+  paid: boolean,
+): Promise<ActionResult<null>> {
+  const parsed = setPaidSchema.safeParse({ participantId, sessionId, paid });
+  if (!parsed.success) return failFromZod(parsed.error);
+
+  const user = await getCurrentUser();
+  if (!user) return fail("not_authenticated");
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("participants")
+    .update({ paid_at: parsed.data.paid ? new Date().toISOString() : null })
+    .eq("id", parsed.data.participantId)
+    .eq("session_id", parsed.data.sessionId);
+
+  if (error) return fail("unknown", "Could not update payment status.");
 
   revalidatePath(`/sessions/${parsed.data.sessionId}/manage`);
   return ok(null);

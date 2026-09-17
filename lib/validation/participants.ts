@@ -29,6 +29,14 @@ export const setCheckedInSchema = z.object({
 
 export type SetCheckedInInput = z.infer<typeof setCheckedInSchema>;
 
+export const setPaidSchema = z.object({
+  participantId: z.uuid(),
+  sessionId: z.uuid(),
+  paid: z.boolean(),
+});
+
+export type SetPaidInput = z.infer<typeof setPaidSchema>;
+
 export const hostAddParticipantSchema = z.object({
   sessionId: z.uuid(),
   userId: z.uuid(),
