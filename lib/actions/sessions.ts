@@ -8,6 +8,7 @@ import { getHostSession } from "@/lib/dal/sessions";
 import { listRoster } from "@/lib/dal/participants";
 import { buildWhatsAppShareText } from "@/lib/format/whatsapp-share";
 import { fail, failFromZod, ok, type ActionResult } from "@/lib/actions/result";
+import { sessionUpdatePayload } from "@/lib/actions/session-payload";
 
 export async function createSession(input: SessionInput): Promise<ActionResult<{ id: string }>> {
   const parsed = sessionSchema.safeParse(input);
@@ -83,11 +84,7 @@ export async function createSession(input: SessionInput): Promise<ActionResult<{
 }
 
 // Same RLS as createSession (sessions_update_host is column-unrestricted),
-// so a plain UPDATE is enough -- no RPC. courtCount is deliberately never
-// written here even though it's part of SessionInput: courts are reconciled
-// through the manage page's add/delete controls (guard_court_delete
-// trigger), and writing court_count here without touching the courts table
-// would desync the two.
+// so a plain UPDATE is enough -- no RPC.
 export async function updateSession(id: string, input: SessionInput): Promise<ActionResult<null>> {
   const idParsed = sessionIdSchema.safeParse({ id });
   if (!idParsed.success) return fail("validation", "Invalid session id.");
@@ -109,23 +106,30 @@ export async function updateSession(id: string, input: SessionInput): Promise<Ac
     );
   }
 
+  // The Server Action is a public endpoint: nothing but the UI's canEdit()
+  // gating (session-actions-menu.tsx) otherwise stops a stale form
+  // submission from writing over a session that moved to live/completed/
+  // cancelled since the Edit dialog was opened (e.g. a co-host started it
+  // live while this host still had the form open) -- there is no DB
+  // trigger enforcing valid status transitions on sessions. Re-fetch the
+  // current state and refuse the write if it's no longer editable.
+  // getHostSession also re-scopes to sessions this caller hosts, so a
+  // caller who was never a host of this session gets the same
+  // not_authorized this DAL call already returns to getSessionShareText.
+  const current = await getHostSession(idParsed.data.id);
+  if (!current) return fail("not_authorized");
+  if (current.status !== "draft" && current.status !== "scheduled") {
+    return fail(
+      "validation",
+      "This session can no longer be edited -- its status changed. Reload and try again.",
+    );
+  }
+
   const supabase = await createClient();
 
   const { error } = await supabase
     .from("sessions")
-    .update({
-      title: values.title,
-      description: values.description,
-      starts_at: values.startsAt,
-      ends_at: values.endsAt,
-      location: values.location,
-      location_url: values.locationUrl,
-      price: values.price,
-      max_participants: values.maxParticipants,
-      waitlist_capacity: values.waitlistCapacity,
-      registration_state: values.registrationState,
-      status: values.status,
-    })
+    .update(sessionUpdatePayload(values))
     .eq("id", idParsed.data.id);
 
   if (error) {

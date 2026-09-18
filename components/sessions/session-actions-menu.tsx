@@ -46,18 +46,28 @@ export function SessionActionsMenu({
   const [cancelOpen, setCancelOpen] = useState(false);
   const [pending, startTransition] = useTransition();
 
+  // Uses navigator.clipboard.write with a ClipboardItem whose value is a
+  // Promise<string>, rather than writeText after an awaited
+  // getSessionShareText round-trip. Safari/WebKit only allows
+  // clipboard writes inside the task derived from the user's click gesture
+  // -- awaiting the server call first would let that transient activation
+  // expire before writeText ever ran, silently failing on iOS Safari. The
+  // clipboard API call below happens synchronously (before any await), so
+  // the gesture is still active; only the text itself resolves later.
   const copyShareText = () =>
     startTransition(async () => {
-      const result = await getSessionShareText(session.id);
-      if (!result.ok) {
-        toast.error(result.message);
-        return;
-      }
       try {
-        await navigator.clipboard.writeText(result.data.text);
+        await navigator.clipboard.write([
+          new ClipboardItem({
+            "text/plain": getSessionShareText(session.id).then((result) => {
+              if (!result.ok) throw new Error(result.message);
+              return result.data.text;
+            }),
+          }),
+        ]);
         toast.success("Copied to clipboard");
-      } catch {
-        toast.error("Could not copy to clipboard");
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Could not copy to clipboard");
       }
     });
 
@@ -155,7 +165,9 @@ export function SessionActionsMenu({
           <DialogHeader>
             <DialogTitle>Cancel this session?</DialogTitle>
             <DialogDescription>
-              This cancels the session for everyone registered. This can&apos;t be undone.
+              This cancels the session. Registered players will not be notified automatically
+              &mdash; let them know yourself (e.g. in your WhatsApp group). This can&apos;t be
+              undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
