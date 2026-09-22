@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getCurrentUser } from "@/lib/dal/user";
-import { getMyRegistration } from "@/lib/dal/participants";
+import { getMyRegistration, listMyGuestRegistrations } from "@/lib/dal/participants";
 
 // The session detail page is ISR-cached, so the server rendering it cannot know
 // who is viewing. The register panel asks here after it hydrates. Routing this
@@ -12,16 +12,19 @@ export async function GET(_request: NextRequest, ctx: RouteContext<"/api/session
   const user = await getCurrentUser();
   if (!user) {
     return NextResponse.json(
-      { registration: null },
+      { registration: null, guests: [] },
       // per-user answer: never store it in any shared cache, same as the 200 below
       { status: 401, headers: { "Cache-Control": "private, no-store" } },
     );
   }
 
-  const registration = await getMyRegistration(id);
+  const [registration, guests] = await Promise.all([
+    getMyRegistration(id),
+    listMyGuestRegistrations(id),
+  ]);
 
   return NextResponse.json(
-    { registration },
+    { registration, guests },
     // per-user answer: never store it in any shared cache
     { headers: { "Cache-Control": "private, no-store" } },
   );

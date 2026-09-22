@@ -12,6 +12,7 @@
 //   JB008 session or participant not found
 //   JB009 court not available for a new/starting match
 //   JB010 court has an active match, cannot delete
+//   JB011 guest registration missing a required field
 
 export const RPC_CODE_MAP = {
   JB001: "registration_closed",
@@ -24,9 +25,10 @@ export const RPC_CODE_MAP = {
   JB008: "not_found",
   JB009: "court_not_available",
   JB010: "court_has_active_match",
+  JB011: "validation",
 } as const;
 
-export type RpcErrorCode = (typeof RPC_CODE_MAP)[keyof typeof RPC_CODE_MAP];
+export type RpcErrorCode = Exclude<(typeof RPC_CODE_MAP)[keyof typeof RPC_CODE_MAP], "validation">;
 export type AppErrorCode = RpcErrorCode | "validation" | "unknown";
 
 const MESSAGES: Record<AppErrorCode, string> = {

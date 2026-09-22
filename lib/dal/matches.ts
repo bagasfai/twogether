@@ -34,7 +34,7 @@ export async function listMatches(sessionId: string): Promise<MatchEntry[]> {
     .select(
       `id, court_id, status, started_at, completed_at,
        courts(court_number),
-       match_players(team, participants(id, profiles!participants_user_id_fkey(full_name, avatar_url)))`,
+       match_players(team, participants(id, guest_name, profiles!participants_user_id_fkey(full_name, avatar_url)))`,
     )
     .eq("session_id", sessionId)
     .order("created_at", { ascending: true });
@@ -48,8 +48,8 @@ export async function listMatches(sessionId: string): Promise<MatchEntry[]> {
     for (const mp of row.match_players) {
       const player: MatchPlayer = {
         participantId: mp.participants.id,
-        fullName: mp.participants.profiles.full_name,
-        avatarUrl: mp.participants.profiles.avatar_url,
+        fullName: mp.participants.profiles?.full_name ?? mp.participants.guest_name,
+        avatarUrl: mp.participants.profiles?.avatar_url ?? null,
       };
       (mp.team === 1 ? team1 : team2).push(player);
     }

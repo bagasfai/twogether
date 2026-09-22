@@ -6,10 +6,11 @@ import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { cancelRegistration, registerForSession } from "@/lib/actions/registration";
+import { AddGuestDialog } from "@/components/sessions/add-guest-dialog";
+import { cancelGuestRegistration, cancelRegistration, registerForSession } from "@/lib/actions/registration";
 // Type-only: erased at compile time, so this never pulls the `server-only`
 // guard from lib/dal/participants.ts into the client bundle.
-import type { MyRegistration } from "@/lib/dal/participants";
+import type { MyGuestRegistration, MyRegistration } from "@/lib/dal/participants";
 // types/supabase.ts is a plain generated types module (no server-only guard),
 // safe to import for real (not type-only) in a client component.
 import type { Database } from "@/types/supabase";
@@ -45,16 +46,35 @@ function isMyRegistration(value: unknown): value is MyRegistration {
   );
 }
 
-function isMyRegistrationResponse(value: unknown): value is { registration: MyRegistration | null } {
+function isMyGuestRegistration(value: unknown): value is MyGuestRegistration {
   if (typeof value !== "object" || value === null) return false;
   const row = value as Record<string, unknown>;
-  return row.registration === null || isMyRegistration(row.registration);
+  return (
+    typeof row.id === "string" &&
+    typeof row.guestName === "string" &&
+    typeof row.status === "string" &&
+    (PARTICIPANT_STATUSES as readonly string[]).includes(row.status) &&
+    typeof row.registeredAt === "string" &&
+    (row.waitlistPosition === null || typeof row.waitlistPosition === "number")
+  );
+}
+
+function isMyRegistrationResponse(
+  value: unknown,
+): value is { registration: MyRegistration | null; guests: MyGuestRegistration[] } {
+  if (typeof value !== "object" || value === null) return false;
+  const row = value as Record<string, unknown>;
+  return (
+    (row.registration === null || isMyRegistration(row.registration)) &&
+    Array.isArray(row.guests) &&
+    row.guests.every(isMyGuestRegistration)
+  );
 }
 
 type State =
   | { kind: "loading" }
   | { kind: "anonymous" }
-  | { kind: "ready"; registration: MyRegistration | null };
+  | { kind: "ready"; registration: MyRegistration | null; guests: MyGuestRegistration[] };
 
 export function RegisterPanel({
   sessionId,
@@ -79,13 +99,13 @@ export function RegisterPanel({
         }
         const body: unknown = await response.json();
         if (!isMyRegistrationResponse(body)) {
-          setState({ kind: "ready", registration: null });
+          setState({ kind: "ready", registration: null, guests: [] });
           return;
         }
-        setState({ kind: "ready", registration: body.registration });
+        setState({ kind: "ready", registration: body.registration, guests: body.guests });
       })
       .catch(() => {
-        if (!cancelled) setState({ kind: "ready", registration: null });
+        if (!cancelled) setState({ kind: "ready", registration: null, guests: [] });
       });
 
     return () => {
@@ -108,81 +128,145 @@ export function RegisterPanel({
   }
 
   const registration = state.registration;
+  const guests = state.guests;
+
+  const cancelGuest = (guestId: string) =>
+    startTransition(async () => {
+      const result = await cancelGuestRegistration(guestId, sessionId);
+      if (result.ok) {
+        setState({ ...state, guests: guests.filter((guest) => guest.id !== guestId) });
+        toast.success(t("toastCancelled"));
+      } else {
+        toast.error(result.message);
+      }
+    });
+
+  const guestList =
+    guests.length > 0 ? (
+      <ul className="flex flex-col gap-1.5">
+        {guests.map((guest) => (
+          <li key={guest.id} className="flex items-center gap-2 text-sm">
+            <span className="font-medium">{guest.guestName}</span>
+            {guest.status === "confirmed" ? (
+              <Badge variant="success">{t("confirmed")}</Badge>
+            ) : (
+              <Badge variant="warning" className="font-mono tabular-nums">
+                {t("waitlistPosition", { position: guest.waitlistPosition ?? 0 })}
+              </Badge>
+            )}
+            <Button variant="ghost" size="sm" disabled={pending} onClick={() => cancelGuest(guest.id)}>
+              {t("cancel")}
+            </Button>
+          </li>
+        ))}
+      </ul>
+    ) : null;
+
+  const bringGuest = registrationOpen ? (
+    <AddGuestDialog
+      sessionId={sessionId}
+      onRegistered={() => {
+        fetch(`/api/sessions/${sessionId}/my-registration`)
+          .then((response) => response.json())
+          .then((body: unknown) => {
+            if (isMyRegistrationResponse(body)) {
+              setState({ kind: "ready", registration: body.registration, guests: body.guests });
+            }
+          })
+          .catch(() => {});
+      }}
+    />
+  ) : null;
 
   if (registration) {
     return (
-      <div className="flex items-center gap-3">
-        {registration.status === "confirmed" ? (
-          <Badge variant="success">{t("confirmed")}</Badge>
-        ) : (
-          <Badge variant="warning" className="font-mono tabular-nums">
-            {t("waitlistPosition", { position: registration.waitlistPosition ?? 0 })}
-          </Badge>
-        )}
-        <Button
-          variant="outline"
-          disabled={pending}
-          onClick={() =>
-            startTransition(async () => {
-              const result = await cancelRegistration(sessionId);
-              if (result.ok) {
-                setState({ kind: "ready", registration: null });
-                toast.success(t("toastCancelled"));
-              } else {
-                toast.error(result.message);
-              }
-            })
-          }
-        >
-          {t("cancel")}
-        </Button>
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center gap-3">
+          {registration.status === "confirmed" ? (
+            <Badge variant="success">{t("confirmed")}</Badge>
+          ) : (
+            <Badge variant="warning" className="font-mono tabular-nums">
+              {t("waitlistPosition", { position: registration.waitlistPosition ?? 0 })}
+            </Badge>
+          )}
+          <Button
+            variant="outline"
+            disabled={pending}
+            onClick={() =>
+              startTransition(async () => {
+                const result = await cancelRegistration(sessionId);
+                if (result.ok) {
+                  setState({ ...state, registration: null });
+                  toast.success(t("toastCancelled"));
+                } else {
+                  toast.error(result.message);
+                }
+              })
+            }
+          >
+            {t("cancel")}
+          </Button>
+          {bringGuest}
+        </div>
+        {guestList}
       </div>
     );
   }
 
   if (!registrationOpen) {
-    return <p className="text-sm text-muted-foreground">{t("registrationClosed")}</p>;
+    return (
+      <div className="flex flex-col gap-3">
+        <p className="text-sm text-muted-foreground">{t("registrationClosed")}</p>
+        {guestList}
+      </div>
+    );
   }
 
   return (
-    <Button
-      disabled={pending}
-      onClick={() =>
-        startTransition(async () => {
-          const result = await registerForSession(sessionId);
+    <div className="flex flex-col gap-3">
+      <div className="flex items-center gap-3">
+        <Button
+          disabled={pending}
+          onClick={() =>
+            startTransition(async () => {
+              const result = await registerForSession(sessionId);
 
-          if (result.ok) {
-            // the RPC already told us the outcome -- no refetch needed
-            setState({
-              kind: "ready",
-              registration: {
-                id: "pending",
-                status: result.data.status,
-                registeredAt: new Date().toISOString(),
-                waitlistPosition: result.data.waitlistPosition,
-                // self-registration is consent by construction -- see
-                // member_confirm_participation in the participant-consent migration
-                needsConfirmation: false,
-              },
-            });
-            toast.success(
-              result.data.status === "confirmed"
-                ? t("toastRegistered")
-                : t("toastWaitlisted", { position: result.data.waitlistPosition ?? 0 }),
-            );
-            return;
+              if (result.ok) {
+                // the RPC already told us the outcome -- no refetch needed
+                setState({
+                  ...state,
+                  registration: {
+                    id: "pending",
+                    status: result.data.status,
+                    registeredAt: new Date().toISOString(),
+                    waitlistPosition: result.data.waitlistPosition,
+                    // self-registration is consent by construction -- see
+                    // member_confirm_participation in the participant-consent migration
+                    needsConfirmation: false,
+                  },
+                });
+                toast.success(
+                  result.data.status === "confirmed"
+                    ? t("toastRegistered")
+                    : t("toastWaitlisted", { position: result.data.waitlistPosition ?? 0 }),
+                );
+                return;
+              }
+
+              if (result.code === "not_authenticated") {
+                window.location.href = `/login?next=${encodeURIComponent(`/sessions/${sessionId}`)}`;
+                return;
+              }
+
+              toast.error(result.message);
+            })
           }
-
-          if (result.code === "not_authenticated") {
-            window.location.href = `/login?next=${encodeURIComponent(`/sessions/${sessionId}`)}`;
-            return;
-          }
-
-          toast.error(result.message);
-        })
-      }
-    >
-      {t("register")}
-    </Button>
+        >
+          {t("register")}
+        </Button>
+        {bringGuest}
+      </div>
+      {guestList}
+    </div>
   );
 }

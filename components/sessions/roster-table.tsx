@@ -26,6 +26,7 @@ type Entry = {
   addedBy: string | null;
   consentedAt: string | null;
   fullName: string | null;
+  isGuest: boolean;
 };
 
 function StatusBadge({ status }: { status: ParticipantStatus }) {
@@ -41,6 +42,13 @@ function StatusBadge({ status }: { status: ParticipantStatus }) {
 function ConsentBadge({ addedBy, consentedAt }: { addedBy: string | null; consentedAt: string | null }) {
   if (addedBy === null || consentedAt !== null) return null;
   return <Badge variant="outline">Awaiting their confirmation</Badge>;
+}
+
+// Guests are brought by a member and have no account -- see
+// register_guest_for_session in the guest-participants migration.
+function GuestBadge({ isGuest }: { isGuest: boolean }) {
+  if (!isGuest) return null;
+  return <Badge variant="outline">Guest</Badge>;
 }
 
 export function RosterTable({ sessionId, entries }: { sessionId: string; entries: Entry[] }) {
@@ -94,6 +102,7 @@ export function RosterTable({ sessionId, entries }: { sessionId: string; entries
             <div className="flex items-start justify-between gap-2">
               <span className="text-sm font-medium">{entry.fullName ?? "Unnamed player"}</span>
               <div className="flex items-center gap-1.5">
+                <GuestBadge isGuest={entry.isGuest} />
                 <ConsentBadge addedBy={entry.addedBy} consentedAt={entry.consentedAt} />
                 <StatusBadge status={entry.status} />
               </div>
@@ -204,6 +213,7 @@ export function RosterTable({ sessionId, entries }: { sessionId: string; entries
               <TableCell>
                 <div className="flex items-center gap-1.5">
                   <StatusBadge status={entry.status} />
+                  <GuestBadge isGuest={entry.isGuest} />
                   <ConsentBadge addedBy={entry.addedBy} consentedAt={entry.consentedAt} />
                 </div>
               </TableCell>

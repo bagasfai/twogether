@@ -25,9 +25,20 @@ export type MyRegistrationRow = MyRegistration & {
   location: string;
 };
 
+// A guest a member brought along has no account, so there's no row of its
+// own to compare against MyRegistration -- it's keyed by participant id
+// rather than being "the" registration, since one member can bring several.
+export type MyGuestRegistration = {
+  id: string;
+  guestName: string;
+  status: ParticipantStatus;
+  registeredAt: string;
+  waitlistPosition: number | null;
+};
+
 export type RosterEntry = {
   id: string;
-  userId: string;
+  userId: string | null;
   status: ParticipantStatus;
   registeredAt: string;
   checkedInAt: string | null;
@@ -36,6 +47,9 @@ export type RosterEntry = {
   consentedAt: string | null;
   fullName: string | null;
   avatarUrl: string | null;
+  /** true when this row is a guest brought by a member, not their own account */
+  isGuest: boolean;
+  guestPhone: string | null;
 };
 
 export type AddableMember = {
@@ -97,6 +111,40 @@ export async function getMyRegistration(
   };
 }
 
+export async function listMyGuestRegistrations(
+  sessionId: string,
+): Promise<MyGuestRegistration[]> {
+  const user = await getCurrentUser();
+  if (!user) return [];
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("participants")
+    .select("id, guest_name, status, registered_at")
+    .eq("session_id", sessionId)
+    .eq("registered_by", user.id)
+    .not("guest_name", "is", null)
+    .neq("status", "cancelled")
+    .order("registered_at", { ascending: true });
+
+  if (error) throw error;
+
+  return Promise.all(
+    (data ?? []).map(async (row) => ({
+      id: row.id,
+      // not-null by the participants_member_xor_guest check + the query
+      // filter above, but the generated column type is still `string | null`
+      guestName: row.guest_name as string,
+      status: row.status,
+      registeredAt: row.registered_at,
+      waitlistPosition:
+        row.status === "waiting_list"
+          ? await waitlistPosition(supabase, sessionId, row.registered_at)
+          : null,
+    })),
+  );
+}
+
 export async function listMyUpcomingRegistrations(): Promise<
   MyRegistrationRow[]
 > {
@@ -148,7 +196,7 @@ export async function listRoster(sessionId: string): Promise<RosterEntry[]> {
   const { data, error } = await supabase
     .from("participants")
     .select(
-      "id, user_id, status, registered_at, checked_in_at, paid_at, added_by, consented_at, profiles!participants_user_id_fkey(full_name, avatar_url)",
+      "id, user_id, status, registered_at, checked_in_at, paid_at, added_by, consented_at, guest_name, guest_phone, profiles!participants_user_id_fkey(full_name, avatar_url)",
     )
     .eq("session_id", sessionId)
     .order("registered_at", { ascending: true });
@@ -164,8 +212,10 @@ export async function listRoster(sessionId: string): Promise<RosterEntry[]> {
     paidAt: row.paid_at,
     addedBy: row.added_by,
     consentedAt: row.consented_at,
-    fullName: row.profiles.full_name,
-    avatarUrl: row.profiles.avatar_url,
+    fullName: row.profiles?.full_name ?? row.guest_name,
+    avatarUrl: row.profiles?.avatar_url ?? null,
+    isGuest: row.guest_name !== null,
+    guestPhone: row.guest_phone,
   }));
 }
 
@@ -180,7 +230,7 @@ export async function listPublicRoster(
   const { data, error } = await supabase
     .from("participants")
     .select(
-      "status, registered_at, profiles!participants_user_id_fkey(full_name)",
+      "status, registered_at, guest_name, profiles!participants_user_id_fkey(full_name)",
     )
     .eq("session_id", sessionId)
     .neq("status", "cancelled")
@@ -191,7 +241,7 @@ export async function listPublicRoster(
   return (data ?? []).map((row) => ({
     status: row.status,
     registeredAt: row.registered_at,
-    fullName: row.profiles.full_name,
+    fullName: row.profiles?.full_name ?? row.guest_name,
   }));
 }
 

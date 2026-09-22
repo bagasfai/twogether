@@ -24,7 +24,7 @@ export async function getRotationQueue(sessionId: string): Promise<RotationEntry
   const [rosterResult, lastPlayedResult, busyResult] = await Promise.all([
     supabase
       .from("participants")
-      .select("id, checked_in_at, profiles!participants_user_id_fkey(full_name, avatar_url)")
+      .select("id, checked_in_at, guest_name, profiles!participants_user_id_fkey(full_name, avatar_url)")
       .eq("session_id", sessionId)
       .eq("status", "confirmed")
       .not("checked_in_at", "is", null),
@@ -59,8 +59,8 @@ export async function getRotationQueue(sessionId: string): Promise<RotationEntry
     .filter((row) => row.checked_in_at !== null && !busyParticipantIds.has(row.id))
     .map((row) => ({
       participantId: row.id,
-      fullName: row.profiles.full_name,
-      avatarUrl: row.profiles.avatar_url,
+      fullName: row.profiles?.full_name ?? row.guest_name,
+      avatarUrl: row.profiles?.avatar_url ?? null,
       checkedInAt: row.checked_in_at as string,
       lastPlayedAt: lastPlayedByParticipant.get(row.id) ?? null,
     }));

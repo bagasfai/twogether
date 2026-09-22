@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { optionalPhone } from "@/lib/validation/phone";
 import type { Database } from "@/types/supabase";
 
 type ParticipantStatus = Database["public"]["Enums"]["participant_status"];
@@ -53,3 +54,20 @@ export const searchMembersSchema = z.object({
 });
 
 export type SearchMembersInput = z.infer<typeof searchMembersSchema>;
+
+export const registerGuestSchema = z.object({
+  sessionId: z.uuid(),
+  guestName: z.string().trim().min(2, "Enter their name").max(80, "Name is too long"),
+  // A guest's phone is a courtesy the registering member may not have --
+  // unlike a member's own phone (required at signup), this stays optional.
+  guestPhone: optionalPhone,
+});
+
+export type RegisterGuestInput = z.infer<typeof registerGuestSchema>;
+
+export const cancelGuestRegistrationSchema = z.object({
+  participantId: z.uuid(),
+  sessionId: z.uuid(),
+});
+
+export type CancelGuestRegistrationInput = z.infer<typeof cancelGuestRegistrationSchema>;

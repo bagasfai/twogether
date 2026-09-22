@@ -2,7 +2,12 @@ import { describe, expect, it } from "vitest";
 import { signInSchema, signUpSchema } from "@/lib/validation/auth";
 import { profileSchema } from "@/lib/validation/profile";
 import { sessionSchema, sessionIdSchema, isZonedInstant } from "@/lib/validation/session";
-import { setCheckedInSchema, setPaidSchema } from "@/lib/validation/participants";
+import {
+  cancelGuestRegistrationSchema,
+  registerGuestSchema,
+  setCheckedInSchema,
+  setPaidSchema,
+} from "@/lib/validation/participants";
 import { createCourtSchema, deleteCourtSchema, setCourtStatusSchema } from "@/lib/validation/courts";
 import { createMatchSchema, matchIdSchema } from "@/lib/validation/matches";
 
@@ -313,6 +318,57 @@ describe("setPaidSchema", () => {
       paid: true,
     });
     expect(result.success).toBe(false);
+  });
+});
+
+describe("registerGuestSchema", () => {
+  const valid = {
+    sessionId: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+    guestName: "Guest One",
+    guestPhone: "081234567890",
+  };
+
+  it("accepts a valid guest with a phone", () => {
+    expect(registerGuestSchema.safeParse(valid).success).toBe(true);
+  });
+
+  it("treats a blank guest phone as null", () => {
+    const result = registerGuestSchema.safeParse({ ...valid, guestPhone: "" });
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data.guestPhone).toBeNull();
+  });
+
+  it("accepts a null guest phone (idempotent re-parse of an already-transformed value)", () => {
+    const result = registerGuestSchema.safeParse({ ...valid, guestPhone: null });
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data.guestPhone).toBeNull();
+  });
+
+  it("rejects a malformed guest phone", () => {
+    expect(registerGuestSchema.safeParse({ ...valid, guestPhone: "abc" }).success).toBe(false);
+  });
+
+  it("rejects a one-character guest name", () => {
+    expect(registerGuestSchema.safeParse({ ...valid, guestName: "A" }).success).toBe(false);
+  });
+
+  it("rejects a non-uuid sessionId", () => {
+    expect(registerGuestSchema.safeParse({ ...valid, sessionId: "nope" }).success).toBe(false);
+  });
+});
+
+describe("cancelGuestRegistrationSchema", () => {
+  const valid = {
+    participantId: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+    sessionId: "3fa85f64-5717-4562-b3fc-2c963f66afa7",
+  };
+
+  it("accepts a valid payload", () => {
+    expect(cancelGuestRegistrationSchema.safeParse(valid).success).toBe(true);
+  });
+
+  it("rejects a non-uuid participantId", () => {
+    expect(cancelGuestRegistrationSchema.safeParse({ ...valid, participantId: "nope" }).success).toBe(false);
   });
 });
 
