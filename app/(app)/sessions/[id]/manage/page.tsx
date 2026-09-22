@@ -12,6 +12,8 @@ import { ManageTabs } from "@/components/sessions/manage-tabs";
 import { SessionRealtimeWatcher } from "@/components/sessions/session-realtime-watcher";
 import { SessionActionsMenu } from "@/components/sessions/session-actions-menu";
 import { Badge } from "@/components/ui/badge";
+import { listHostAnnouncements } from "@/lib/dal/announcements";
+import { AnnouncementList } from "@/components/sessions/announcement-list";
 
 export default async function ManageSessionPage({ params }: PageProps<"/sessions/[id]/manage">) {
   const { id } = await params;
@@ -27,6 +29,7 @@ export default async function ManageSessionPage({ params }: PageProps<"/sessions
   const courts = await listCourts(id);
   const matches = await listMatches(id);
   const rotationQueue = await getRotationQueue(id);
+  const announcements = await listHostAnnouncements(id);
   const confirmed = roster.filter((entry) => entry.status === "confirmed").length;
   const waiting = roster.filter((entry) => entry.status === "waiting_list").length;
   const checkedIn = roster.filter((entry) => entry.checkedInAt !== null).length;
@@ -69,6 +72,8 @@ export default async function ManageSessionPage({ params }: PageProps<"/sessions
           {session.registrationState}
         </Badge>
       </div>
+
+      <AnnouncementList sessionId={id} announcements={announcements} />
 
       <ManageTabs
         courtCount={courts.length}
