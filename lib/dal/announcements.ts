@@ -130,9 +130,17 @@ export async function listHostAnnouncements(sessionId: string): Promise<Announce
   return (data ?? []).map(toAnnouncementRow);
 }
 
-// The admin page itself already gates with requireAdmin; this follows the
-// DAL convention of every function checking auth at the source rather than
-// trusting the caller (see listRoster's comment on the same convention).
+// Despite the name, this function does not itself verify the caller is an
+// admin -- it only checks getCurrentUser() (i.e. "is logged in"), following
+// the DAL convention of every function checking auth at the source rather
+// than trusting the caller (see listRoster's comment on the same
+// convention). It's safe because it relies on two things outside this
+// function: (a) the only caller, app/(app)/admin/page.tsx, already gates the
+// page with requireAdmin, and (b) RLS bounds the returned rows to
+// `session_id is null` community-wide announcements, the same published set
+// any anonymous visitor could already read via listPublicCommunityAnnouncements
+// above. If this function ever gets a second caller that isn't already
+// admin-gated, it needs a real role check added here.
 export async function listCommunityAnnouncementsForAdmin(): Promise<AnnouncementRow[]> {
   const user = await getCurrentUser();
   if (!user) return [];

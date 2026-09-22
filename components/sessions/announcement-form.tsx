@@ -52,8 +52,16 @@ export function AnnouncementForm({
     });
   };
 
+  const handleOpenChange = (next: boolean) => {
+    setOpen(next);
+    if (next) {
+      setTitle(announcement?.title ?? "");
+      setBody(announcement?.body ?? "");
+    }
+  };
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button size="sm" variant={editing ? "outline" : "default"}>
           {editing ? "Edit" : "Post announcement"}

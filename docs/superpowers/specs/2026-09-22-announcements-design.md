@@ -253,7 +253,7 @@ for "not authorized to see anything here", same convention as
 - `lib/dal/announcements.ts` — new
 - `lib/validation/announcement.ts` — new
 - `lib/actions/announcements.ts` — new
-- `tests/unit/announcement-schema.test.ts` — new
+- `tests/unit/validation.test.ts` — modified (this repo keeps all zod-schema unit tests in one shared file; the plan correctly redirected here instead of creating a new file)
 - `components/sessions/announcement-form.tsx` — new
 - `components/sessions/announcement-list.tsx` — new
 - `app/(app)/sessions/[id]/manage/page.tsx` — add announcements section

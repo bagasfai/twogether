@@ -18,23 +18,6 @@ export default async function DashboardPage() {
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-10">
-      {announcements.length > 0 ? (
-        <section className="flex flex-col gap-3">
-          <h2 className="text-lg font-semibold tracking-tight">Announcements</h2>
-          <div className="flex flex-col gap-3">
-            {announcements.map((announcement) => (
-              <Card key={announcement.id}>
-                <CardHeader>
-                  <CardTitle>{announcement.title}</CardTitle>
-                  <CardDescription>{new Date(announcement.publishedAt).toLocaleString()}</CardDescription>
-                </CardHeader>
-                <CardContent className="whitespace-pre-wrap text-sm">{announcement.body}</CardContent>
-              </Card>
-            ))}
-          </div>
-        </section>
-      ) : null}
-
       <section className="flex flex-col gap-3">
         <h1 className="text-xl font-semibold tracking-tight">Your upcoming sessions</h1>
         {registrations.length === 0 ? (
@@ -74,6 +57,23 @@ export default async function DashboardPage() {
           </div>
         )}
       </section>
+
+      {announcements.length > 0 ? (
+        <section className="flex flex-col gap-3">
+          <h2 className="text-lg font-semibold tracking-tight">Announcements</h2>
+          <div className="flex flex-col gap-3">
+            {announcements.map((announcement) => (
+              <Card key={announcement.id}>
+                <CardHeader>
+                  <CardTitle>{announcement.title}</CardTitle>
+                  <CardDescription>{new Date(announcement.publishedAt).toLocaleString()}</CardDescription>
+                </CardHeader>
+                <CardContent className="whitespace-pre-wrap text-sm">{announcement.body}</CardContent>
+              </Card>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       {hosted.length > 0 ? (
         <section className="flex flex-col gap-3">

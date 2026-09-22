@@ -10,7 +10,11 @@ import {
 } from "@/lib/validation/participants";
 import { createCourtSchema, deleteCourtSchema, setCourtStatusSchema } from "@/lib/validation/courts";
 import { createMatchSchema, matchIdSchema } from "@/lib/validation/matches";
-import { announcementSchema } from "@/lib/validation/announcement";
+import {
+  announcementSchema,
+  createAnnouncementSchema,
+  announcementIdSchema,
+} from "@/lib/validation/announcement";
 
 describe("signUpSchema", () => {
   const valid = {
@@ -553,5 +557,40 @@ describe("announcementSchema", () => {
 
   it("rejects a body over 2000 characters", () => {
     expect(announcementSchema.safeParse({ ...valid, body: "a".repeat(2001) }).success).toBe(false);
+  });
+
+  it("accepts a body of exactly 2000 characters", () => {
+    expect(announcementSchema.safeParse({ ...valid, body: "a".repeat(2000) }).success).toBe(true);
+  });
+});
+
+describe("createAnnouncementSchema", () => {
+  const valid = { title: "Court fees going up", body: "Heads up.", sessionId: "3fa85f64-5717-4562-b3fc-2c963f66afa6" };
+
+  it("accepts a session-scoped announcement with a valid uuid sessionId", () => {
+    expect(createAnnouncementSchema.safeParse(valid).success).toBe(true);
+  });
+
+  it("accepts a community-wide announcement with a null sessionId", () => {
+    expect(createAnnouncementSchema.safeParse({ ...valid, sessionId: null }).success).toBe(true);
+  });
+
+  it("rejects a non-uuid, non-null sessionId", () => {
+    expect(createAnnouncementSchema.safeParse({ ...valid, sessionId: "not-a-uuid" }).success).toBe(false);
+  });
+
+  it("rejects a missing sessionId", () => {
+    const { sessionId, ...withoutSessionId } = valid;
+    expect(createAnnouncementSchema.safeParse(withoutSessionId).success).toBe(false);
+  });
+});
+
+describe("announcementIdSchema", () => {
+  it("accepts a valid uuid", () => {
+    expect(announcementIdSchema.safeParse({ id: "3fa85f64-5717-4562-b3fc-2c963f66afa6" }).success).toBe(true);
+  });
+
+  it("rejects a non-uuid", () => {
+    expect(announcementIdSchema.safeParse({ id: "nope" }).success).toBe(false);
   });
 });

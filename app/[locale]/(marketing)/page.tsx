@@ -4,10 +4,12 @@ import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { listPublicCommunityAnnouncements } from "@/lib/dal/announcements";
 
-// This page previously did no data fetching at all. Matches
-// (marketing)/sessions/page.tsx's existing revalidate value so this page
-// keeps ISR caching instead of becoming fully dynamic now that it reads
-// from the database.
+// This page previously did no data fetching. `revalidate` is set here for
+// when/if this route group stops being forced dynamic (currently
+// (marketing)/layout.tsx's getCurrentUser() call forces every page in this
+// group to render dynamically regardless of this value) -- matches the
+// sibling (marketing)/sessions/page.tsx's value so both are consistent if
+// that ever changes.
 export const revalidate = 60;
 
 export default async function Home() {

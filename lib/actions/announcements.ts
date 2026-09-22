@@ -17,6 +17,7 @@ function revalidateForSession(sessionId: string | null) {
   if (sessionId === null) {
     revalidatePath("/");
     revalidatePath("/dashboard");
+    revalidatePath("/admin");
     return;
   }
   revalidatePath(`/sessions/${sessionId}`);
