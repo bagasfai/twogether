@@ -10,6 +10,7 @@ import {
 } from "@/lib/validation/participants";
 import { createCourtSchema, deleteCourtSchema, setCourtStatusSchema } from "@/lib/validation/courts";
 import { createMatchSchema, matchIdSchema } from "@/lib/validation/matches";
+import { announcementSchema } from "@/lib/validation/announcement";
 
 describe("signUpSchema", () => {
   const valid = {
@@ -515,5 +516,42 @@ describe("isZonedInstant", () => {
 
   it("rejects a bare value that includes seconds but still has no zone", () => {
     expect(isZonedInstant("2026-10-02T19:00:00")).toBe(false);
+  });
+});
+
+describe("announcementSchema", () => {
+  const valid = { title: "Court fees going up", body: "Heads up, rates increase next month." };
+
+  it("accepts a valid announcement", () => {
+    expect(announcementSchema.safeParse(valid).success).toBe(true);
+  });
+
+  it("trims whitespace from title and body", () => {
+    const result = announcementSchema.safeParse({ title: "  Hello  ", body: "  World  " });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.title).toBe("Hello");
+      expect(result.data.body).toBe("World");
+    }
+  });
+
+  it("rejects an empty title", () => {
+    expect(announcementSchema.safeParse({ ...valid, title: "" }).success).toBe(false);
+  });
+
+  it("rejects an empty body", () => {
+    expect(announcementSchema.safeParse({ ...valid, body: "" }).success).toBe(false);
+  });
+
+  it("rejects a title over 200 characters", () => {
+    expect(announcementSchema.safeParse({ ...valid, title: "a".repeat(201) }).success).toBe(false);
+  });
+
+  it("accepts a title of exactly 200 characters", () => {
+    expect(announcementSchema.safeParse({ ...valid, title: "a".repeat(200) }).success).toBe(true);
+  });
+
+  it("rejects a body over 2000 characters", () => {
+    expect(announcementSchema.safeParse({ ...valid, body: "a".repeat(2001) }).success).toBe(false);
   });
 });
