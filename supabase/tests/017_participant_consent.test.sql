@@ -27,6 +27,7 @@ set local role authenticated;
 
 -- self-registration is consent by construction
 set local request.jwt.claims = '{"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"}';
+select public.register_for_session('aaaaaaaa-0000-0000-0000-000000000001');
 select isnt(
   (select consented_at from public.participants
      where session_id = 'aaaaaaaa-0000-0000-0000-000000000001'
