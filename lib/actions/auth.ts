@@ -47,8 +47,9 @@ export async function signUp(input: SignUpInput): Promise<ActionResult<{ needsCo
     email: parsed.data.email,
     password: parsed.data.password,
     options: {
-      // handle_new_user copies full_name out of raw_user_meta_data into profiles
-      data: { full_name: parsed.data.fullName },
+      // handle_new_user copies full_name/phone out of raw_user_meta_data into
+      // profiles/profiles_private
+      data: { full_name: parsed.data.fullName, phone: parsed.data.phone },
       emailRedirectTo: `${siteUrl()}/auth/confirm?next=/dashboard`,
     },
   });

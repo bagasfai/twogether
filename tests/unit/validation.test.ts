@@ -10,8 +10,13 @@ describe("signUpSchema", () => {
   const valid = {
     fullName: "Bagas Kara",
     email: "Bagas@Example.com ",
+    phone: "081234567890",
     password: "supersecret",
   };
+
+  it("rejects a signup with no phone number", () => {
+    expect(signUpSchema.safeParse({ ...valid, phone: "" }).success).toBe(false);
+  });
 
   it("accepts a valid signup and normalises the email", () => {
     const result = signUpSchema.safeParse(valid);
@@ -55,7 +60,12 @@ describe("signInSchema", () => {
 // property is proven uniformly rather than assumed for this schema alone.
 describe("idempotence (parse(parse(x)) === parse(x))", () => {
   it("signUpSchema round-trips", () => {
-    const input = { fullName: "Bagas Kara", email: "Bagas@Example.com ", password: "supersecret" };
+    const input = {
+      fullName: "Bagas Kara",
+      email: "Bagas@Example.com ",
+      phone: "081234567890",
+      password: "supersecret",
+    };
     const once = signUpSchema.parse(input);
     expect(signUpSchema.parse(once)).toEqual(once);
   });
