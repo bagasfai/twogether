@@ -1,5 +1,5 @@
 import NextLink from "next/link";
-import { useTranslations } from "next-intl";
+import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { listPublicCommunityAnnouncements } from "@/lib/dal/announcements";
@@ -11,9 +11,11 @@ import { listPublicCommunityAnnouncements } from "@/lib/dal/announcements";
 export const revalidate = 60;
 
 export default async function Home() {
-  const t = useTranslations("home");
-  const tAnnouncements = useTranslations("announcements");
-  const announcements = await listPublicCommunityAnnouncements();
+  const [t, tAnnouncements, announcements] = await Promise.all([
+    getTranslations("home"),
+    getTranslations("announcements"),
+    listPublicCommunityAnnouncements(),
+  ]);
 
   return (
     <>
