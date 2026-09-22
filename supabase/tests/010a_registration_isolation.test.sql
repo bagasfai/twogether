@@ -62,8 +62,14 @@ insert into public.participants (session_id, user_id, status, registered_at)
 values ('aaaaaaaa-0000-0000-0000-000000000001', '11111111-1111-1111-1111-111111111111',
         'confirmed', clock_timestamp());
 
-set local role authenticated;
-set local request.jwt.claims = '{"sub":"22222222-2222-2222-2222-222222222222","role":"authenticated"}';
+-- Run as postgres, not authenticated: since
+-- 20260917000004_participants_update_column_grant.sql, participants_update_host
+-- is column-restricted to checked_in_at, so a host can no longer issue a
+-- status-changing UPDATE at all -- this fixture only needs *a* direct
+-- status UPDATE to prove promote_from_waitlist's own isolation guard fires,
+-- not that a host specifically can trigger it that way.
+set local role postgres;
+set local request.jwt.claims = '';
 
 select throws_ok(
   $$ update public.participants set status = 'cancelled', cancelled_at = now()

@@ -244,14 +244,24 @@ select lives_ok(
   'host seats the second of two waitlisted participants'
 );
 
--- the host cancels both confirmed participants in a single UPDATE
--- statement; a row-level trigger promotes once per matching row (two
--- promotions), where a statement-level trigger would only promote one
+-- a direct status-changing UPDATE, in a single statement, cancelling both
+-- confirmed participants at once; a row-level trigger promotes once per
+-- matching row (two promotions), where a statement-level trigger would
+-- only promote one. Run as postgres, not authenticated: since
+-- 20260917000004_participants_update_column_grant.sql, participants_update_host
+-- is column-restricted to checked_in_at, so a host can no longer issue this
+-- UPDATE directly (see 012_invariant_fixes.test.sql's F1a for that
+-- assertion) -- this fixture only needs *a* row-level UPDATE to prove the
+-- FOR EACH ROW promotion behavior, not that a host specifically can do it.
+set local role postgres;
+set local request.jwt.claims = '';
 update public.participants
    set status = 'cancelled', cancelled_at = now()
  where session_id = 'aaaaaaaa-0000-0000-0000-000000000004'
    and user_id in ('99999999-9999-9999-9999-999999999999', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb')
    and status = 'confirmed';
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"22222222-2222-2222-2222-222222222222","role":"authenticated"}';
 
 select is(
   (select count(*)::int from public.participants
@@ -375,11 +385,17 @@ select lives_ok(
 -- promoted. In the original fixture (max 2, two cancelled, two waiting)
 -- deleting this guard still promoted exactly 2 by coincidence -- here,
 -- deleting it would incorrectly promote the waitlisted participant too.
+-- Run as postgres, not authenticated -- see the role-switch comment on the
+-- earlier direct UPDATE in this file for why a host can no longer do this.
+set local role postgres;
+set local request.jwt.claims = '';
 update public.participants
    set status = 'cancelled', cancelled_at = now()
  where session_id = 'aaaaaaaa-0000-0000-0000-000000000006'
    and user_id = 'a1a1a1a1-a1a1-a1a1-a1a1-a1a1a1a1a1a1'
    and status = 'confirmed';
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"22222222-2222-2222-2222-222222222222","role":"authenticated"}';
 
 select is(
   (select status::text from public.participants

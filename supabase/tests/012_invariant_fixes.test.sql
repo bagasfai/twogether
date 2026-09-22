@@ -2,7 +2,7 @@
 -- F3+F4 (promotion fires on every way a confirmed slot is freed), and the
 -- re-review fixes (demotion self-reversion; checked_in_at on demotion).
 begin;
-select plan(10);
+select plan(11);
 
 insert into auth.users (id, email) values
   ('22222222-2222-2222-2222-222222222222', 'host@test.local'),
@@ -116,9 +116,28 @@ values
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"22222222-2222-2222-2222-222222222222","role":"authenticated"}';
 
--- F1a: a host's plain UPDATE that cancels a checked-in participant (not one
--- of the RPCs, which is the whole point -- participants_update_host is
--- column- and status-unrestricted) must not leave checked_in_at set.
+-- F1a (superseded by 20260917000004_participants_update_column_grant.sql):
+-- participants_update_host used to be column- and status-unrestricted, so a
+-- host's plain UPDATE could cancel a participant (or rewrite registered_at /
+-- added_by) without going through host_set_participant_status at all. That
+-- grant is now column-restricted to checked_in_at, so the direct-UPDATE
+-- status change this block used to exercise is no longer possible for
+-- `authenticated` -- which is the fix, not a regression. Assert the grant
+-- actually blocks it, then re-run the original scenario as a superuser
+-- (standing in for the service role / an admin script, which the column
+-- grant does not and should not restrict) to prove enforce_checkin_requires_active
+-- still holds as defense-in-depth for any caller that *does* have raw
+-- column access.
+select throws_ok(
+  $$ update public.participants set status = 'cancelled'
+      where id = 'cccccccc-1111-1111-1111-111111111111' $$,
+  '42501',
+  null,
+  'a host can no longer change status via a direct UPDATE -- only checked_in_at is grantable'
+);
+
+reset role;
+
 update public.participants
    set status = 'cancelled'
  where id = 'cccccccc-1111-1111-1111-111111111111';
@@ -127,7 +146,7 @@ select is(
   (select checked_in_at from public.participants
     where id = 'cccccccc-1111-1111-1111-111111111111'),
   null,
-  'a host direct-UPDATE cancellation clears checked_in_at even without the RPC doing it by hand'
+  'a direct-UPDATE cancellation (e.g. via service role) clears checked_in_at even without the RPC doing it by hand'
 );
 
 select is(
@@ -144,8 +163,11 @@ select is(
   (select status::text from public.participants
     where id = 'cccccccc-2222-2222-2222-222222222222'),
   'confirmed',
-  'cancelling via direct host UPDATE still promotes the waitlisted participant'
+  'cancelling via direct UPDATE still promotes the waitlisted participant'
 );
+
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"22222222-2222-2222-2222-222222222222","role":"authenticated"}';
 
 -- F1b: setting checked_in_at on an already-cancelled row must not stick --
 -- the BEFORE trigger fires on UPDATE too, not just on the transition into

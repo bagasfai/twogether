@@ -33,15 +33,39 @@ found by review, triaged, and deliberately left. Verdicts are from the final who
 
 - `sessions.created_by` is `ON DELETE RESTRICT`, so `profiles_delete_admin` hits a bare FK
   error for anyone who ever created a session. Decide: `on delete set null`, or block in UI.
-- Deleting a court under an `in_progress` match nulls `court_id` and leaves the match live.
-- `participants_update_host` is column-unrestricted: a host can rewrite `registered_at`
-  (waitlist order) or `added_by` (the over-capacity audit trail).
+- ~~Deleting a court under an `in_progress` match nulls `court_id` and leaves the match
+  live.~~ **Already resolved** (this doc was stale) by `guard_court_delete`
+  (`20260913000001_match_scheduling.sql`): a `before delete` trigger raises `JB010` if the
+  court has a `scheduled`/`in_progress` match, mapped through `lib/errors/rpc.ts` and
+  `lib/actions/courts.ts`.
+- ~~`participants_update_host` is column-unrestricted: a host can rewrite `registered_at`
+  (waitlist order) or `added_by` (the over-capacity audit trail).~~ **Resolved** by migration
+  `20260917000004_participants_update_column_grant.sql`: `authenticated` now only holds
+  `GRANT UPDATE (checked_in_at)` on `participants` (table-level UPDATE revoked). All status
+  transitions already ran through SECURITY DEFINER RPCs (`host_set_participant_status`,
+  `host_add_participant`, `register_for_session`, `add_guest_participant`,
+  `cancel_registration`, `member_confirm_participation`), which are unaffected since they run
+  with the function owner's privileges — a plain client UPDATE can now only ever touch
+  `checked_in_at`. `supabase/tests/012_invariant_fixes.test.sql`'s F1a was updated to assert
+  the block (`throws_ok` on a direct status UPDATE, sqlstate `42501`) and to re-run its
+  trigger-defense-in-depth scenario as `postgres` instead of `authenticated`, since that
+  vector is now closed for the host role specifically; two other test fixtures
+  (`010_registration.test.sql`, `010a_registration_isolation.test.sql`) that used a direct
+  status-changing UPDATE purely to exercise trigger behavior were switched to run under
+  `postgres` for the same reason.
 - Grant-surface test pins cover the positive half only; a regression re-granting EXECUTE to
   PUBLIC would slip past. (The final review found exactly this class of bug in `is_admin`.)
 - `ARRIVAL_SPREAD_THRESHOLD_MS=50` in the race script is tuned to one machine. Make it an env
   override BEFORE wiring the script into CI, or it will flake and get disabled.
-- A demoted participant keeps their original `registered_at`, so they rejoin the queue ahead
-  of people who have waited longer. Queue-fairness question, not a correctness one.
+- ~~A demoted participant keeps their original `registered_at`, so they rejoin the queue ahead
+  of people who have waited longer.~~ **Resolved** by migration
+  `20260917000003_demotion_queue_fairness.sql`: `host_set_participant_status` now re-stamps
+  `registered_at` to `now()` whenever the transition lands on `waiting_list` from any other
+  status, so a demoted participant re-enters at the back of the real waitlist instead of
+  keeping their original registration time. Covered by
+  `supabase/tests/018_demotion_queue_fairness.test.sql`, which proves both the stamp itself
+  and that it actually changes promotion order (a participant who was waiting before the
+  demotion gets promoted first on the next freed seat).
 
 ## Fine to leave
 
