@@ -145,6 +145,27 @@ export async function listMyGuestRegistrations(
   );
 }
 
+export type MyPastRegistrationRow = {
+  id: string;
+  sessionId: string;
+  status: ParticipantStatus;
+  registeredAt: string;
+  title: string;
+  startsAt: string;
+  location: string;
+};
+
+export type MyPastGuestRegistrationRow = {
+  id: string;
+  sessionId: string;
+  guestName: string;
+  status: ParticipantStatus;
+  registeredAt: string;
+  title: string;
+  startsAt: string;
+  location: string;
+};
+
 export async function listMyUpcomingRegistrations(): Promise<
   MyRegistrationRow[]
 > {
@@ -180,6 +201,81 @@ export async function listMyUpcomingRegistrations(): Promise<
       needsConfirmation: row.added_by !== null && row.consented_at === null,
     })),
   );
+}
+
+// Past-session counterpart to listMyUpcomingRegistrations(). Cancelled rows
+// are excluded, same as the upcoming query -- cancelling means you opted out
+// before the event happened, not something that occurred at the session.
+// waiting_list rows that never got promoted ARE included: that's still real
+// history of an attempt. waitlistPosition/needsConfirmation are dropped from
+// the row shape entirely (not hardcoded null) since both concepts -- queue
+// position, pending confirmation -- are meaningless once the event is over.
+export async function listMyPastRegistrations(): Promise<
+  MyPastRegistrationRow[]
+> {
+  const user = await getCurrentUser();
+  if (!user) return [];
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("participants")
+    .select(
+      "id, session_id, status, registered_at, sessions!inner(title, starts_at, location)",
+    )
+    .eq("user_id", user.id)
+    .neq("status", "cancelled")
+    .lt("sessions.starts_at", new Date().toISOString())
+    .order("starts_at", { ascending: false, referencedTable: "sessions" });
+
+  if (error) throw error;
+
+  return (data ?? []).map((row) => ({
+    id: row.id,
+    sessionId: row.session_id,
+    status: row.status,
+    registeredAt: row.registered_at,
+    title: row.sessions.title,
+    startsAt: row.sessions.starts_at,
+    location: row.sessions.location,
+  }));
+}
+
+// Past-session counterpart to listMyGuestRegistrations(), but across all of
+// the caller's sessions rather than one -- guests you brought are part of
+// your own activity record, same reasoning as including your own waitlisted
+// rows above.
+export async function listMyPastGuestRegistrations(): Promise<
+  MyPastGuestRegistrationRow[]
+> {
+  const user = await getCurrentUser();
+  if (!user) return [];
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("participants")
+    .select(
+      "id, session_id, guest_name, status, registered_at, sessions!inner(title, starts_at, location)",
+    )
+    .eq("registered_by", user.id)
+    .not("guest_name", "is", null)
+    .neq("status", "cancelled")
+    .lt("sessions.starts_at", new Date().toISOString())
+    .order("starts_at", { ascending: false, referencedTable: "sessions" });
+
+  if (error) throw error;
+
+  return (data ?? []).map((row) => ({
+    id: row.id,
+    sessionId: row.session_id,
+    // not-null by the participants_member_xor_guest check + the query
+    // filter above, but the generated column type is still `string | null`
+    guestName: row.guest_name as string,
+    status: row.status,
+    registeredAt: row.registered_at,
+    title: row.sessions.title,
+    startsAt: row.sessions.starts_at,
+    location: row.sessions.location,
+  }));
 }
 
 export async function listRoster(sessionId: string): Promise<RosterEntry[]> {
