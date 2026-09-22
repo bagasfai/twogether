@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { getPublicSession } from "@/lib/dal/public-sessions";
+import { listPublicSessionAnnouncements } from "@/lib/dal/announcements";
 import { RegisterPanel } from "@/components/sessions/register-panel";
 import { RegisteredParticipants } from "@/components/sessions/registered-participants";
 
@@ -37,8 +38,14 @@ export default async function SessionDetailPage({
   params,
 }: PageProps<"/[locale]/sessions/[id]">) {
   const { id } = await params;
-  const [session, t] = await Promise.all([getPublicSession(id), getTranslations("sessionDetail")]);
+  const [session, t, tAnnouncements] = await Promise.all([
+    getPublicSession(id),
+    getTranslations("sessionDetail"),
+    getTranslations("announcements"),
+  ]);
   if (!session) notFound();
+
+  const announcements = await listPublicSessionAnnouncements(id);
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-8 px-6 py-12">
@@ -64,6 +71,20 @@ export default async function SessionDetailPage({
       </header>
 
       {session.description ? <p className="max-w-[65ch] text-base">{session.description}</p> : null}
+
+      {announcements.length > 0 ? (
+        <section className="flex flex-col gap-3">
+          <h2 className="text-sm font-medium text-muted-foreground">{tAnnouncements("title")}</h2>
+          <div className="flex flex-col gap-3">
+            {announcements.map((announcement) => (
+              <div key={announcement.id} className="flex flex-col gap-1 rounded-xl border bg-card p-4">
+                <p className="text-sm font-medium">{announcement.title}</p>
+                <p className="whitespace-pre-wrap text-sm text-muted-foreground">{announcement.body}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       <dl className="grid grid-cols-3 gap-4 rounded-xl border bg-card p-4 text-sm">
         <div className="flex flex-col gap-1">
