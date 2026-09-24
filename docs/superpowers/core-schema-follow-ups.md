@@ -53,8 +53,17 @@ found by review, triaged, and deliberately left. Verdicts are from the final who
   (`010_registration.test.sql`, `010a_registration_isolation.test.sql`) that used a direct
   status-changing UPDATE purely to exercise trigger behavior were switched to run under
   `postgres` for the same reason.
-- Grant-surface test pins cover the positive half only; a regression re-granting EXECUTE to
-  PUBLIC would slip past. (The final review found exactly this class of bug in `is_admin`.)
+- ~~Grant-surface test pins cover the positive half only; a regression re-granting EXECUTE to
+  PUBLIC would slip past. (The final review found exactly this class of bug in `is_admin`.)~~
+  **Resolved** by `supabase/tests/022_grant_surface_negatives.test.sql`: pins the negative half
+  of the grant surface across the match-scheduling and guest-participant RPCs (EXECUTE, never
+  pinned before), the full `participants` column-grant surface (only `status` had a negative
+  check, via `throws_ok` in `012`; the rest of the disallowed columns didn't), and the two
+  `profiles_private` privilege types `013_profiles_private.test.sql` didn't cover (anon UPDATE,
+  anon DELETE). 28 assertions, all catalog-privilege checks (`has_function_privilege` /
+  `has_column_privilege` / `has_table_privilege`) needing no fixtures or role switching. Ran
+  clean against current migrations on first pass — no actual grant regression found, just closed
+  the coverage gap.
 - `ARRIVAL_SPREAD_THRESHOLD_MS=50` in the race script is tuned to one machine. Make it an env
   override BEFORE wiring the script into CI, or it will flake and get disabled.
 - ~~A demoted participant keeps their original `registered_at`, so they rejoin the queue ahead
