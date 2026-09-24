@@ -25,7 +25,7 @@ SESSION_ID="aaaaaaaa-0000-0000-0000-00000000f001"
 # How tight the simultaneous-release barrier must be for the passing run to
 # actually mean something. If this is ever flaky on slower hardware, raise it
 # and say so in the report — do not delete the assertion.
-ARRIVAL_SPREAD_THRESHOLD_MS=50
+ARRIVAL_SPREAD_THRESHOLD_MS="${ARRIVAL_SPREAD_THRESHOLD_MS:-50}"
 
 TMPDIR=$(mktemp -d)
 

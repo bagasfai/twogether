@@ -70,8 +70,15 @@ found by review, triaged, and deliberately left. Verdicts are from the final who
   `has_column_privilege` / `has_table_privilege`) needing no fixtures or role switching. Ran
   clean against current migrations on first pass — no actual grant regression found, just closed
   the coverage gap.
-- `ARRIVAL_SPREAD_THRESHOLD_MS=50` in the race script is tuned to one machine. Make it an env
-  override BEFORE wiring the script into CI, or it will flake and get disabled.
+- ~~`ARRIVAL_SPREAD_THRESHOLD_MS=50` in the race script is tuned to one machine. Make it an env
+  override BEFORE wiring the script into CI, or it will flake and get disabled.~~ **Resolved** by
+  `scripts/test-concurrent-registration.sh` line 28: now `ARRIVAL_SPREAD_THRESHOLD_MS="${ARRIVAL_SPREAD_THRESHOLD_MS:-50}"`,
+  same `${VAR:-default}` idiom the script already used for `DB_URL`. Verified against the local
+  stack: default run passed unchanged (barrier spread 2-3ms, well under 50ms); a
+  `ARRIVAL_SPREAD_THRESHOLD_MS=1` override correctly failed on the barrier-spread assertion
+  specifically ("barrier spread 1ms >= 1ms"), proving the override is actually read; a follow-up
+  default run passed again. No CI workflow exists yet in this repo — this just makes the
+  threshold override-able ahead of that.
 - ~~A demoted participant keeps their original `registered_at`, so they rejoin the queue ahead
   of people who have waited longer.~~ **Resolved** by migration
   `20260917000003_demotion_queue_fairness.sql`: `host_set_participant_status` now re-stamps
