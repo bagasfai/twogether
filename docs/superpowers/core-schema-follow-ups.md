@@ -31,8 +31,14 @@ found by review, triaged, and deliberately left. Verdicts are from the final who
 
 ## Should fix soon
 
-- `sessions.created_by` is `ON DELETE RESTRICT`, so `profiles_delete_admin` hits a bare FK
-  error for anyone who ever created a session. Decide: `on delete set null`, or block in UI.
+- ~~`sessions.created_by` is `ON DELETE RESTRICT`, so `profiles_delete_admin` hits a bare FK
+  error for anyone who ever created a session. Decide: `on delete set null`, or block in UI.~~
+  **Resolved** by migration `20260924000002_session_created_by_set_null.sql`: `created_by` is
+  now nullable with `on delete set null` on the FK — deleting a profile that created a session
+  nulls the pointer instead of blocking. The session row and its history are kept. Covered by
+  `supabase/tests/023_session_created_by_set_null.test.sql`. No application code read
+  `session.created_by` (only wrote it on insert), so the nullability change needed no code
+  changes beyond regenerating `types/supabase.ts`.
 - ~~Deleting a court under an `in_progress` match nulls `court_id` and leaves the match
   live.~~ **Already resolved** (this doc was stale) by `guard_court_delete`
   (`20260913000001_match_scheduling.sql`): a `before delete` trigger raises `JB010` if the

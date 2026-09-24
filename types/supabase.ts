@@ -472,7 +472,7 @@ export type Database = {
         Row: {
           court_count: number
           created_at: string
-          created_by: string
+          created_by: string | null
           description: string | null
           ends_at: string
           id: string
@@ -490,7 +490,7 @@ export type Database = {
         Insert: {
           court_count?: number
           created_at?: string
-          created_by: string
+          created_by?: string | null
           description?: string | null
           ends_at: string
           id?: string
@@ -508,7 +508,7 @@ export type Database = {
         Update: {
           court_count?: number
           created_at?: string
-          created_by?: string
+          created_by?: string | null
           description?: string | null
           ends_at?: string
           id?: string
