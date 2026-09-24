@@ -232,10 +232,6 @@ otp_length = 6
 # Number of seconds before the email OTP expires (defaults to 1 hour).
 otp_expiry = 3600
 
-[auth.email.template.confirmation]
-subject = "Confirm your Jakbar Twogether account"
-content_path = "./supabase/templates/confirmation.html"
-
 # Use a production-ready SMTP server
 # [auth.email.smtp]
 # enabled = true
@@ -287,6 +283,19 @@ max_frequency = "5s"
 # [auth.hook.custom_access_token]
 # enabled = true
 # uri = "pg-functions://<database>/<schema>/<hook_name>"
+
+# Intercepts every auth email (signup confirmation today; see
+# supabase/functions/send-email) and sends it via Resend + React Email
+# instead of Supabase's built-in SMTP templates -- required because
+# auth.email.smtp is unset (no SMTP relay configured).
+[auth.hook.send_email]
+enabled = true
+# The CLI only accepts localhost/127.0.0.1/::1/host.docker.internal for a
+# plain http:// hook uri (validated at `supabase start`) -- the edge-runtime
+# container's own docker-network hostname is rejected even though it
+# resolves and works from inside gotrue's container.
+uri = "http://host.docker.internal:54331/functions/v1/send-email"
+secrets = "env(SEND_EMAIL_HOOK_SECRET)"
 
 # Configure one of the supported SMS providers: `twilio`, `twilio_verify`, `messagebird`, `textlocal`, `vonage`.
 [auth.sms.twilio]
@@ -373,6 +382,12 @@ enabled = false
 authorization_url_path = "/oauth/consent"
 # Allow dynamic client registration
 allow_dynamic_registration = false
+
+[functions.send-email]
+# Called by Supabase Auth itself (see [auth.hook.send_email] below), not by
+# a signed-in user -- there is no Supabase JWT to verify. standardwebhooks
+# signature verification inside the function is the real auth check here.
+verify_jwt = false
 
 [edge_runtime]
 enabled = true

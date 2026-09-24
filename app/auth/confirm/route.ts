@@ -5,11 +5,12 @@ import { createClient } from "@/lib/supabase/server";
 import { safeNext } from "@/lib/auth/redirect";
 
 // The only email-confirmation flow this app issues links for today is
-// signup confirmation, which Supabase's template sends as type=email (see
-// supabase/templates/confirmation.html). Recovery, invite, magic-link and
-// email-change links have no corresponding flow in this app yet -- don't
-// let an attacker-controlled `type` value reach verifyOtp() for those.
-// Widen this list only when a route exists to handle the result.
+// signup confirmation, sent as type=email by the Resend/React Email send-email
+// hook (see supabase/functions/send-email -- it rejects every other
+// email_action_type before a link is ever built). Recovery, invite,
+// magic-link and email-change links have no corresponding flow in this app
+// yet -- don't let an attacker-controlled `type` value reach verifyOtp() for
+// those. Widen this list only when a route exists to handle the result.
 const ALLOWED_OTP_TYPES: readonly EmailOtpType[] = ["email"];
 
 function parseOtpType(value: string | null): EmailOtpType | null {

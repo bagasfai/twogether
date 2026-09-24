@@ -43,3 +43,8 @@ next-env.d.ts
 
 # rtk vitest json report
 .vitest
+
+# agent tooling: resolved skill caches (regenerated from skills-lock.json)
+# and personal/machine-local settings -- not shared project state.
+.agents/
+.claude/
