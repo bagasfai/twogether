@@ -38,6 +38,14 @@ export const setPaidSchema = z.object({
 
 export type SetPaidInput = z.infer<typeof setPaidSchema>;
 
+export const setNoShowSchema = z.object({
+  participantId: z.uuid(),
+  sessionId: z.uuid(),
+  noShow: z.boolean(),
+});
+
+export type SetNoShowInput = z.infer<typeof setNoShowSchema>;
+
 export const hostAddParticipantSchema = z.object({
   sessionId: z.uuid(),
   userId: z.uuid(),

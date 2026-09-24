@@ -9,6 +9,7 @@ import {
   hostAddParticipantSchema,
   searchMembersSchema,
   setCheckedInSchema,
+  setNoShowSchema,
   setPaidSchema,
   setParticipantStatusSchema,
 } from "@/lib/validation/participants";
@@ -97,6 +98,36 @@ export async function setPaid(
     .eq("session_id", parsed.data.sessionId);
 
   if (error) return fail("unknown", "Could not update payment status.");
+
+  revalidatePath(`/sessions/${parsed.data.sessionId}/manage`);
+  return ok(null);
+}
+
+// Same reasoning as setPaid immediately above: not a capacity-racing
+// decision, so a direct UPDATE gated by participants_update_host's row scope
+// plus the no_show_at column grant (20260924000001) is enough -- no RPC.
+// The roster UI only surfaces this once the session is completed, but that's
+// a UI-layer gate, not enforced here -- a host can correct a no-show mark at
+// any time (manual override, rule 3).
+export async function setNoShow(
+  participantId: string,
+  sessionId: string,
+  noShow: boolean,
+): Promise<ActionResult<null>> {
+  const parsed = setNoShowSchema.safeParse({ participantId, sessionId, noShow });
+  if (!parsed.success) return failFromZod(parsed.error);
+
+  const user = await getCurrentUser();
+  if (!user) return fail("not_authenticated");
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("participants")
+    .update({ no_show_at: parsed.data.noShow ? new Date().toISOString() : null })
+    .eq("id", parsed.data.participantId)
+    .eq("session_id", parsed.data.sessionId);
+
+  if (error) return fail("unknown", "Could not update no-show status.");
 
   revalidatePath(`/sessions/${parsed.data.sessionId}/manage`);
   return ok(null);

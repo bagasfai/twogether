@@ -83,7 +83,7 @@ export default async function ManageSessionPage({ params }: PageProps<"/sessions
         matches={
           <MatchPanel sessionId={session.id} matches={matches} courts={courts} rotationQueue={rotationQueue} />
         }
-        roster={<RosterTable sessionId={session.id} entries={roster} />}
+        roster={<RosterTable sessionId={session.id} entries={roster} sessionStatus={session.status} />}
       />
     </div>
   );

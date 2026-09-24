@@ -20,7 +20,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { SessionForm } from "@/components/sessions/session-form";
-import { cancelSession, getSessionShareText } from "@/lib/actions/sessions";
+import { cancelSession, closeSession, getSessionShareText } from "@/lib/actions/sessions";
 import type { HostedSession } from "@/lib/dal/sessions";
 
 // Editing only makes sense pre-lifecycle -- SessionForm's own status field
@@ -35,6 +35,13 @@ function canCancel(status: HostedSession["status"]): boolean {
   return status !== "cancelled" && status !== "completed";
 }
 
+// The only path that sets status = 'completed' -- see closeSession's comment
+// in lib/actions/sessions.ts. 'draft' is excluded: a session that never
+// opened has no roster worth gating a no-show toggle on.
+function canClose(status: HostedSession["status"]): boolean {
+  return status === "scheduled" || status === "live";
+}
+
 export function SessionActionsMenu({
   session,
   showManageLink = true,
@@ -44,6 +51,7 @@ export function SessionActionsMenu({
 }) {
   const [editOpen, setEditOpen] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
+  const [closeOpen, setCloseOpen] = useState(false);
   const [pending, startTransition] = useTransition();
 
   // Uses navigator.clipboard.write with a ClipboardItem whose value is a
@@ -82,6 +90,17 @@ export function SessionActionsMenu({
       }
     });
 
+  const confirmClose = () =>
+    startTransition(async () => {
+      const result = await closeSession(session.id);
+      if (result.ok) {
+        toast.success("Session closed");
+        setCloseOpen(false);
+      } else {
+        toast.error(result.message);
+      }
+    });
+
   return (
     <>
       <DropdownMenu>
@@ -113,6 +132,16 @@ export function SessionActionsMenu({
           {showManageLink ? (
             <DropdownMenuItem asChild>
               <Link href={`/sessions/${session.id}/manage`}>Manage</Link>
+            </DropdownMenuItem>
+          ) : null}
+          {canClose(session.status) ? (
+            <DropdownMenuItem
+              onSelect={(event) => {
+                event.preventDefault();
+                setCloseOpen(true);
+              }}
+            >
+              Close session
             </DropdownMenuItem>
           ) : null}
           {canCancel(session.status) ? (
@@ -176,6 +205,26 @@ export function SessionActionsMenu({
             </Button>
             <Button variant="destructive" disabled={pending} onClick={confirmCancel}>
               {pending ? "Cancelling…" : "Cancel session"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={closeOpen} onOpenChange={setCloseOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Close this session?</DialogTitle>
+            <DialogDescription>
+              Marks the session completed and opens the roster&apos;s no-show tracking. This
+              can&apos;t be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" disabled={pending} onClick={() => setCloseOpen(false)}>
+              Not yet
+            </Button>
+            <Button disabled={pending} onClick={confirmClose}>
+              {pending ? "Closing…" : "Close session"}
             </Button>
           </DialogFooter>
         </DialogContent>

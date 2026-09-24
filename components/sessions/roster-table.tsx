@@ -6,7 +6,7 @@ import { AddParticipantDialog } from "@/components/sessions/add-participant-dial
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { setCheckedIn, setPaid, setParticipantStatus } from "@/lib/actions/participants";
+import { setCheckedIn, setNoShow, setPaid, setParticipantStatus } from "@/lib/actions/participants";
 import { cn } from "@/lib/utils";
 // types/supabase.ts is a plain generated types module (no server-only guard),
 // safe to import for real (not type-only) in a client component. Deriving
@@ -23,6 +23,7 @@ type Entry = {
   registeredAt: string;
   checkedInAt: string | null;
   paidAt: string | null;
+  noShowAt: string | null;
   addedBy: string | null;
   consentedAt: string | null;
   fullName: string | null;
@@ -51,7 +52,15 @@ function GuestBadge({ isGuest }: { isGuest: boolean }) {
   return <Badge variant="outline">Guest</Badge>;
 }
 
-export function RosterTable({ sessionId, entries }: { sessionId: string; entries: Entry[] }) {
+export function RosterTable({
+  sessionId,
+  entries,
+  sessionStatus,
+}: {
+  sessionId: string;
+  entries: Entry[];
+  sessionStatus: Database["public"]["Enums"]["session_status"];
+}) {
   const [pending, startTransition] = useTransition();
 
   const change = (participantId: string, status: Entry["status"]) =>
@@ -72,6 +81,13 @@ export function RosterTable({ sessionId, entries }: { sessionId: string; entries
     startTransition(async () => {
       const result = await setPaid(participantId, sessionId, paid);
       if (result.ok) toast.success(paid ? "Marked paid" : "Payment undone");
+      else toast.error(result.message);
+    });
+
+  const toggleNoShow = (participantId: string, noShow: boolean) =>
+    startTransition(async () => {
+      const result = await setNoShow(participantId, sessionId, noShow);
+      if (result.ok) toast.success(noShow ? "Marked no-show" : "No-show undone");
       else toast.error(result.message);
     });
 
@@ -156,6 +172,29 @@ export function RosterTable({ sessionId, entries }: { sessionId: string; entries
                   </Button>
                 )
               ) : null}
+              {sessionStatus === "completed" && entry.status === "confirmed" ? (
+                entry.noShowAt ? (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={pending}
+                    className="h-11 flex-1 basis-32"
+                    onClick={() => toggleNoShow(entry.id, false)}
+                  >
+                    Undo no-show
+                  </Button>
+                ) : (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={pending}
+                    className="h-11 flex-1 basis-32"
+                    onClick={() => toggleNoShow(entry.id, true)}
+                  >
+                    Mark no-show
+                  </Button>
+                )
+              ) : null}
               {entry.status !== "confirmed" ? (
                 <Button
                   size="sm"
@@ -203,6 +242,7 @@ export function RosterTable({ sessionId, entries }: { sessionId: string; entries
             <TableHead>Registered</TableHead>
             <TableHead>Check-in</TableHead>
             <TableHead>Paid</TableHead>
+            {sessionStatus === "completed" ? <TableHead>No-show</TableHead> : null}
             <TableHead className="text-right">Override</TableHead>
           </TableRow>
         </TableHeader>
@@ -244,6 +284,31 @@ export function RosterTable({ sessionId, entries }: { sessionId: string; entries
                   </Button>
                 )}
               </TableCell>
+              {sessionStatus === "completed" ? (
+                <TableCell>
+                  {entry.status !== "confirmed" ? (
+                    <span className="text-sm text-muted-foreground">—</span>
+                  ) : entry.noShowAt ? (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={pending}
+                      onClick={() => toggleNoShow(entry.id, false)}
+                    >
+                      Undo no-show
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={pending}
+                      onClick={() => toggleNoShow(entry.id, true)}
+                    >
+                      Mark no-show
+                    </Button>
+                  )}
+                </TableCell>
+              ) : null}
               <TableCell className="flex justify-end gap-2">
                 {entry.status !== "confirmed" ? (
                   <Button size="sm" variant="outline" disabled={pending} onClick={() => change(entry.id, "confirmed")}>

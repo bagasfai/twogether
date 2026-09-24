@@ -6,6 +6,7 @@ import {
   cancelGuestRegistrationSchema,
   registerGuestSchema,
   setCheckedInSchema,
+  setNoShowSchema,
   setPaidSchema,
 } from "@/lib/validation/participants";
 import { createCourtSchema, deleteCourtSchema, setCourtStatusSchema } from "@/lib/validation/courts";
@@ -321,6 +322,26 @@ describe("setPaidSchema", () => {
       participantId: "not-a-uuid",
       sessionId: "3fa85f64-5717-4562-b3fc-2c963f66afa9",
       paid: true,
+    });
+    expect(result.success).toBe(false);
+  });
+});
+
+describe("setNoShowSchema", () => {
+  it("accepts a valid payload", () => {
+    const result = setNoShowSchema.safeParse({
+      participantId: "3fa85f64-5717-4562-b3fc-2c963f66afa8",
+      sessionId: "3fa85f64-5717-4562-b3fc-2c963f66afa9",
+      noShow: true,
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects a non-uuid participantId", () => {
+    const result = setNoShowSchema.safeParse({
+      participantId: "not-a-uuid",
+      sessionId: "3fa85f64-5717-4562-b3fc-2c963f66afa9",
+      noShow: true,
     });
     expect(result.success).toBe(false);
   });

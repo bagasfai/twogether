@@ -174,6 +174,36 @@ export async function cancelSession(id: string): Promise<ActionResult<null>> {
   return ok(null);
 }
 
+// Same rationale as cancelSession immediately above: a distinct, deliberately
+// confirmed action rather than a status dropdown value. This is the only
+// path that ever sets status = 'completed' -- the roster's no-show toggle
+// (setNoShow in lib/actions/participants.ts) gates on that value, so closing
+// a session is what turns the no-show controls on.
+export async function closeSession(id: string): Promise<ActionResult<null>> {
+  const idParsed = sessionIdSchema.safeParse({ id });
+  if (!idParsed.success) return fail("validation", "Invalid session id.");
+
+  const user = await getCurrentUser();
+  if (!user) return fail("not_authenticated");
+
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from("sessions")
+    .update({ status: "completed" })
+    .eq("id", idParsed.data.id);
+
+  if (error) {
+    if (error.code === "42501") return fail("not_authorized");
+    return fail("unknown", "Could not close the session.");
+  }
+
+  revalidatePath(`/sessions/${idParsed.data.id}/manage`);
+  revalidatePath("/dashboard");
+  revalidatePath("/sessions");
+  return ok(null);
+}
+
 // Read-only. getHostSession already scopes to sessions this caller hosts
 // (see its comment in lib/dal/sessions.ts) -- returning null there means
 // "not a host of this session", surfaced here as not_authorized rather than

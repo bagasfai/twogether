@@ -43,6 +43,7 @@ export type RosterEntry = {
   registeredAt: string;
   checkedInAt: string | null;
   paidAt: string | null;
+  noShowAt: string | null;
   addedBy: string | null;
   consentedAt: string | null;
   fullName: string | null;
@@ -292,7 +293,7 @@ export async function listRoster(sessionId: string): Promise<RosterEntry[]> {
   const { data, error } = await supabase
     .from("participants")
     .select(
-      "id, user_id, status, registered_at, checked_in_at, paid_at, added_by, consented_at, guest_name, guest_phone, profiles!participants_user_id_fkey(full_name, avatar_url)",
+      "id, user_id, status, registered_at, checked_in_at, paid_at, no_show_at, added_by, consented_at, guest_name, guest_phone, profiles!participants_user_id_fkey(full_name, avatar_url)",
     )
     .eq("session_id", sessionId)
     .order("registered_at", { ascending: true });
@@ -306,6 +307,7 @@ export async function listRoster(sessionId: string): Promise<RosterEntry[]> {
     registeredAt: row.registered_at,
     checkedInAt: row.checked_in_at,
     paidAt: row.paid_at,
+    noShowAt: row.no_show_at,
     addedBy: row.added_by,
     consentedAt: row.consented_at,
     fullName: row.profiles?.full_name ?? row.guest_name,
