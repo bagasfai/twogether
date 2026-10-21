@@ -12,16 +12,24 @@ export default async function MarketingLayout({ children }: { children: ReactNod
   return (
     <div className="flex flex-1 flex-col">
       <header className="sticky top-0 z-20 border-b border-border/60 bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="mx-auto flex max-w-5xl items-center gap-6 px-6 py-4">
-          <Link href="/" className="text-base font-semibold tracking-tight">
+        {/* Below sm, brand + login share the first row and the nav links +
+            language switcher drop to a second row, so a 320px viewport never
+            scrolls horizontally. From sm up it is the original single row. */}
+        <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-6 gap-y-2 px-6 py-4">
+          <Link href="/" className="mr-auto whitespace-nowrap text-base font-semibold tracking-tight sm:mr-0">
             {t("nav.brand")}
           </Link>
-          <nav className="flex flex-1 items-center gap-6 text-sm text-muted-foreground">
-            <Link href="/sessions" className="transition-colors hover:text-foreground">
-              {t("nav.sessions")}
-            </Link>
-          </nav>
-          <LanguageSwitcher />
+          <div className="order-last flex basis-full items-center gap-6 sm:order-none sm:flex-1 sm:basis-auto">
+            <nav className="flex flex-1 items-center gap-6 text-sm text-muted-foreground">
+              <Link href="/sessions" className="whitespace-nowrap transition-colors hover:text-foreground">
+                {t("nav.sessions")}
+              </Link>
+              <Link href="/gallery" className="whitespace-nowrap transition-colors hover:text-foreground">
+                {t("nav.gallery")}
+              </Link>
+            </nav>
+            <LanguageSwitcher />
+          </div>
           {/* /dashboard and /login live outside app/[locale] -- plain Link, no locale prefix */}
           <Button asChild size="sm" variant={user ? "default" : "outline"}>
             <NextLink href={user ? "/dashboard" : "/login"}>

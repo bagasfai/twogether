@@ -2,6 +2,7 @@
   "nav": {
     "brand": "Jakbar Twogether",
     "sessions": "Sesi",
+    "gallery": "Galeri",
     "dashboard": "Dashboard",
     "login": "Masuk"
   },
@@ -65,5 +66,24 @@
   },
   "announcements": {
     "title": "Pengumuman"
+  },
+  "gallery": {
+    "metaTitle": "Galeri — Jakbar Twogether",
+    "metaDescription": "Foto-foto dari sesi open play badminton Jakbar Twogether di Jakarta Barat.",
+    "tagline": "Open play, dalam foto.",
+    "inventory": "{albums, plural, other {# album}} · {photos, plural, other {# foto}}",
+    "empty": "Belum ada album. Foto dari sesi kami akan muncul di sini setelah dibagikan.",
+    "albumPhotoCount": "{count, plural, other {# foto}}",
+    "albumMetaTitle": "{album} — Galeri — Jakbar Twogether",
+    "albumNotFound": "Album tidak ditemukan",
+    "back": "Semua album",
+    "noPhotos": "Belum ada foto",
+    "noPhotosBody": "Foto di album ini akan muncul di sini setelah disetujui.",
+    "openPhoto": "Buka foto {current} dari {total}",
+    "position": "{current} / {total}",
+    "close": "Tutup",
+    "previous": "Foto sebelumnya",
+    "next": "Foto berikutnya",
+    "defaultAlt": "Foto dari {album}"
   }
 }

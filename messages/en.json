@@ -2,6 +2,7 @@
   "nav": {
     "brand": "Jakbar Twogether",
     "sessions": "Sessions",
+    "gallery": "Gallery",
     "dashboard": "Dashboard",
     "login": "Log in"
   },
@@ -65,5 +66,24 @@
   },
   "announcements": {
     "title": "Announcements"
+  },
+  "gallery": {
+    "metaTitle": "Gallery — Jakbar Twogether",
+    "metaDescription": "Photos from Jakbar Twogether open-play badminton sessions in West Jakarta.",
+    "tagline": "Open play, in photos.",
+    "inventory": "{albums, plural, one {# album} other {# albums}} · {photos, plural, one {# photo} other {# photos}}",
+    "empty": "No albums yet. Photos from our sessions will show up here once they're shared.",
+    "albumPhotoCount": "{count, plural, one {# photo} other {# photos}}",
+    "albumMetaTitle": "{album} — Gallery — Jakbar Twogether",
+    "albumNotFound": "Album not found",
+    "back": "All albums",
+    "noPhotos": "No photos yet",
+    "noPhotosBody": "Photos from this album will appear here once they're approved.",
+    "openPhoto": "Open photo {current} of {total}",
+    "position": "{current} / {total}",
+    "close": "Close",
+    "previous": "Previous photo",
+    "next": "Next photo",
+    "defaultAlt": "Photo from {album}"
   }
 }
