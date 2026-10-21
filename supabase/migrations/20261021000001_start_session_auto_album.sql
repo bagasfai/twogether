@@ -40,6 +40,10 @@ begin
 end;
 $$;
 
+-- Trigger function: never callable as an RPC. The trigger runs it as the
+-- function owner, so no role needs EXECUTE.
+revoke execute on function public.create_session_gallery() from public, anon, authenticated;
+
 create trigger sessions_create_gallery
 after update of status on public.sessions
 for each row
