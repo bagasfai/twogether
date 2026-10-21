@@ -4,6 +4,7 @@
 --   2. can_review_gallery()
 --   3. privileges and policies
 --   4. can_upload_to_gallery()
+--   5. add_gallery_photo()
 --   (JB012-JB016 are allocated for the gallery RPCs: JB012 upload not eligible,
 --    JB013 upload window closed, JB014 pending cap reached, JB015 invalid upload
 --    path, JB016 invalid state.)
@@ -120,3 +121,129 @@ $$;
 
 revoke execute on function public.can_upload_to_gallery(uuid) from public, anon;
 grant execute on function public.can_upload_to_gallery(uuid) to authenticated;
+
+-- ---- 5. add_gallery_photo ----
+
+-- The only way a gallery_photos row is created. Steps, in this order:
+--   1. JB004 without auth.uid(); then an advisory xact lock on the
+--      (gallery, user) pair, taken before the eligibility check and the cap
+--      count, so two parallel uploads by the same user serialise and cannot
+--      both slip under the cap. Different users never contend.
+--   2. Eligibility (can_upload_to_gallery; an unknown album is also JB012).
+--      When it fails, a confirmed, checked-in participant of the album's
+--      session is past the 7-day window: JB013. Anyone else: JB012.
+--   3. Path (JB015): must start with '<gallery_id>/', must not already be a
+--      gallery_photos row, and must match a storage.objects row in the
+--      'gallery' bucket uploaded by the caller. No row exists without its file.
+--   4. Cap (JB014): non-reviewers may hold at most 20 pending photos per album.
+--   5. Insert: reviewers (admin, or host/co-host of the album's session) get
+--      'approved' with reviewed_by/reviewed_at set; everyone else 'pending'.
+--      sort_order = max + 1 (0 for an empty album). Ties between different
+--      users uploading concurrently are harmless: display orders by
+--      sort_order, created_at. The caption is trimmed, blank becomes null.
+--
+-- Storage owner column: storage.objects has both owner (uuid, the older
+-- column) and owner_id (text, the newer one). Probing the local stack
+-- (storage-api v1.72.1) with a real authenticated upload showed the Storage
+-- API populates BOTH with the uploader's id. Supabase marks owner as
+-- deprecated in favour of owner_id, so the check accepts either column:
+-- owner_id = auth.uid()::text or owner = auth.uid(). That keeps working if a
+-- later Storage version stops writing owner. The Storage policies use the
+-- same rule.
+create or replace function public.add_gallery_photo(
+  p_gallery_id uuid,
+  p_path text,
+  p_caption text
+)
+returns public.gallery_photos
+language plpgsql
+volatile
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_session_id uuid;
+  v_is_reviewer boolean;
+  v_row public.gallery_photos;
+begin
+  if v_uid is null then
+    raise exception 'not authenticated' using errcode = 'JB004';
+  end if;
+
+  perform pg_advisory_xact_lock(
+    hashtextextended(p_gallery_id::text || ':' || v_uid::text, 0)
+  );
+
+  select g.session_id into v_session_id
+    from public.galleries g
+   where g.id = p_gallery_id;
+
+  if not found or not public.can_upload_to_gallery(p_gallery_id) then
+    if exists (
+      select 1
+        from public.participants p
+       where p.session_id = v_session_id
+         and p.user_id = v_uid
+         and p.status = 'confirmed'
+         and p.checked_in_at is not null
+    ) then
+      raise exception 'upload window closed' using errcode = 'JB013';
+    end if;
+    raise exception 'not eligible to upload to this album' using errcode = 'JB012';
+  end if;
+
+  if p_path is null
+     or length(p_path) <= 37
+     or left(p_path, 37) <> p_gallery_id::text || '/' then
+    raise exception 'upload path must start with the album id' using errcode = 'JB015';
+  end if;
+
+  if exists (select 1 from public.gallery_photos gp where gp.storage_path = p_path) then
+    raise exception 'upload path already used' using errcode = 'JB015';
+  end if;
+
+  if not exists (
+    select 1
+      from storage.objects o
+     where o.bucket_id = 'gallery'
+       and o.name = p_path
+       and (o.owner_id = v_uid::text or o.owner = v_uid)
+  ) then
+    raise exception 'no uploaded file at this path' using errcode = 'JB015';
+  end if;
+
+  v_is_reviewer := public.can_review_gallery(p_gallery_id);
+
+  if not v_is_reviewer and (
+    select count(*)
+      from public.gallery_photos gp
+     where gp.gallery_id = p_gallery_id
+       and gp.uploaded_by = v_uid
+       and gp.status = 'pending'
+  ) >= 20 then
+    raise exception 'pending photo limit reached' using errcode = 'JB014';
+  end if;
+
+  insert into public.gallery_photos
+    (gallery_id, storage_path, caption, sort_order, uploaded_by,
+     status, reviewed_by, reviewed_at)
+  values (
+    p_gallery_id,
+    p_path,
+    nullif(trim(p_caption), ''),
+    coalesce((select max(gp.sort_order) from public.gallery_photos gp
+               where gp.gallery_id = p_gallery_id), -1) + 1,
+    v_uid,
+    case when v_is_reviewer then 'approved' else 'pending' end::public.gallery_photo_status,
+    case when v_is_reviewer then v_uid end,
+    case when v_is_reviewer then now() end
+  )
+  returning * into v_row;
+
+  return v_row;
+end;
+$$;
+
+revoke execute on function public.add_gallery_photo(uuid, text, text) from public, anon;
+grant execute on function public.add_gallery_photo(uuid, text, text) to authenticated;

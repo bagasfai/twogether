@@ -3,11 +3,12 @@
 --   1. visibility and grants   (gallery_photos columns, privileges, policies)
 --   2. can_review_gallery
 --   3. can_upload_to_gallery
+--   4. add_gallery_photo
 -- Fixture rows in gallery_photos are inserted as postgres: direct INSERT is
 -- revoked from authenticated (rows come only from add_gallery_photo).
 
 begin;
-select plan(57);
+select plan(81);
 
 -- ---- fixtures ----
 
@@ -531,6 +532,261 @@ select ok(
   has_function_privilege('authenticated', 'public.can_upload_to_gallery(uuid)', 'execute')
   and not has_function_privilege('anon', 'public.can_upload_to_gallery(uuid)', 'execute'),
   'can_upload_to_gallery is executable by authenticated and not by anon'
+);
+
+-- ======== 4. add_gallery_photo ========
+-- Uses Album Now (b4, session a3: U confirmed+checked in, M not checked in,
+-- H1 owner, C co-host) and Album Edge Out (b6: U checked in, window closed).
+-- V is a second confirmed, checked-in member of a3, for the per-user cap.
+-- storage.objects rows are inserted as postgres with both owner (uuid) and
+-- owner_id (text) set, which is what the local Storage API (storage-api
+-- v1.72.1) writes on upload. The gallery bucket is created on conflict do
+-- nothing so this keeps working once the bucket migration lands.
+
+select lives_ok(
+  $$ insert into auth.users (id, email) values
+       ('99999999-6666-6666-6666-666666666666', 'member2-025@test.local');
+     insert into public.participants (session_id, user_id, status, checked_in_at)
+     values ('a3a3a3a3-6666-6666-6666-666666666666',
+             '99999999-6666-6666-6666-666666666666', 'confirmed', now()) $$,
+  'fixture: second checked-in member V'
+);
+
+select lives_ok(
+  $$ insert into storage.buckets (id, name) values ('gallery', 'gallery')
+     on conflict (id) do nothing $$,
+  'fixture: gallery bucket'
+);
+
+-- Album Now already holds a photo, so the next sort_order is 42. H1 also
+-- already has 20 pending rows there, so the cap exemption is really exercised.
+select lives_ok(
+  $$ insert into public.gallery_photos
+       (gallery_id, storage_path, status, sort_order)
+     values ('b4b4b4b4-6666-6666-6666-666666666666',
+             'b4b4b4b4-6666-6666-6666-666666666666/seed.webp', 'approved', 41);
+     insert into public.gallery_photos
+       (gallery_id, storage_path, status, uploaded_by)
+     select 'b4b4b4b4-6666-6666-6666-666666666666',
+            format('b4b4b4b4-6666-6666-6666-666666666666/seed-h-%s.webp', i),
+            'pending', '11111111-6666-6666-6666-666666666666'
+       from generate_series(1, 20) as i $$,
+  'fixture: existing photos in Album Now (max sort_order 41, 20 pending by H1)'
+);
+
+create function pg_temp.put_object(p_name text, p_owner uuid)
+returns void
+language sql
+as $$
+  insert into storage.objects (bucket_id, name, owner, owner_id)
+  values ('gallery', p_name, p_owner, p_owner::text);
+$$;
+
+select lives_ok(
+  $$ select pg_temp.put_object('b4b4b4b4-6666-6666-6666-666666666666/' || n, o::uuid)
+       from (values
+         ('a1.webp',        '55555555-6666-6666-6666-666666666666'),
+         ('h1.webp',        '11111111-6666-6666-6666-666666666666'),
+         ('h2.webp',        '22222222-6666-6666-6666-666666666666'),
+         ('u1.webp',        '33333333-6666-6666-6666-666666666666'),
+         ('u-null.webp',    '33333333-6666-6666-6666-666666666666'),
+         ('u-blank.webp',   '33333333-6666-6666-6666-666666666666'),
+         ('u-trim.webp',    '33333333-6666-6666-6666-666666666666'),
+         ('u-after.webp',   '33333333-6666-6666-6666-666666666666'),
+         ('m1.webp',        '44444444-6666-6666-6666-666666666666'),
+         ('foreign.webp',   '44444444-6666-6666-6666-666666666666')
+       ) as t(n, o);
+     select pg_temp.put_object('b5b5b5b5-6666-6666-6666-666666666666/u.webp',
+                               '33333333-6666-6666-6666-666666666666');
+     select pg_temp.put_object('b6b6b6b6-6666-6666-6666-666666666666/u.webp',
+                               '33333333-6666-6666-6666-666666666666');
+     select pg_temp.put_object(
+              format('b4b4b4b4-6666-6666-6666-666666666666/cap-v-%s.webp', i),
+              '99999999-6666-6666-6666-666666666666')
+       from generate_series(1, 21) as i;
+     select pg_temp.put_object(
+              format('b4b4b4b4-6666-6666-6666-666666666666/cap-h-%s.webp', i),
+              '11111111-6666-6666-6666-666666666666')
+       from generate_series(1, 21) as i $$,
+  'fixture: storage objects'
+);
+
+set local role authenticated;
+
+-- no claims
+set local request.jwt.claims = '';
+
+select throws_ok(
+  $$ select public.add_gallery_photo('b4b4b4b4-6666-6666-6666-666666666666',
+       'b4b4b4b4-6666-6666-6666-666666666666/u1.webp', null) $$,
+  'JB004', null,
+  'a caller without claims gets JB004'
+);
+
+-- admin: approved immediately, sort_order = max + 1
+set local request.jwt.claims = '{"sub":"55555555-6666-6666-6666-666666666666","role":"authenticated"}';
+
+select throws_ok(
+  $$ select public.add_gallery_photo('00000000-0000-0000-0000-000000000000',
+       '00000000-0000-0000-0000-000000000000/a.webp', null) $$,
+  'JB012', null,
+  'an unknown album gets JB012, even for an admin'
+);
+
+select results_eq(
+  $$ select status::text, uploaded_by, reviewed_by, reviewed_at is not null, sort_order
+       from public.add_gallery_photo('b4b4b4b4-6666-6666-6666-666666666666',
+              'b4b4b4b4-6666-6666-6666-666666666666/a1.webp', 'by admin') $$,
+  $$ values ('approved', '55555555-6666-6666-6666-666666666666'::uuid,
+             '55555555-6666-6666-6666-666666666666'::uuid, true, 42) $$,
+  'an admin upload is approved, reviewed by the admin, sort_order max + 1'
+);
+
+-- host: approved immediately
+set local request.jwt.claims = '{"sub":"11111111-6666-6666-6666-666666666666","role":"authenticated"}';
+
+select results_eq(
+  $$ select status::text, uploaded_by, reviewed_by, reviewed_at is not null, sort_order
+       from public.add_gallery_photo('b4b4b4b4-6666-6666-6666-666666666666',
+              'b4b4b4b4-6666-6666-6666-666666666666/h1.webp', null) $$,
+  $$ values ('approved', '11111111-6666-6666-6666-666666666666'::uuid,
+             '11111111-6666-6666-6666-666666666666'::uuid, true, 43) $$,
+  'a host upload is approved, reviewed by the host, sort_order max + 1'
+);
+
+-- member U: pending
+set local request.jwt.claims = '{"sub":"33333333-6666-6666-6666-666666666666","role":"authenticated"}';
+
+select results_eq(
+  $$ select status::text, uploaded_by, reviewed_by is null, reviewed_at is null, sort_order
+       from public.add_gallery_photo('b4b4b4b4-6666-6666-6666-666666666666',
+              'b4b4b4b4-6666-6666-6666-666666666666/u1.webp', 'smash') $$,
+  $$ values ('pending', '33333333-6666-6666-6666-666666666666'::uuid, true, true, 44) $$,
+  'a member upload is pending, uploaded by the member, not reviewed'
+);
+
+select is(
+  (select caption from public.add_gallery_photo('b4b4b4b4-6666-6666-6666-666666666666',
+     'b4b4b4b4-6666-6666-6666-666666666666/u-null.webp', null)),
+  null,
+  'a null caption is stored as null'
+);
+
+select is(
+  (select caption from public.add_gallery_photo('b4b4b4b4-6666-6666-6666-666666666666',
+     'b4b4b4b4-6666-6666-6666-666666666666/u-blank.webp', '   ')),
+  null,
+  'a blank-only caption is stored as null'
+);
+
+select is(
+  (select caption from public.add_gallery_photo('b4b4b4b4-6666-6666-6666-666666666666',
+     'b4b4b4b4-6666-6666-6666-666666666666/u-trim.webp', '  rally  ')),
+  'rally',
+  'a caption is trimmed'
+);
+
+select throws_ok(
+  $$ select public.add_gallery_photo('b4b4b4b4-6666-6666-6666-666666666666',
+       'b4b4b4b4-6666-6666-6666-666666666666/u1.webp', null) $$,
+  'JB015', null,
+  'the same path twice gets JB015'
+);
+
+select throws_ok(
+  $$ select public.add_gallery_photo('b4b4b4b4-6666-6666-6666-666666666666',
+       'b4b4b4b4-6666-6666-6666-666666666666/missing.webp', null) $$,
+  'JB015', null,
+  'a path with no storage object gets JB015'
+);
+
+select throws_ok(
+  $$ select public.add_gallery_photo('b4b4b4b4-6666-6666-6666-666666666666',
+       'b4b4b4b4-6666-6666-6666-666666666666/foreign.webp', null) $$,
+  'JB015', null,
+  'a storage object owned by another user gets JB015'
+);
+
+select throws_ok(
+  $$ select public.add_gallery_photo('b4b4b4b4-6666-6666-6666-666666666666',
+       'b5b5b5b5-6666-6666-6666-666666666666/u.webp', null) $$,
+  'JB015', null,
+  'a path not prefixed with the album id gets JB015 (even if the caller owns it)'
+);
+
+select throws_ok(
+  $$ select public.add_gallery_photo('b6b6b6b6-6666-6666-6666-666666666666',
+       'b6b6b6b6-6666-6666-6666-666666666666/u.webp', null) $$,
+  'JB013', null,
+  'a checked-in member after the 7-day window gets JB013'
+);
+
+-- not eligible
+set local request.jwt.claims = '{"sub":"44444444-6666-6666-6666-666666666666","role":"authenticated"}';
+
+select throws_ok(
+  $$ select public.add_gallery_photo('b4b4b4b4-6666-6666-6666-666666666666',
+       'b4b4b4b4-6666-6666-6666-666666666666/m1.webp', null) $$,
+  'JB012', null,
+  'a confirmed member who is not checked in gets JB012'
+);
+
+set local request.jwt.claims = '{"sub":"22222222-6666-6666-6666-666666666666","role":"authenticated"}';
+
+select throws_ok(
+  $$ select public.add_gallery_photo('b4b4b4b4-6666-6666-6666-666666666666',
+       'b4b4b4b4-6666-6666-6666-666666666666/h2.webp', null) $$,
+  'JB012', null,
+  'an unrelated host gets JB012'
+);
+
+-- pending cap: V uploads 20, the 21st is refused
+set local request.jwt.claims = '{"sub":"99999999-6666-6666-6666-666666666666","role":"authenticated"}';
+
+select is(
+  (select count(*)::int
+     from generate_series(1, 20) as i,
+          lateral public.add_gallery_photo('b4b4b4b4-6666-6666-6666-666666666666',
+            format('b4b4b4b4-6666-6666-6666-666666666666/cap-v-%s.webp', i), null) as p
+    where p.status = 'pending'),
+  20,
+  'a member can hold 20 pending photos in one album'
+);
+
+select throws_ok(
+  $$ select public.add_gallery_photo('b4b4b4b4-6666-6666-6666-666666666666',
+       'b4b4b4b4-6666-6666-6666-666666666666/cap-v-21.webp', null) $$,
+  'JB014', null,
+  'the 21st pending photo gets JB014'
+);
+
+-- another user's pending photos do not count against the caller
+set local request.jwt.claims = '{"sub":"33333333-6666-6666-6666-666666666666","role":"authenticated"}';
+
+select lives_ok(
+  $$ select public.add_gallery_photo('b4b4b4b4-6666-6666-6666-666666666666',
+       'b4b4b4b4-6666-6666-6666-666666666666/u-after.webp', null) $$,
+  'another member''s 20 pending photos do not consume the caller''s cap'
+);
+
+-- reviewers are exempt from the cap
+set local request.jwt.claims = '{"sub":"11111111-6666-6666-6666-666666666666","role":"authenticated"}';
+
+select is(
+  (select count(*)::int
+     from generate_series(1, 21) as i,
+          lateral public.add_gallery_photo('b4b4b4b4-6666-6666-6666-666666666666',
+            format('b4b4b4b4-6666-6666-6666-666666666666/cap-h-%s.webp', i), null)),
+  21,
+  'a host with 20 pending photos can still upload 21 more (reviewers are exempt from the cap)'
+);
+
+reset role;
+
+select ok(
+  has_function_privilege('authenticated', 'public.add_gallery_photo(uuid, text, text)', 'execute')
+  and not has_function_privilege('anon', 'public.add_gallery_photo(uuid, text, text)', 'execute'),
+  'add_gallery_photo is executable by authenticated and not by anon'
 );
 
 select * from finish();
