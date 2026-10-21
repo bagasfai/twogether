@@ -5,6 +5,7 @@
 --   3. privileges and policies
 --   4. can_upload_to_gallery()
 --   5. add_gallery_photo()
+--   6. review_gallery_photo()
 --   (JB012-JB016 are allocated for the gallery RPCs: JB012 upload not eligible,
 --    JB013 upload window closed, JB014 pending cap reached, JB015 invalid upload
 --    path, JB016 invalid state.)
@@ -18,7 +19,11 @@ alter table public.gallery_photos
   add column status public.gallery_photo_status not null default 'pending',
   add column reviewed_by uuid references public.profiles (id) on delete set null,
   add column reviewed_at timestamptz,
-  add constraint gallery_photos_storage_path_key unique (storage_path);
+  add constraint gallery_photos_storage_path_key unique (storage_path),
+  -- Applies to add_gallery_photo and to a host's column-granted caption
+  -- UPDATE alike.
+  add constraint gallery_photos_caption_len_check
+    check (char_length(caption) <= 200);
 
 create index gallery_photos_gallery_status_idx
   on public.gallery_photos (gallery_id, status);
@@ -140,7 +145,9 @@ grant execute on function public.can_upload_to_gallery(uuid) to authenticated;
 --      'approved' with reviewed_by/reviewed_at set; everyone else 'pending'.
 --      sort_order = max + 1 (0 for an empty album). Ties between different
 --      users uploading concurrently are harmless: display orders by
---      sort_order, created_at. The caption is trimmed, blank becomes null.
+--      sort_order, created_at. The caption is trimmed of spaces, tabs, CR
+--      and LF; blank becomes null. Over 200 characters fails the
+--      gallery_photos_caption_len_check constraint (SQLSTATE 23514).
 --
 -- Storage owner column: storage.objects has both owner (uuid, the older
 -- column) and owner_id (text, the newer one). Probing the local stack
@@ -148,8 +155,9 @@ grant execute on function public.can_upload_to_gallery(uuid) to authenticated;
 -- API populates BOTH with the uploader's id. Supabase marks owner as
 -- deprecated in favour of owner_id, so the check accepts either column:
 -- owner_id = auth.uid()::text or owner = auth.uid(). That keeps working if a
--- later Storage version stops writing owner. The Storage policies use the
--- same rule.
+-- later Storage version stops writing owner. The Storage policies (Task 9)
+-- must use the same ownership rule:
+-- (o.owner_id = auth.uid()::text or o.owner = auth.uid()).
 create or replace function public.add_gallery_photo(
   p_gallery_id uuid,
   p_path text,
@@ -231,7 +239,7 @@ begin
   values (
     p_gallery_id,
     p_path,
-    nullif(trim(p_caption), ''),
+    nullif(btrim(p_caption, E' \t\r\n'), ''),
     coalesce((select max(gp.sort_order) from public.gallery_photos gp
                where gp.gallery_id = p_gallery_id), -1) + 1,
     v_uid,
@@ -247,3 +255,73 @@ $$;
 
 revoke execute on function public.add_gallery_photo(uuid, text, text) from public, anon;
 grant execute on function public.add_gallery_photo(uuid, text, text) to authenticated;
+
+-- ---- 6. review_gallery_photo ----
+
+-- Approve or reject a pending photo. Steps, in this order:
+--   1. JB004 without auth.uid().
+--   2. select ... for update on the photo row, so an approve and a reject of
+--      the same photo serialise: the loser waits, then sees the row approved
+--      (JB016) or gone (JB008). Unknown id: JB008.
+--   3. JB007 unless can_review_gallery(gallery_id): admin, or host/co-host of
+--      the album's session. An album whose session was deleted is admin-only.
+--   4. JB016 for an action other than 'approve'/'reject' (including null),
+--      or a photo that is not pending.
+--   5. approve: status 'approved', reviewed_by/reviewed_at set; returns null.
+--      reject: deletes the row and returns its storage_path, so the caller
+--      can remove the file through the Storage API.
+create or replace function public.review_gallery_photo(
+  p_photo_id uuid,
+  p_action text
+)
+returns text
+language plpgsql
+volatile
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_photo public.gallery_photos;
+begin
+  if v_uid is null then
+    raise exception 'not authenticated' using errcode = 'JB004';
+  end if;
+
+  select gp.* into v_photo
+    from public.gallery_photos gp
+   where gp.id = p_photo_id
+     for update;
+
+  if not found then
+    raise exception 'photo not found' using errcode = 'JB008';
+  end if;
+
+  if not public.can_review_gallery(v_photo.gallery_id) then
+    raise exception 'not authorized to review this photo' using errcode = 'JB007';
+  end if;
+
+  if p_action is null or p_action not in ('approve', 'reject') then
+    raise exception 'action must be approve or reject' using errcode = 'JB016';
+  end if;
+
+  if v_photo.status <> 'pending' then
+    raise exception 'photo is not pending' using errcode = 'JB016';
+  end if;
+
+  if p_action = 'approve' then
+    update public.gallery_photos
+       set status = 'approved',
+           reviewed_by = v_uid,
+           reviewed_at = now()
+     where id = v_photo.id;
+    return null;
+  end if;
+
+  delete from public.gallery_photos where id = v_photo.id;
+  return v_photo.storage_path;
+end;
+$$;
+
+revoke execute on function public.review_gallery_photo(uuid, text) from public, anon;
+grant execute on function public.review_gallery_photo(uuid, text) to authenticated;

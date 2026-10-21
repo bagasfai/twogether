@@ -4,11 +4,12 @@
 --   2. can_review_gallery
 --   3. can_upload_to_gallery
 --   4. add_gallery_photo
+--   5. review_gallery_photo
 -- Fixture rows in gallery_photos are inserted as postgres: direct INSERT is
 -- revoked from authenticated (rows come only from add_gallery_photo).
 
 begin;
-select plan(81);
+select plan(114);
 
 -- ---- fixtures ----
 
@@ -593,6 +594,10 @@ select lives_ok(
          ('u-blank.webp',   '33333333-6666-6666-6666-666666666666'),
          ('u-trim.webp',    '33333333-6666-6666-6666-666666666666'),
          ('u-after.webp',   '33333333-6666-6666-6666-666666666666'),
+         ('u-ws.webp',      '33333333-6666-6666-6666-666666666666'),
+         ('u-200.webp',     '33333333-6666-6666-6666-666666666666'),
+         ('u-long.webp',    '33333333-6666-6666-6666-666666666666'),
+         ('c1.webp',        '66666666-6666-6666-6666-666666666666'),
          ('m1.webp',        '44444444-6666-6666-6666-666666666666'),
          ('foreign.webp',   '44444444-6666-6666-6666-666666666666')
        ) as t(n, o);
@@ -654,6 +659,13 @@ select results_eq(
   'a host upload is approved, reviewed by the host, sort_order max + 1'
 );
 
+select throws_ok(
+  $$ update public.gallery_photos set caption = repeat('x', 201)
+      where id = 'c0000011-6666-6666-6666-666666666666' $$,
+  '23514', null,
+  'a host''s direct caption update longer than 200 characters is rejected'
+);
+
 -- member U: pending
 set local request.jwt.claims = '{"sub":"33333333-6666-6666-6666-666666666666","role":"authenticated"}';
 
@@ -684,6 +696,36 @@ select is(
      'b4b4b4b4-6666-6666-6666-666666666666/u-trim.webp', '  rally  ')),
   'rally',
   'a caption is trimmed'
+);
+
+select is(
+  (select caption from public.add_gallery_photo('b4b4b4b4-6666-6666-6666-666666666666',
+     'b4b4b4b4-6666-6666-6666-666666666666/u-ws.webp', E'\t\r\n \n\t')),
+  null,
+  'a caption of only tabs and newlines is stored as null'
+);
+
+select is(
+  (select char_length(caption) from public.add_gallery_photo(
+     'b4b4b4b4-6666-6666-6666-666666666666',
+     'b4b4b4b4-6666-6666-6666-666666666666/u-200.webp', repeat('x', 200))),
+  200,
+  'a 200-character caption is accepted'
+);
+
+select throws_ok(
+  $$ select public.add_gallery_photo('b4b4b4b4-6666-6666-6666-666666666666',
+       'b4b4b4b4-6666-6666-6666-666666666666/u-long.webp', repeat('x', 201)) $$,
+  '23514', null,
+  'a 201-character caption is rejected by add_gallery_photo'
+);
+
+-- first photo of an empty album (Album Edge In, inside U's window)
+select is(
+  (select sort_order from public.add_gallery_photo('b5b5b5b5-6666-6666-6666-666666666666',
+     'b5b5b5b5-6666-6666-6666-666666666666/u.webp', null)),
+  0,
+  'the first photo of an empty album gets sort_order 0'
 );
 
 select throws_ok(
@@ -719,6 +761,17 @@ select throws_ok(
        'b6b6b6b6-6666-6666-6666-666666666666/u.webp', null) $$,
   'JB013', null,
   'a checked-in member after the 7-day window gets JB013'
+);
+
+-- co-host C: approved immediately
+set local request.jwt.claims = '{"sub":"66666666-6666-6666-6666-666666666666","role":"authenticated"}';
+
+select results_eq(
+  $$ select status::text, reviewed_by
+       from public.add_gallery_photo('b4b4b4b4-6666-6666-6666-666666666666',
+              'b4b4b4b4-6666-6666-6666-666666666666/c1.webp', null) $$,
+  $$ values ('approved', '66666666-6666-6666-6666-666666666666'::uuid) $$,
+  'a co-host upload is approved, reviewed by the co-host'
 );
 
 -- not eligible
@@ -776,9 +829,10 @@ select is(
   (select count(*)::int
      from generate_series(1, 21) as i,
           lateral public.add_gallery_photo('b4b4b4b4-6666-6666-6666-666666666666',
-            format('b4b4b4b4-6666-6666-6666-666666666666/cap-h-%s.webp', i), null)),
+            format('b4b4b4b4-6666-6666-6666-666666666666/cap-h-%s.webp', i), null) as p
+    where p.status = 'approved'),
   21,
-  'a host with 20 pending photos can still upload 21 more (reviewers are exempt from the cap)'
+  'a host with 20 pending photos can still upload 21 more, all approved (reviewers are exempt from the cap)'
 );
 
 reset role;
@@ -787,6 +841,231 @@ select ok(
   has_function_privilege('authenticated', 'public.add_gallery_photo(uuid, text, text)', 'execute')
   and not has_function_privilege('anon', 'public.add_gallery_photo(uuid, text, text)', 'execute'),
   'add_gallery_photo is executable by authenticated and not by anon'
+);
+
+-- ======== 5. review_gallery_photo ========
+-- Pending photos inserted as postgres: r1-r5 in Album Now (b4: H1 owner,
+-- C co-host; r5 has no uploader), r6 in Album One (b1, session S1). p22 in
+-- Album Two (b2, S2 owned by H2) is still pending from section 1.
+-- A pgTAP file cannot contend, so the approve-vs-reject race is covered by
+-- the JB016 cases (the loser sees a non-pending or missing row) plus a check
+-- that the function locks the row with select ... for update.
+
+select lives_ok(
+  $$ insert into public.gallery_photos
+       (id, gallery_id, storage_path, status, uploaded_by)
+     values
+       ('d0000001-6666-6666-6666-666666666666', 'b4b4b4b4-6666-6666-6666-666666666666',
+        'b4b4b4b4-6666-6666-6666-666666666666/r1.webp', 'pending',
+        '33333333-6666-6666-6666-666666666666'),
+       ('d0000002-6666-6666-6666-666666666666', 'b4b4b4b4-6666-6666-6666-666666666666',
+        'b4b4b4b4-6666-6666-6666-666666666666/r2.webp', 'pending',
+        '33333333-6666-6666-6666-666666666666'),
+       ('d0000003-6666-6666-6666-666666666666', 'b4b4b4b4-6666-6666-6666-666666666666',
+        'b4b4b4b4-6666-6666-6666-666666666666/r3.webp', 'pending',
+        '33333333-6666-6666-6666-666666666666'),
+       ('d0000004-6666-6666-6666-666666666666', 'b4b4b4b4-6666-6666-6666-666666666666',
+        'b4b4b4b4-6666-6666-6666-666666666666/r4.webp', 'pending',
+        '33333333-6666-6666-6666-666666666666'),
+       ('d0000005-6666-6666-6666-666666666666', 'b4b4b4b4-6666-6666-6666-666666666666',
+        'b4b4b4b4-6666-6666-6666-666666666666/r5.webp', 'pending', null),
+       ('d0000006-6666-6666-6666-666666666666', 'b1b1b1b1-6666-6666-6666-666666666666',
+        'b1b1b1b1-6666-6666-6666-666666666666/r6.webp', 'pending',
+        '33333333-6666-6666-6666-666666666666') $$,
+  'fixture: pending photos to review'
+);
+
+set local role authenticated;
+
+-- no claims
+set local request.jwt.claims = '';
+
+select throws_ok(
+  $$ select public.review_gallery_photo('d0000001-6666-6666-6666-666666666666', 'approve') $$,
+  'JB004', null,
+  'a caller without claims gets JB004'
+);
+
+-- member M
+set local request.jwt.claims = '{"sub":"44444444-6666-6666-6666-666666666666","role":"authenticated"}';
+
+select throws_ok(
+  $$ select public.review_gallery_photo('d0000001-6666-6666-6666-666666666666', 'approve') $$,
+  'JB007', null,
+  'a member gets JB007'
+);
+
+-- host H1
+set local request.jwt.claims = '{"sub":"11111111-6666-6666-6666-666666666666","role":"authenticated"}';
+
+select throws_ok(
+  $$ select public.review_gallery_photo('00000000-0000-0000-0000-000000000000', 'approve') $$,
+  'JB008', null,
+  'an unknown photo id gets JB008'
+);
+
+select throws_ok(
+  $$ select public.review_gallery_photo('c0000022-6666-6666-6666-666666666666', 'approve') $$,
+  'JB007', null,
+  'the host of S1 reviewing an S2 photo gets JB007'
+);
+
+select throws_ok(
+  $$ select public.review_gallery_photo('d0000004-6666-6666-6666-666666666666', 'delete') $$,
+  'JB016', null,
+  'an invalid action gets JB016'
+);
+
+select throws_ok(
+  $$ select public.review_gallery_photo('d0000004-6666-6666-6666-666666666666', null) $$,
+  'JB016', null,
+  'a null action gets JB016'
+);
+
+select is(
+  public.review_gallery_photo('d0000001-6666-6666-6666-666666666666', 'approve'),
+  null,
+  'the owner host''s approve returns null'
+);
+
+select results_eq(
+  $$ select status::text, reviewed_by, reviewed_at is not null
+       from public.gallery_photos where id = 'd0000001-6666-6666-6666-666666666666' $$,
+  $$ values ('approved', '11111111-6666-6666-6666-666666666666'::uuid, true) $$,
+  'the owner host''s approve sets status, reviewed_by and reviewed_at'
+);
+
+select throws_ok(
+  $$ select public.review_gallery_photo('d0000001-6666-6666-6666-666666666666', 'approve') $$,
+  'JB016', null,
+  'approving an already-approved photo gets JB016'
+);
+
+select throws_ok(
+  $$ select public.review_gallery_photo('d0000001-6666-6666-6666-666666666666', 'reject') $$,
+  'JB016', null,
+  'rejecting an approved photo gets JB016'
+);
+
+select is(
+  public.review_gallery_photo('d0000003-6666-6666-6666-666666666666', 'reject'),
+  'b4b4b4b4-6666-6666-6666-666666666666/r3.webp',
+  'reject returns the exact storage_path'
+);
+
+select is(
+  (select count(*)::int from public.gallery_photos
+    where id = 'd0000005-6666-6666-6666-666666666666'),
+  1,
+  'the reviewer sees a pending photo whose uploader is null'
+);
+
+select is(
+  public.review_gallery_photo('d0000005-6666-6666-6666-666666666666', 'reject'),
+  'b4b4b4b4-6666-6666-6666-666666666666/r5.webp',
+  'a pending photo whose uploader is null can be rejected'
+);
+
+-- co-host C
+set local request.jwt.claims = '{"sub":"66666666-6666-6666-6666-666666666666","role":"authenticated"}';
+
+select is(
+  public.review_gallery_photo('d0000002-6666-6666-6666-666666666666', 'approve'),
+  null,
+  'the co-host''s approve returns null'
+);
+
+select results_eq(
+  $$ select status::text, reviewed_by, reviewed_at is not null
+       from public.gallery_photos where id = 'd0000002-6666-6666-6666-666666666666' $$,
+  $$ values ('approved', '66666666-6666-6666-6666-666666666666'::uuid, true) $$,
+  'the co-host''s approve sets status, reviewed_by and reviewed_at'
+);
+
+-- admin
+set local request.jwt.claims = '{"sub":"55555555-6666-6666-6666-666666666666","role":"authenticated"}';
+
+select is(
+  public.review_gallery_photo('c0000022-6666-6666-6666-666666666666', 'approve'),
+  null,
+  'the admin''s approve returns null'
+);
+
+select results_eq(
+  $$ select status::text, reviewed_by, reviewed_at is not null
+       from public.gallery_photos where id = 'c0000022-6666-6666-6666-666666666666' $$,
+  $$ values ('approved', '55555555-6666-6666-6666-666666666666'::uuid, true) $$,
+  'the admin''s approve sets status, reviewed_by and reviewed_at'
+);
+
+reset role;
+
+select is(
+  (select count(*)::int from public.gallery_photos
+    where id in ('d0000003-6666-6666-6666-666666666666',
+                 'd0000005-6666-6666-6666-666666666666')),
+  0,
+  'rejected photos are deleted'
+);
+
+-- S1 deleted: Album One survives with a null session_id
+select lives_ok(
+  $$ delete from public.sessions where id = 'a1a1a1a1-6666-6666-6666-666666666666' $$,
+  'fixture: postgres deletes session S1'
+);
+
+select is(
+  (select session_id from public.galleries
+    where id = 'b1b1b1b1-6666-6666-6666-666666666666'),
+  null,
+  'the album of a deleted session remains with a null session_id'
+);
+
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"11111111-6666-6666-6666-666666666666","role":"authenticated"}';
+
+select throws_ok(
+  $$ select public.review_gallery_photo('d0000006-6666-6666-6666-666666666666', 'approve') $$,
+  'JB007', null,
+  'the former host of a deleted session gets JB007'
+);
+
+set local request.jwt.claims = '{"sub":"55555555-6666-6666-6666-666666666666","role":"authenticated"}';
+
+select is(
+  public.review_gallery_photo('d0000006-6666-6666-6666-666666666666', 'approve'),
+  null,
+  'the admin can approve a pending photo of an orphaned album'
+);
+
+select results_eq(
+  $$ select status::text, reviewed_by
+       from public.gallery_photos where id = 'd0000006-6666-6666-6666-666666666666' $$,
+  $$ values ('approved', '55555555-6666-6666-6666-666666666666'::uuid) $$,
+  'the orphaned album''s photo is approved by the admin'
+);
+
+set local role anon;
+set local request.jwt.claims = '';
+
+select is(
+  (select count(*)::int from public.gallery_photos where status = 'pending'),
+  0,
+  'anon still sees no pending photo'
+);
+
+reset role;
+
+select ok(
+  pg_get_functiondef('public.review_gallery_photo(uuid, text)'::regprocedure)
+    ~* 'for\s+update',
+  'review_gallery_photo locks the photo row with select ... for update'
+);
+
+select ok(
+  has_function_privilege('authenticated', 'public.review_gallery_photo(uuid, text)', 'execute')
+  and not has_function_privilege('anon', 'public.review_gallery_photo(uuid, text)', 'execute'),
+  'review_gallery_photo is executable by authenticated and not by anon'
 );
 
 select * from finish();
