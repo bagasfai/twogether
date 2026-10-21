@@ -84,13 +84,15 @@ export function HoldToConfirmButton({
     setAnnouncement(t("holdCancelled"));
   }, [stopTimer, t]);
 
-  const isDisabled = disabled || busy;
-
   return (
     <>
       <button
         type="button"
-        disabled={isDisabled}
+        // Busy uses aria-disabled rather than disabled so keyboard focus stays
+        // on the button while onConfirm runs; start() already ignores input
+        // while busy.
+        disabled={disabled}
+        aria-disabled={busy || undefined}
         aria-label={label}
         title={t("holdHint")}
         onPointerDown={(event) => {
@@ -115,20 +117,23 @@ export function HoldToConfirmButton({
           cancel();
         }}
         style={{ "--hold-duration": `${holdMs}ms` } as CSSProperties}
-        className="relative inline-flex h-9 touch-none select-none items-center justify-center overflow-hidden rounded-full border border-destructive px-4 text-sm font-medium text-destructive outline-none focus-visible:ring-[3px] focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
+        className="relative inline-flex h-9 touch-none select-none items-center justify-center overflow-hidden rounded-full border border-destructive px-4 text-sm font-medium text-destructive outline-none focus-visible:ring-[3px] focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
       >
         <span>{label}</span>
         {/* The filled state is a clipped copy of the label, so the text flips
             to paper colour exactly where the fill has reached. Linear on
             purpose: the fill shows elapsed hold time, which is linear. The
-            reset uses the system's micro duration. */}
+            reset uses the system's micro duration. Under reduced motion the
+            clip is not animated: the whole fill fades in over --dur-micro
+            (opacity only, <=150ms) while held, and the hold is still timed. */}
         <span
           aria-hidden="true"
           className={cn(
-            "absolute inset-0 flex items-center justify-center bg-destructive text-primary-foreground motion-reduce:hidden",
+            "absolute inset-0 flex items-center justify-center bg-destructive text-primary-foreground",
+            "motion-reduce:[clip-path:inset(0_0_0_0)] motion-reduce:transition-opacity motion-reduce:duration-[var(--dur-micro)] motion-reduce:ease-[var(--ease-out)]",
             holding
-              ? "[clip-path:inset(0_0_0_0)] transition-[clip-path] duration-[var(--hold-duration)] ease-linear"
-              : "[clip-path:inset(0_100%_0_0)] transition-[clip-path] duration-[var(--dur-micro)] ease-[var(--ease-out)]",
+              ? "[clip-path:inset(0_0_0_0)] transition-[clip-path] duration-[var(--hold-duration)] ease-linear motion-reduce:opacity-100"
+              : "[clip-path:inset(0_100%_0_0)] transition-[clip-path] duration-[var(--dur-micro)] ease-[var(--ease-out)] motion-reduce:opacity-0",
           )}
         >
           {label}

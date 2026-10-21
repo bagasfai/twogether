@@ -30,6 +30,16 @@ export function validatePickedFile(
   return { ok: true };
 }
 
+// Some browsers (Safari) cannot encode webp and silently hand back PNG bytes
+// from canvas.toBlob("image/webp"). Uploading those under a .webp path with an
+// image/webp content type would mislabel the file, so this is thrown instead.
+export class WebpUnsupportedError extends Error {
+  constructor() {
+    super("This browser cannot encode webp");
+    this.name = "WebpUnsupportedError";
+  }
+}
+
 // Browser-only. Re-encoding through a canvas also strips EXIF/GPS metadata.
 export async function resizeToWebp(file: File): Promise<Blob> {
   const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
@@ -43,7 +53,11 @@ export async function resizeToWebp(file: File): Promise<Blob> {
     ctx.drawImage(bitmap, 0, 0, width, height);
     return await new Promise<Blob>((resolve, reject) => {
       canvas.toBlob(
-        (blob) => (blob ? resolve(blob) : reject(new Error("Could not encode image"))),
+        (blob) => {
+          if (!blob) reject(new Error("Could not encode image"));
+          else if (blob.type !== "image/webp") reject(new WebpUnsupportedError());
+          else resolve(blob);
+        },
         "image/webp",
         WEBP_QUALITY,
       );

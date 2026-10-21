@@ -10,6 +10,7 @@ import { createClient } from "@/lib/supabase/client";
 import { addGalleryPhoto, deleteGalleryPhoto, listMyPhotosAction } from "@/lib/actions/galleries";
 import { ACCEPTED_TYPES, galleryPhotoPath, resizeToWebp, validatePickedFile } from "@/lib/gallery/image";
 import { runWithConcurrency } from "@/lib/gallery/upload-queue";
+import { runUploadPipeline } from "@/lib/gallery/upload-pipeline";
 import { galleryPhotoUrl } from "@/lib/gallery/url";
 import { cn } from "@/lib/utils";
 // Type-only: erased at compile time, so the server-only guard in the DAL never
@@ -100,52 +101,53 @@ export function UploadPanel({ galleryId }: { galleryId: string }) {
 
   const processRow = useCallback(
     async ({ id, file }: { id: string; file: File }) => {
-      let path = uploadedPaths.current.get(id);
-
-      if (!path) {
-        patchRow(id, { state: "working", stage: "resizing" });
-        let blob: Blob;
-        try {
-          blob = await resizeToWebp(file);
-        } catch {
-          // Retrying the same unreadable file cannot help, so no Retry.
-          patchRow(id, { state: "invalid", error: t("fileReadFailed") });
-          return;
-        }
-
-        patchRow(id, { state: "working", stage: "uploading" });
-        const candidate = galleryPhotoPath(galleryId, crypto.randomUUID());
-        // upsert: false because the bucket has no UPDATE policy, and a fresh
-        // uuid path never needs overwriting.
-        const { error } = await supabase.storage
-          .from("gallery")
-          .upload(candidate, blob, { contentType: "image/webp", upsert: false });
-        if (error) {
-          patchRow(id, { state: "failed", error: t("fileUploadFailed") });
-          return;
-        }
-        path = candidate;
-        uploadedPaths.current.set(id, path);
-      }
-
-      patchRow(id, { state: "working", stage: "saving" });
-      let message: string | null;
+      // runUploadPipeline never rejects; the outer catch only guards the UI
+      // updates around it, so a row can never be left in "working".
       try {
-        // The schema's caption is a string that trims "" to null, so "no
-        // caption" is sent as "" (a literal null fails validation).
-        const result = await addGalleryPhoto({ galleryId, path, caption: "" });
-        message = result.ok ? null : result.message;
-      } catch {
-        message = t("fileSaveFailed");
-      }
-      if (message) {
-        patchRow(id, { state: "failed", error: message });
-        return;
-      }
+        const outcome = await runUploadPipeline({
+          existingPath: uploadedPaths.current.get(id) ?? null,
+          resize: () => resizeToWebp(file),
+          makePath: () => galleryPhotoPath(galleryId, crypto.randomUUID()),
+          // upsert: false because the bucket has no UPDATE policy, and a fresh
+          // uuid path never needs overwriting.
+          upload: (path, blob) =>
+            supabase.storage.from("gallery").upload(path, blob, { contentType: "image/webp", upsert: false }),
+          // The schema's caption is a string that trims "" to null, so "no
+          // caption" is sent as "".
+          save: (path) => addGalleryPhoto({ galleryId, path, caption: "" }),
+          onStage: (stage) => patchRow(id, { state: "working", stage }),
+          onUploaded: (path) => uploadedPaths.current.set(id, path),
+        });
 
-      // Silent success: the row goes away and the photo shows up below.
-      removeRow(id);
-      await refreshPhotos();
+        if (outcome.ok) {
+          // Silent success: the row goes away and the photo shows up below.
+          removeRow(id);
+          await refreshPhotos();
+          return;
+        }
+
+        switch (outcome.reason) {
+          // Retrying the same file in the same browser cannot help: no Retry.
+          case "read":
+            patchRow(id, { state: "invalid", error: t("fileReadFailed") });
+            return;
+          case "encode":
+            patchRow(id, { state: "invalid", error: t("fileEncodeFailed") });
+            return;
+          case "upload":
+            patchRow(id, { state: "failed", error: t("fileUploadFailed") });
+            return;
+          case "save":
+            patchRow(id, { state: "failed", error: outcome.message ?? t("fileSaveFailed") });
+            return;
+        }
+      } catch {
+        // The stored path (if any) stays in uploadedPaths, so Retry re-saves it.
+        patchRow(id, {
+          state: "failed",
+          error: uploadedPaths.current.has(id) ? t("fileSaveFailed") : t("fileUploadFailed"),
+        });
+      }
     },
     [galleryId, patchRow, refreshPhotos, removeRow, supabase, t],
   );

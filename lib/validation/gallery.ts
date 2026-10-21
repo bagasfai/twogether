@@ -44,8 +44,12 @@ export const albumIdSchema = z.object({ id: z.uuid() });
 
 export const updateAlbumSchema = albumSchema.extend({ id: z.uuid() });
 
-export type AddGalleryPhotoInput = z.infer<typeof addGalleryPhotoSchema>;
-export type ReviewGalleryPhotoInput = z.infer<typeof reviewGalleryPhotoSchema>;
-export type UpdateCaptionInput = z.infer<typeof updateCaptionSchema>;
-export type AlbumInput = z.infer<typeof albumSchema>;
-export type UpdateAlbumInput = z.infer<typeof updateAlbumSchema>;
+// Action inputs use the schema INPUT types: caption/description are strings
+// that the schemas trim and turn "" into null, so callers send "" for "none"
+// (a literal null fails validation). The output types are what the actions use
+// after parsing.
+export type AddGalleryPhotoInput = z.input<typeof addGalleryPhotoSchema>;
+export type ReviewGalleryPhotoInput = z.input<typeof reviewGalleryPhotoSchema>;
+export type UpdateCaptionInput = z.input<typeof updateCaptionSchema>;
+export type AlbumInput = z.input<typeof albumSchema>;
+export type UpdateAlbumInput = z.input<typeof updateAlbumSchema>;

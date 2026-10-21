@@ -93,6 +93,7 @@
     "fileEmpty": "File ini kosong.",
     "fileTooLarge": "File ini lebih dari 5 MB.",
     "fileReadFailed": "Foto ini tidak bisa dibaca. Coba file lain.",
+    "fileEncodeFailed": "Browser ini tidak bisa mengubah foto ke WebP. Coba browser lain.",
     "fileUploadFailed": "Unggahan gagal. Periksa koneksimu lalu coba lagi.",
     "fileSaveFailed": "Foto sudah terunggah tapi belum bisa ditambahkan. Coba lagi.",
     "fileProgress": "Mengunggah {name}",

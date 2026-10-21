@@ -93,6 +93,7 @@
     "fileEmpty": "This file is empty.",
     "fileTooLarge": "This file is larger than 5 MB.",
     "fileReadFailed": "This photo couldn't be read. Try another file.",
+    "fileEncodeFailed": "This browser can't convert photos to WebP. Try a different browser.",
     "fileUploadFailed": "Upload failed. Check your connection and try again.",
     "fileSaveFailed": "The photo uploaded but couldn't be added. Try again.",
     "fileProgress": "Uploading {name}",
