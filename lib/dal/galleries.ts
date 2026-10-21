@@ -54,6 +54,9 @@ function byDisplayOrder(a: PhotoOrderFields, b: PhotoOrderFields): number {
   return a.created_at < b.created_at ? -1 : a.created_at > b.created_at ? 1 : 0;
 }
 
+// PostgREST max_rows (1000 in config.toml) caps top-level rows only, not rows
+// embedded under each album, so photoCount/cover are not truncated by it; the
+// top-level galleries list is far below that cap for a community this size.
 // Anon-safe. The explicit status filter on the embedded photos is belt and
 // braces: gallery_photos RLS already limits anon to approved rows, but this
 // keeps the result correct if the caller were ever signed in as a reviewer.
@@ -65,7 +68,7 @@ export async function listPublicAlbums(): Promise<PublicAlbum[]> {
   const { data, error } = await supabase
     .from("galleries")
     .select(
-      "id, title, sessions(starts_at), gallery_photos(storage_path, sort_order, created_at, status)",
+      "id, title, created_at, sessions(starts_at), gallery_photos(storage_path, sort_order, created_at, status)",
     )
     .eq("gallery_photos.status", "approved");
 
@@ -77,13 +80,25 @@ export async function listPublicAlbums(): Promise<PublicAlbum[]> {
       return {
         id: album.id,
         title: album.title,
+        createdAt: album.created_at,
         sessionStartsAt: album.sessions?.starts_at ?? null,
         photoCount: photos.length,
         coverPath: photos[0]?.storage_path ?? null,
       };
     })
     .filter((album) => album.photoCount > 0)
-    .sort((a, b) => (b.sessionStartsAt ?? "").localeCompare(a.sessionStartsAt ?? ""));
+    // Deterministic: session-linked albums first by session start (newest
+    // first), then standalone albums by creation time (newest first).
+    .sort((a, b) => {
+      if (a.sessionStartsAt && b.sessionStartsAt) return b.sessionStartsAt.localeCompare(a.sessionStartsAt);
+      if (a.sessionStartsAt) return -1;
+      if (b.sessionStartsAt) return 1;
+      return b.createdAt.localeCompare(a.createdAt);
+    })
+    .map(({ createdAt: _createdAt, ...album }) => {
+      void _createdAt;
+      return album;
+    });
 }
 
 // Returns the album even when it has no approved photos (the page shows an
@@ -130,21 +145,21 @@ export async function getAlbumForSession(sessionId: string): Promise<{ id: strin
   return data ? { id: data.id } : null;
 }
 
-// Same query as getAlbumForSession; a second name so callers read naturally.
-export const getAlbumIdForSession = getAlbumForSession;
-
+// Counts are computed server-side (head + exact count) so the max_rows cap
+// on returned rows can never make the inventory undercount photos. Albums
+// counts those with >=1 approved photo, same rule as listPublicAlbums.
 export async function getPublicInventory(): Promise<{ albums: number; photos: number }> {
   const supabase = createPublicClient();
 
-  const { data, error } = await supabase
+  const { count, error } = await supabase
     .from("gallery_photos")
-    .select("gallery_id")
+    .select("id", { count: "exact", head: true })
     .eq("status", "approved");
 
   if (error) throw error;
 
-  const rows = data ?? [];
-  return { albums: new Set(rows.map((row) => row.gallery_id)).size, photos: rows.length };
+  const albums = await listPublicAlbums();
+  return { albums: albums.length, photos: count ?? 0 };
 }
 
 const PHOTO_COLUMNS =

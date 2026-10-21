@@ -61,6 +61,8 @@ export async function addGalleryPhoto(input: AddGalleryPhotoInput): Promise<Acti
   const { data, error } = await supabase.rpc("add_gallery_photo", {
     p_gallery_id: parsed.data.galleryId,
     p_path: parsed.data.path,
+    // The SQL function accepts NULL for "no caption", but the generated type
+    // models the argument as a plain string; the cast only bridges that gap.
     p_caption: parsed.data.caption as string,
   });
 
