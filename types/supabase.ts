@@ -119,7 +119,7 @@ export type Database = {
       galleries: {
         Row: {
           created_at: string
-          created_by: string
+          created_by: string | null
           description: string | null
           id: string
           session_id: string | null
@@ -128,7 +128,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          created_by: string
+          created_by?: string | null
           description?: string | null
           id?: string
           session_id?: string | null
@@ -137,7 +137,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
-          created_by?: string
+          created_by?: string | null
           description?: string | null
           id?: string
           session_id?: string | null
@@ -167,7 +167,10 @@ export type Database = {
           created_at: string
           gallery_id: string
           id: string
+          reviewed_at: string | null
+          reviewed_by: string | null
           sort_order: number
+          status: Database["public"]["Enums"]["gallery_photo_status"]
           storage_path: string
           uploaded_by: string | null
         }
@@ -176,7 +179,10 @@ export type Database = {
           created_at?: string
           gallery_id: string
           id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
           sort_order?: number
+          status?: Database["public"]["Enums"]["gallery_photo_status"]
           storage_path: string
           uploaded_by?: string | null
         }
@@ -185,7 +191,10 @@ export type Database = {
           created_at?: string
           gallery_id?: string
           id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
           sort_order?: number
+          status?: Database["public"]["Enums"]["gallery_photo_status"]
           storage_path?: string
           uploaded_by?: string | null
         }
@@ -195,6 +204,13 @@ export type Database = {
             columns: ["gallery_id"]
             isOneToOne: false
             referencedRelation: "galleries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gallery_photos_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
@@ -538,6 +554,32 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_gallery_photo: {
+        Args: { p_caption: string; p_gallery_id: string; p_path: string }
+        Returns: {
+          caption: string | null
+          created_at: string
+          gallery_id: string
+          id: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          sort_order: number
+          status: Database["public"]["Enums"]["gallery_photo_status"]
+          storage_path: string
+          uploaded_by: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "gallery_photos"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      can_review_gallery: { Args: { p_gallery_id: string }; Returns: boolean }
+      can_upload_to_gallery: {
+        Args: { p_gallery_id: string }
+        Returns: boolean
+      }
       cancel_guest_registration: {
         Args: { p_participant_id: string }
         Returns: undefined
@@ -710,6 +752,10 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      review_gallery_photo: {
+        Args: { p_action: string; p_photo_id: string }
+        Returns: string
+      }
       session_is_public: { Args: { p_session_id: string }; Returns: boolean }
       session_lock_key: { Args: { p_session_id: string }; Returns: number }
       start_match: {
@@ -732,6 +778,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      start_session: { Args: { p_session_id: string }; Returns: undefined }
       waitlist_position_of: {
         Args: { p_id: string; p_registered_at: string; p_session_id: string }
         Returns: number
@@ -739,6 +786,7 @@ export type Database = {
     }
     Enums: {
       court_status: "idle" | "in_use" | "unavailable"
+      gallery_photo_status: "pending" | "approved"
       match_status: "scheduled" | "in_progress" | "completed" | "cancelled"
       participant_status: "confirmed" | "waiting_list" | "cancelled"
       registration_state: "closed" | "open"
@@ -871,6 +919,7 @@ export const Constants = {
   public: {
     Enums: {
       court_status: ["idle", "in_use", "unavailable"],
+      gallery_photo_status: ["pending", "approved"],
       match_status: ["scheduled", "in_progress", "completed", "cancelled"],
       participant_status: ["confirmed", "waiting_list", "cancelled"],
       registration_state: ["closed", "open"],
