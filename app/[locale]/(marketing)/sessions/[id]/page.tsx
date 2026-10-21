@@ -5,6 +5,8 @@ import { getPublicSession } from "@/lib/dal/public-sessions";
 import { listPublicSessionAnnouncements } from "@/lib/dal/announcements";
 import { RegisterPanel } from "@/components/sessions/register-panel";
 import { RegisteredParticipants } from "@/components/sessions/registered-participants";
+import { UploadPanel } from "@/components/gallery/upload-panel";
+import { getAlbumForSession } from "@/lib/dal/galleries";
 
 export const revalidate = 60;
 
@@ -45,7 +47,8 @@ export default async function SessionDetailPage({
   ]);
   if (!session) notFound();
 
-  const announcements = await listPublicSessionAnnouncements(id);
+  // Both read through the cookieless anon client, so the page stays ISR.
+  const [announcements, album] = await Promise.all([listPublicSessionAnnouncements(id), getAlbumForSession(id)]);
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-8 px-6 py-12">
@@ -106,6 +109,10 @@ export default async function SessionDetailPage({
       <RegisterPanel sessionId={session.id} registrationOpen={session.registrationState === "open"} />
 
       <RegisteredParticipants sessionId={session.id} />
+
+      {/* The panel decides on the client whether this viewer may upload and
+          renders nothing otherwise, so visitors get the same static page. */}
+      {album ? <UploadPanel galleryId={album.id} /> : null}
     </div>
   );
 }

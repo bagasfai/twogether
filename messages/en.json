@@ -84,6 +84,34 @@
     "close": "Close",
     "previous": "Previous photo",
     "next": "Next photo",
-    "defaultAlt": "Photo from {album}"
+    "defaultAlt": "Photo from {album}",
+    "uploadTitle": "Add your photos",
+    "uploadHint": "JPEG, PNG or WebP, up to 5 MB each. A host reviews them before they appear in the gallery.",
+    "choosePhotos": "Choose photos",
+    "dropHint": "or drop them here",
+    "fileInvalidType": "Only JPEG, PNG or WebP. HEIC photos need to be exported as JPEG first.",
+    "fileEmpty": "This file is empty.",
+    "fileTooLarge": "This file is larger than 5 MB.",
+    "fileReadFailed": "This photo couldn't be read. Try another file.",
+    "fileUploadFailed": "Upload failed. Check your connection and try again.",
+    "fileSaveFailed": "The photo uploaded but couldn't be added. Try again.",
+    "fileProgress": "Uploading {name}",
+    "stage": {
+      "queued": "Waiting",
+      "resizing": "Preparing",
+      "uploading": "Uploading",
+      "saving": "Saving"
+    },
+    "retry": "Retry",
+    "dismiss": "Dismiss",
+    "dismissFile": "Dismiss {name}",
+    "myPhotos": "Your photos",
+    "myPhotoAlt": "Your photo",
+    "pending": "Pending",
+    "deletePhoto": "Delete",
+    "deleteFailed": "Couldn't delete the photo. Try again.",
+    "holdHint": "Press and hold to confirm",
+    "holdRemaining": "Keep holding, {seconds, plural, one {# second} other {# seconds}} left",
+    "holdCancelled": "Released early. Nothing changed."
   }
 }
