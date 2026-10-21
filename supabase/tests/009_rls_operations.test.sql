@@ -1,5 +1,5 @@
 begin;
-select plan(26);
+select plan(27);
 
 insert into auth.users (id, email) values
   ('11111111-1111-1111-1111-111111111111', 'member@test.local'),
@@ -217,19 +217,31 @@ select is(
   'the session host can read the announcement they just posted'
 );
 
--- gallery_photos_write / gallery_photos_select: a session host can add a
--- photo to their session's gallery and read it back.
+-- gallery_photos: direct INSERT is revoked from authenticated (rows come only
+-- from add_gallery_photo), so a host cannot insert one. A photo inserted by
+-- the postgres role is still readable by the host of its session (select
+-- policy: reviewer sees every row of their album).
+select throws_ok(
+  $$ insert into public.gallery_photos (gallery_id, storage_path)
+     values ('eeeeeeee-0000-0000-0000-000000000002', 'sessions/a/direct.jpg') $$,
+  '42501',
+  null,
+  'a session host cannot insert a gallery photo directly'
+);
+
+set local role postgres;
 select lives_ok(
   $$ insert into public.gallery_photos (gallery_id, storage_path)
      values ('eeeeeeee-0000-0000-0000-000000000002', 'sessions/a/1.jpg') $$,
-  'a session host can add a photo to their session''s gallery'
+  'a gallery photo can be added by the postgres role'
 );
+set local role authenticated;
 
 select is(
   (select count(*)::int from public.gallery_photos
     where gallery_id = 'eeeeeeee-0000-0000-0000-000000000002'),
   1,
-  'the session host can read the gallery photo they just added'
+  'the session host can read the gallery photo of their session'
 );
 
 -- Orphaned gallery: an UPDATE whose USING clause excludes every candidate
