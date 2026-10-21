@@ -2,11 +2,12 @@
 -- Sections are appended by later gallery tasks; keep plan() in step.
 --   1. visibility and grants   (gallery_photos columns, privileges, policies)
 --   2. can_review_gallery
+--   3. can_upload_to_gallery
 -- Fixture rows in gallery_photos are inserted as postgres: direct INSERT is
 -- revoked from authenticated (rows come only from add_gallery_photo).
 
 begin;
-select plan(30);
+select plan(57);
 
 -- ---- fixtures ----
 
@@ -278,6 +279,14 @@ select throws_ok(
 
 -- ======== 2. can_review_gallery ========
 
+reset role;
+
+select lives_ok(
+  $$ insert into public.galleries (id, session_id, title)
+     values ('b3b3b3b3-6666-6666-6666-666666666666', null, 'Unlinked Album') $$,
+  'fixture: unlinked album (session_id null)'
+);
+
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"11111111-6666-6666-6666-666666666666","role":"authenticated"}';
 
@@ -305,12 +314,223 @@ select ok(
   'an admin can review any album'
 );
 
+select ok(
+  public.can_review_gallery('b3b3b3b3-6666-6666-6666-666666666666'),
+  'an admin can review an unlinked album'
+);
+
+select throws_ok(
+  $$ update public.gallery_photos set reviewed_at = now() $$,
+  '42501', null,
+  'an admin cannot update reviewed_at directly'
+);
+
+set local request.jwt.claims = '{"sub":"11111111-6666-6666-6666-666666666666","role":"authenticated"}';
+
+select ok(
+  not public.can_review_gallery('b3b3b3b3-6666-6666-6666-666666666666'),
+  'a host cannot review an unlinked album'
+);
+
+select throws_ok(
+  $$ update public.gallery_photos set reviewed_at = now() $$,
+  '42501', null,
+  'a host cannot update reviewed_at directly'
+);
+
 reset role;
 
 select ok(
   has_function_privilege('authenticated', 'public.can_review_gallery(uuid)', 'execute')
   and not has_function_privilege('anon', 'public.can_review_gallery(uuid)', 'execute'),
   'can_review_gallery is executable by authenticated and not by anon'
+);
+
+-- ======== 3. can_upload_to_gallery ========
+-- SE: ends now (inside the window), owned by H1, with co-host C.
+-- SW_in / SW_out: ended 7 days minus / plus one minute ago.
+-- Participants of SE: U confirmed+checked in, M confirmed not checked in,
+-- W waiting_list+checked in, X cancelled+checked in (the enforce-check-in
+-- trigger would null it, so it is disabled for that one insert).
+
+select lives_ok(
+  $$ insert into auth.users (id, email) values
+       ('66666666-6666-6666-6666-666666666666', 'cohost-025@test.local'),
+       ('77777777-6666-6666-6666-666666666666', 'waiter-025@test.local'),
+       ('88888888-6666-6666-6666-666666666666', 'canceller-025@test.local') $$,
+  'fixture: extra users'
+);
+
+select lives_ok(
+  $$ insert into public.sessions
+       (id, title, starts_at, ends_at, location, max_participants, created_by, status)
+     values
+       ('a3a3a3a3-6666-6666-6666-666666666666', 'Session Now',
+        now() - interval '2 hours', now(), 'GOR Jakbar', 16,
+        '11111111-6666-6666-6666-666666666666', 'scheduled'),
+       ('a4a4a4a4-6666-6666-6666-666666666666', 'Session Edge In',
+        now() - interval '7 days 2 hours',
+        now() - interval '7 days' + interval '1 minute', 'GOR Jakbar', 16,
+        '22222222-6666-6666-6666-666666666666', 'scheduled'),
+       ('a5a5a5a5-6666-6666-6666-666666666666', 'Session Edge Out',
+        now() - interval '7 days 2 hours',
+        now() - interval '7 days' - interval '1 minute', 'GOR Jakbar', 16,
+        '22222222-6666-6666-6666-666666666666', 'scheduled') $$,
+  'fixture: sessions'
+);
+
+select lives_ok(
+  $$ insert into public.session_hosts (session_id, user_id, role)
+     values ('a3a3a3a3-6666-6666-6666-666666666666',
+             '66666666-6666-6666-6666-666666666666', 'cohost') $$,
+  'fixture: co-host'
+);
+
+select lives_ok(
+  $$ insert into public.galleries (id, session_id, title) values
+       ('b4b4b4b4-6666-6666-6666-666666666666',
+        'a3a3a3a3-6666-6666-6666-666666666666', 'Album Now'),
+       ('b5b5b5b5-6666-6666-6666-666666666666',
+        'a4a4a4a4-6666-6666-6666-666666666666', 'Album Edge In'),
+       ('b6b6b6b6-6666-6666-6666-666666666666',
+        'a5a5a5a5-6666-6666-6666-666666666666', 'Album Edge Out') $$,
+  'fixture: albums'
+);
+
+select lives_ok(
+  $$ insert into public.participants (session_id, user_id, status, checked_in_at) values
+       ('a3a3a3a3-6666-6666-6666-666666666666',
+        '33333333-6666-6666-6666-666666666666', 'confirmed', now()),
+       ('a3a3a3a3-6666-6666-6666-666666666666',
+        '44444444-6666-6666-6666-666666666666', 'confirmed', null),
+       ('a3a3a3a3-6666-6666-6666-666666666666',
+        '77777777-6666-6666-6666-666666666666', 'waiting_list', now()),
+       ('a4a4a4a4-6666-6666-6666-666666666666',
+        '33333333-6666-6666-6666-666666666666', 'confirmed', now()),
+       ('a5a5a5a5-6666-6666-6666-666666666666',
+        '33333333-6666-6666-6666-666666666666', 'confirmed', now()) $$,
+  'fixture: participants'
+);
+
+alter table public.participants disable trigger participants_enforce_checkin;
+
+select lives_ok(
+  $$ insert into public.participants
+       (session_id, user_id, status, checked_in_at, cancelled_at)
+     values ('a3a3a3a3-6666-6666-6666-666666666666',
+             '88888888-6666-6666-6666-666666666666', 'cancelled', now(), now()) $$,
+  'fixture: cancelled participant that is still checked in'
+);
+
+alter table public.participants enable trigger participants_enforce_checkin;
+
+set local role authenticated;
+
+-- admin
+set local request.jwt.claims = '{"sub":"55555555-6666-6666-6666-666666666666","role":"authenticated"}';
+
+select ok(
+  public.can_upload_to_gallery('b4b4b4b4-6666-6666-6666-666666666666'),
+  'an admin can upload to any album'
+);
+
+select ok(
+  public.can_upload_to_gallery('b3b3b3b3-6666-6666-6666-666666666666'),
+  'an admin can upload to an unlinked album'
+);
+
+-- owner host H1
+set local request.jwt.claims = '{"sub":"11111111-6666-6666-6666-666666666666","role":"authenticated"}';
+
+select ok(
+  public.can_upload_to_gallery('b4b4b4b4-6666-6666-6666-666666666666'),
+  'the owner host can upload to their session''s album'
+);
+
+select ok(
+  not public.can_upload_to_gallery('b3b3b3b3-6666-6666-6666-666666666666'),
+  'a host cannot upload to an unlinked album'
+);
+
+-- co-host
+set local request.jwt.claims = '{"sub":"66666666-6666-6666-6666-666666666666","role":"authenticated"}';
+
+select ok(
+  public.can_upload_to_gallery('b4b4b4b4-6666-6666-6666-666666666666'),
+  'a co-host can upload to the session''s album'
+);
+
+-- unrelated host H2 (not a host of the Session Now album)
+set local request.jwt.claims = '{"sub":"22222222-6666-6666-6666-666666666666","role":"authenticated"}';
+
+select ok(
+  not public.can_upload_to_gallery('b4b4b4b4-6666-6666-6666-666666666666'),
+  'an unrelated host cannot upload to another session''s album'
+);
+
+-- participants
+set local request.jwt.claims = '{"sub":"33333333-6666-6666-6666-666666666666","role":"authenticated"}';
+
+select ok(
+  public.can_upload_to_gallery('b4b4b4b4-6666-6666-6666-666666666666'),
+  'a confirmed, checked-in participant can upload'
+);
+
+select ok(
+  public.can_upload_to_gallery('b5b5b5b5-6666-6666-6666-666666666666'),
+  'the window is open 1 minute before the 7-day cutoff'
+);
+
+select ok(
+  not public.can_upload_to_gallery('b6b6b6b6-6666-6666-6666-666666666666'),
+  'the window is closed 1 minute after the 7-day cutoff'
+);
+
+select ok(
+  not public.can_upload_to_gallery('b3b3b3b3-6666-6666-6666-666666666666'),
+  'a checked-in participant cannot upload to an unlinked album'
+);
+
+set local request.jwt.claims = '{"sub":"44444444-6666-6666-6666-666666666666","role":"authenticated"}';
+
+select ok(
+  not public.can_upload_to_gallery('b4b4b4b4-6666-6666-6666-666666666666'),
+  'a confirmed participant who is not checked in cannot upload'
+);
+
+select ok(
+  not public.can_upload_to_gallery('00000000-0000-0000-0000-000000000000'),
+  'an unknown album id returns false'
+);
+
+set local request.jwt.claims = '{"sub":"77777777-6666-6666-6666-666666666666","role":"authenticated"}';
+
+select ok(
+  not public.can_upload_to_gallery('b4b4b4b4-6666-6666-6666-666666666666'),
+  'a waiting_list participant who is checked in cannot upload'
+);
+
+set local request.jwt.claims = '{"sub":"88888888-6666-6666-6666-666666666666","role":"authenticated"}';
+
+select ok(
+  not public.can_upload_to_gallery('b4b4b4b4-6666-6666-6666-666666666666'),
+  'a cancelled participant with checked_in_at set cannot upload'
+);
+
+-- no claims
+set local request.jwt.claims = '';
+
+select ok(
+  not public.can_upload_to_gallery('b4b4b4b4-6666-6666-6666-666666666666'),
+  'a caller without claims gets false'
+);
+
+reset role;
+
+select ok(
+  has_function_privilege('authenticated', 'public.can_upload_to_gallery(uuid)', 'execute')
+  and not has_function_privilege('anon', 'public.can_upload_to_gallery(uuid)', 'execute'),
+  'can_upload_to_gallery is executable by authenticated and not by anon'
 );
 
 select * from finish();

@@ -3,6 +3,10 @@
 --   1. gallery_photos columns (status, reviewed_by, reviewed_at, unique path)
 --   2. can_review_gallery()
 --   3. privileges and policies
+--   4. can_upload_to_gallery()
+--   (JB012-JB016 are allocated for the gallery RPCs: JB012 upload not eligible,
+--    JB013 upload window closed, JB014 pending cap reached, JB015 invalid upload
+--    path, JB016 invalid state.)
 
 -- ---- 1. gallery_photos columns ----
 
@@ -78,3 +82,41 @@ create policy gallery_photos_delete on public.gallery_photos
     public.can_review_gallery(gallery_id)
     or (uploaded_by = auth.uid() and status = 'pending')
   );
+
+-- ---- 4. can_upload_to_gallery ----
+
+-- True for an admin, a host (owner or co-host) of the album's session, or a
+-- confirmed, checked-in participant of that session until 7 days after
+-- sessions.ends_at. Unlinked albums are admin-only. Returns false for an
+-- unknown album or a caller without claims (auth.uid() null matches no row).
+create or replace function public.can_upload_to_gallery(p_gallery_id uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+  select public.is_admin()
+      or exists (
+        select 1
+          from public.galleries g
+         where g.id = p_gallery_id
+           and g.session_id is not null
+           and (
+             public.is_session_host(g.session_id)
+             or exists (
+               select 1
+                 from public.participants p
+                 join public.sessions s on s.id = p.session_id
+                where p.session_id = g.session_id
+                  and p.user_id = auth.uid()
+                  and p.status = 'confirmed'
+                  and p.checked_in_at is not null
+                  and now() <= s.ends_at + interval '7 days'
+             )
+           )
+      );
+$$;
+
+revoke execute on function public.can_upload_to_gallery(uuid) from public, anon;
+grant execute on function public.can_upload_to_gallery(uuid) to authenticated;
