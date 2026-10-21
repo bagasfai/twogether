@@ -9,6 +9,11 @@ import {
   setNoShowSchema,
   setPaidSchema,
 } from "@/lib/validation/participants";
+import {
+  addGalleryPhotoSchema,
+  albumSchema,
+  reviewGalleryPhotoSchema,
+} from "@/lib/validation/gallery";
 import { createCourtSchema, deleteCourtSchema, setCourtStatusSchema } from "@/lib/validation/courts";
 import { createMatchSchema, matchIdSchema } from "@/lib/validation/matches";
 import {
@@ -613,5 +618,48 @@ describe("announcementIdSchema", () => {
 
   it("rejects a non-uuid", () => {
     expect(announcementIdSchema.safeParse({ id: "nope" }).success).toBe(false);
+  });
+});
+
+describe("gallery schemas", () => {
+  const galleryId = "3fa85f64-5717-4562-b3fc-2c963f66afa6";
+  const photoUuid = "7c9e6679-7425-40de-944b-e07fc1f90ae7";
+  const valid = { galleryId, path: `${galleryId}/${photoUuid}.webp`, caption: "Nice rally" };
+
+  it("accepts a valid path", () => {
+    expect(addGalleryPhotoSchema.safeParse(valid).success).toBe(true);
+  });
+
+  it("rejects a path under a different gallery id", () => {
+    const other = "11111111-1111-4111-8111-111111111111";
+    expect(addGalleryPhotoSchema.safeParse({ ...valid, path: `${other}/${photoUuid}.webp` }).success).toBe(false);
+  });
+
+  it("rejects a .jpg path", () => {
+    expect(addGalleryPhotoSchema.safeParse({ ...valid, path: `${galleryId}/${photoUuid}.jpg` }).success).toBe(false);
+  });
+
+  it("rejects a path with ..", () => {
+    expect(addGalleryPhotoSchema.safeParse({ ...valid, path: `${galleryId}/../${photoUuid}.webp` }).success).toBe(false);
+  });
+
+  it("trims the caption and turns blank into null", () => {
+    expect(addGalleryPhotoSchema.parse({ ...valid, caption: "  hi  " }).caption).toBe("hi");
+    expect(addGalleryPhotoSchema.parse({ ...valid, caption: "   " }).caption).toBeNull();
+  });
+
+  it("rejects a caption over 200 characters", () => {
+    expect(addGalleryPhotoSchema.safeParse({ ...valid, caption: "a".repeat(201) }).success).toBe(false);
+  });
+
+  it("rejects an unknown review action", () => {
+    expect(reviewGalleryPhotoSchema.safeParse({ photoId: photoUuid, action: "delete" }).success).toBe(false);
+    expect(reviewGalleryPhotoSchema.safeParse({ photoId: photoUuid, action: "approve" }).success).toBe(true);
+  });
+
+  it("rejects an empty or 121-char album title", () => {
+    expect(albumSchema.safeParse({ title: "", description: "" }).success).toBe(false);
+    expect(albumSchema.safeParse({ title: "a".repeat(121), description: "" }).success).toBe(false);
+    expect(albumSchema.parse({ title: "ok", description: " " }).description).toBeNull();
   });
 });

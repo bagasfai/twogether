@@ -13,6 +13,11 @@
 //   JB009 court not available for a new/starting match
 //   JB010 court has an active match, cannot delete
 //   JB011 guest registration missing a required field
+//   JB012 not eligible to add photos to this gallery
+//   JB013 photo upload window for the session has closed
+//   JB014 pending-photo cap reached
+//   JB015 invalid upload (bad path or caption)
+//   JB016 photo or album already changed (stale state)
 
 export const RPC_CODE_MAP = {
   JB001: "registration_closed",
@@ -26,6 +31,11 @@ export const RPC_CODE_MAP = {
   JB009: "court_not_available",
   JB010: "court_has_active_match",
   JB011: "validation",
+  JB012: "upload_not_eligible",
+  JB013: "upload_window_closed",
+  JB014: "upload_cap_reached",
+  JB015: "invalid_upload",
+  JB016: "invalid_state",
 } as const;
 
 export type RpcErrorCode = Exclude<(typeof RPC_CODE_MAP)[keyof typeof RPC_CODE_MAP], "validation">;
@@ -48,6 +58,11 @@ const MESSAGES: Record<AppErrorCode, string> = {
   not_found: "We could not find that.",
   court_not_available: "That court isn't available right now.",
   court_has_active_match: "Cancel or complete the match on this court before deleting it.",
+  upload_not_eligible: "You can't add photos to this album.",
+  upload_window_closed: "The window for adding photos to this session has closed.",
+  upload_cap_reached: "You have 20 photos waiting for approval. Wait for a host to review them.",
+  invalid_upload: "That photo could not be added. Please try again.",
+  invalid_state: "This has already changed. Reload and try again.",
   validation: "Please check the highlighted fields.",
   unknown: "Something went wrong. Please try again.",
 };
