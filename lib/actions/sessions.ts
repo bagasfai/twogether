@@ -7,7 +7,7 @@ import { sessionSchema, sessionIdSchema, isZonedInstant, type SessionInput } fro
 import { getHostSession } from "@/lib/dal/sessions";
 import { listRoster } from "@/lib/dal/participants";
 import { buildWhatsAppShareText } from "@/lib/format/whatsapp-share";
-import { fail, failFromZod, ok, type ActionResult } from "@/lib/actions/result";
+import { fail, failFromRpc, failFromZod, ok, type ActionResult } from "@/lib/actions/result";
 import { sessionUpdatePayload } from "@/lib/actions/session-payload";
 
 export async function createSession(input: SessionInput): Promise<ActionResult<{ id: string }>> {
@@ -197,6 +197,27 @@ export async function closeSession(id: string): Promise<ActionResult<null>> {
     if (error.code === "42501") return fail("not_authorized");
     return fail("unknown", "Could not close the session.");
   }
+
+  revalidatePath(`/sessions/${idParsed.data.id}/manage`);
+  revalidatePath("/dashboard");
+  revalidatePath("/sessions");
+  return ok(null);
+}
+
+// Goes through an RPC rather than a plain status UPDATE like closeSession:
+// starting a session must be validated and applied atomically in the database
+// (state check + transition), and its JB codes map through failFromRpc.
+export async function startSession(id: string): Promise<ActionResult<null>> {
+  const idParsed = sessionIdSchema.safeParse({ id });
+  if (!idParsed.success) return fail("validation", "Invalid session id.");
+
+  const user = await getCurrentUser();
+  if (!user) return fail("not_authenticated");
+
+  const supabase = await createClient();
+
+  const { error } = await supabase.rpc("start_session", { p_session_id: idParsed.data.id });
+  if (error) return failFromRpc(error);
 
   revalidatePath(`/sessions/${idParsed.data.id}/manage`);
   revalidatePath("/dashboard");
