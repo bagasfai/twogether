@@ -140,6 +140,27 @@ found by review, triaged, and deliberately left. Verdicts are from the final who
   `remotePatterns` from its host.
 - **Approve-vs-reject contention** is only covered structurally in pgTAP (single
   connection); no concurrent script exercises it.
+- **Marketing pages all render dynamically.** The `(marketing)` layout calls
+  `getCurrentUser()`, which reads cookies, so every marketing page (including `/gallery`
+  and `/sessions`) is dynamic. The `revalidate` exports and ISR comments on those pages
+  overstate what happens. Fix: move the auth-aware header button into a client island
+  so the layout stops reading cookies.
+- **Unbounded orphan Storage objects per uploader.** The 20-pending cap counts
+  `gallery_photos` rows, not Storage objects. An eligible uploader can keep uploading
+  files without calling `add_gallery_photo` for the whole 7-day window. Each is capped
+  at 5 MB by the bucket, but their number is not. The orphan cleanup script above
+  reclaims them; a per-user object quota would prevent them.
+- **Owner can delete their approved photo's file.** `gallery_delete` on `storage.objects`
+  lets the object owner delete regardless of the row's status, so a member can remove
+  the file behind an approved photo through the Storage API. The row stays and the
+  public tile breaks. Fix: make the owner branch require no approved row at that path.
+- **next/image optimizer keeps derived copies.** Rejected or deleted photos stay
+  reachable as optimized `/_next/image` responses until the cache TTL runs out, even
+  after the Storage object is gone. Shorten `images.minimumCacheTTL` for the gallery or
+  purge on reject/delete if that matters.
+- **Verify the jpeg fallback on a real iPhone.** WebKit cannot encode webp from a canvas;
+  the upload helper falls back to jpeg (`.jpg` path, `image/jpeg`). Only covered by unit
+  tests with a stubbed encoder; confirm a real iOS Safari upload end to end.
 
 ## Process note
 
