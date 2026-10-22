@@ -15,6 +15,7 @@ import { galleryPhotoUrl } from "@/lib/gallery/url";
 // Type-only: erased at compile time, so the server-only DAL never reaches the
 // client bundle.
 import type { GalleryPhotoRow } from "@/lib/dal/galleries";
+import type { Database } from "@/types/supabase";
 
 export type PhotosPanelAlbum = { id: string; title: string; description: string | null };
 
@@ -24,13 +25,23 @@ export function PhotosPanel({
   album,
   pending,
   approved,
+  sessionStatus,
 }: {
   album: PhotosPanelAlbum | null;
   pending: GalleryPhotoRow[];
   approved: GalleryPhotoRow[];
+  sessionStatus: Database["public"]["Enums"]["session_status"];
 }) {
   if (!album) {
-    return <p className="text-sm text-muted-foreground">Photos open once the session starts.</p>;
+    // Only a scheduled (or draft) session still gets an album by starting. A
+    // completed or cancelled session, or one marked live without going
+    // through start_session, never will.
+    const waiting = sessionStatus === "scheduled" || sessionStatus === "draft";
+    return (
+      <p className="text-sm text-muted-foreground">
+        {waiting ? "Photos open once the session starts." : "This session has no photo album."}
+      </p>
+    );
   }
 
   return (
@@ -40,7 +51,7 @@ export function PhotosPanel({
         <ReviewQueue photos={pending} />
         <ApprovedPhotos photos={approved} />
         <AlbumDescription album={album} />
-        <UploadPanel galleryId={album.id} />
+        <UploadPanel galleryId={album.id} autoApproved />
       </div>
     </div>
   );

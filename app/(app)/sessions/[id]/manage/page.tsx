@@ -108,7 +108,12 @@ export default async function ManageSessionPage({ params }: PageProps<"/sessions
         roster={<RosterTable sessionId={session.id} entries={roster} sessionStatus={session.status} />}
         photos={
           <NextIntlClientProvider locale="en" messages={{ gallery: messages.gallery }}>
-            <PhotosPanel album={album} pending={pendingPhotos} approved={approvedPhotos} />
+            <PhotosPanel
+                album={album}
+                pending={pendingPhotos}
+                approved={approvedPhotos}
+                sessionStatus={session.status}
+              />
           </NextIntlClientProvider>
         }
       />

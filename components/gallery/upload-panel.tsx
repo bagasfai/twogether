@@ -35,7 +35,10 @@ type FileRow = {
 
 type Visibility = "checking" | "hidden" | "visible";
 
-export function UploadPanel({ galleryId }: { galleryId: string }) {
+// autoApproved: the caller is a host or admin, whose uploads are approved on
+// insert (add_gallery_photo), so the "a host reviews them" hint would be wrong.
+// The public session page leaves it off: there the uploader is a member.
+export function UploadPanel({ galleryId, autoApproved = false }: { galleryId: string; autoApproved?: boolean }) {
   const t = useTranslations("gallery");
   const [supabase] = useState(createClient);
   const [visibility, setVisibility] = useState<Visibility>("checking");
@@ -223,7 +226,9 @@ export function UploadPanel({ galleryId }: { galleryId: string }) {
         <h2 id="upload-panel-title" className="text-base font-semibold">
           {t("uploadTitle")}
         </h2>
-        <p className="text-sm text-muted-foreground">{t("uploadHint")}</p>
+        <p className="text-sm text-muted-foreground">
+          {t("uploadHint")} {autoApproved ? t("uploadAutoApprovedHint") : t("uploadReviewHint")}
+        </p>
       </div>
 
       <div

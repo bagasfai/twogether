@@ -181,7 +181,7 @@ function AlbumRow({ album }: { album: AdminAlbum }) {
       <p className="text-xs text-muted-foreground">
         Deleting an album permanently removes all of its photos.
       </p>
-      {uploadOpen ? <UploadPanel galleryId={album.id} /> : null}
+      {uploadOpen ? <UploadPanel galleryId={album.id} autoApproved /> : null}
     </li>
   );
 }
