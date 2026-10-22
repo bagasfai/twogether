@@ -7,14 +7,19 @@ import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
 import { listAdminAlbums, listAllPendingForAdmin } from "@/lib/dal/galleries";
 import { AlbumAdminSection } from "@/components/gallery/album-admin-section";
+import { getAboutForAdmin, listFaqItemsForAdmin } from "@/lib/dal/community-content-admin";
+import { AboutEditor } from "@/components/admin/about-editor";
+import { FaqEditor } from "@/components/admin/faq-editor";
 
 export default async function AdminPage() {
   const user = await requireAdmin("/admin");
-  const [members, announcements, albums, pending, messages] = await Promise.all([
+  const [members, announcements, albums, pending, about, faqItems, messages] = await Promise.all([
     listAllMembers(),
     listCommunityAnnouncementsForAdmin(),
     listAdminAlbums(),
     listAllPendingForAdmin(),
+    getAboutForAdmin(),
+    listFaqItemsForAdmin(),
     // (app) has no NextIntlClientProvider; the gallery components read the
     // "gallery" namespace, so provide just that, in English.
     getMessages({ locale: "en" }),
@@ -40,6 +45,22 @@ export default async function AdminPage() {
       <section>
         <NextIntlClientProvider locale="en" messages={{ gallery: messages.gallery }}>
           <AlbumAdminSection albums={albums} pending={pending} />
+        </NextIntlClientProvider>
+      </section>
+
+      <section className="flex flex-col gap-4">
+        <header className="flex flex-col gap-1">
+          <h2 className="text-lg font-semibold tracking-tight">About page</h2>
+          <p className="text-sm text-muted-foreground">
+            Shown publicly at /about in both languages.
+          </p>
+        </header>
+        <AboutEditor about={about} />
+      </section>
+
+      <section>
+        <NextIntlClientProvider locale="en" messages={{ gallery: messages.gallery }}>
+          <FaqEditor items={faqItems} />
         </NextIntlClientProvider>
       </section>
     </div>
