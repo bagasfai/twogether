@@ -162,6 +162,21 @@ found by review, triaged, and deliberately left. Verdicts are from the final who
   the upload helper falls back to jpeg (`.jpg` path, `image/jpeg`). Only covered by unit
   tests with a stubbed encoder; confirm a real iOS Safari upload end to end.
 
+## From the About/FAQ work
+
+- The seeded `community_about` text is a placeholder. An admin must replace it (EN and ID) before launch.
+- Still to do for the marketing site: sitemap, robots and community stats.
+- `scripts/test-concurrent-faq-order.sh` has no `faq_delete` racer: removing the advisory lock from `faq_delete` turns nothing red. Its `EXIT:$?` line under `set -e` never shows a nonzero value, so it cannot report a failing exit code.
+- The DB `btrim` check only strips space, tab, CR and LF. NBSP and other Unicode-only whitespace pass it, while zod `trim()` is wider than the DB. A value that is blank to zod but Unicode-whitespace-only is accepted if it bypasses the form.
+- A malformed `NEXT_PUBLIC_SITE_URL` makes `new URL()` throw in `app/layout.tsx`, contrary to the "never breaks the build" comment there.
+- `revalidate = 60` on `/about` and `/faq` is inert while the marketing layout reads cookies (the pages render dynamically).
+- `proxy.ts` `isMarketingPath` is a manual safelist: a new marketing page 404s unprefixed until added. `/about` and `/faq` were added in Task 4.
+- Admin FAQ move/delete buttons repeat the same labels on every card, with no `aria-label` naming the question (`HoldToConfirmButton` has no `aria-label` prop).
+- The admin server `fieldErrors` path is not exercised end to end, and hold-to-delete was only verified with a synthetic pointer event.
+- `community_about.updated_by` is client-supplied: the update policy does not tie it to `auth.uid()`, so an admin can attribute an edit to another profile.
+- `faq_lock_key()` keeps the default PUBLIC `EXECUTE`. It is an immutable constant and harmless; `030_about_faq_grant_surface_negatives.test.sql` pins that state deliberately so a change is conscious.
+- Mutation check (Task 7) confirmed the pins bite: dropping the `faq_move` revoke, adding `sort_order` to the `faq_items` column grant, and dropping `is_admin()` from either update policy each turn at least one pgTAP assertion red.
+
 ## Process note
 
 The "delete the code, the suite still passes" gap was found **five** separate times across this
