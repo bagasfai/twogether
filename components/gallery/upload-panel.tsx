@@ -251,7 +251,7 @@ export function UploadPanel({ galleryId }: { galleryId: string }) {
         <button
           type="button"
           onClick={() => inputRef.current?.click()}
-          className="inline-flex h-9 items-center justify-center rounded-full border border-foreground px-4 text-sm font-medium outline-none transition-colors duration-[var(--dur-micro)] ease-[var(--ease-out)] hover:bg-muted focus-visible:ring-[3px] focus-visible:ring-ring"
+          className="inline-flex h-11 items-center justify-center rounded-full border border-foreground px-4 text-sm font-medium outline-none transition-colors duration-[var(--dur-micro)] ease-[var(--ease-out)] hover:bg-muted focus-visible:ring-[3px] focus-visible:ring-ring"
         >
           {t("choosePhotos")}
         </button>
@@ -270,7 +270,7 @@ export function UploadPanel({ galleryId }: { galleryId: string }) {
                   <button
                     type="button"
                     onClick={() => retryRow(row)}
-                    className="shrink-0 rounded-full text-sm font-medium underline-offset-4 outline-none hover:underline focus-visible:ring-[3px] focus-visible:ring-ring"
+                    className="min-h-11 shrink-0 rounded-full px-2 text-sm font-medium underline-offset-4 outline-none hover:underline focus-visible:ring-[3px] focus-visible:ring-ring"
                   >
                     {t("retry")}
                   </button>
@@ -279,7 +279,7 @@ export function UploadPanel({ galleryId }: { galleryId: string }) {
                   <button
                     type="button"
                     onClick={() => removeRow(row.id)}
-                    className="shrink-0 rounded-full text-sm text-muted-foreground underline-offset-4 outline-none hover:underline focus-visible:ring-[3px] focus-visible:ring-ring"
+                    className="min-h-11 shrink-0 rounded-full px-2 text-sm text-muted-foreground underline-offset-4 outline-none hover:underline focus-visible:ring-[3px] focus-visible:ring-ring"
                     aria-label={t("dismissFile", { name: row.name })}
                   >
                     {t("dismiss")}
@@ -331,7 +331,11 @@ export function UploadPanel({ galleryId }: { galleryId: string }) {
                     <Badge variant="warning">{t("pending")}</Badge>
                     {/* The uploader may delete only while pending (RLS), so
                         approved photos get no control here. */}
-                    <HoldToConfirmButton label={t("deletePhoto")} onConfirm={() => removePhoto(photo.id)} />
+                    <HoldToConfirmButton
+                      label={t("deletePhoto")}
+                      onConfirm={() => removePhoto(photo.id)}
+                      className="h-11"
+                    />
                   </div>
                 ) : null}
               </li>
