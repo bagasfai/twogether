@@ -39,7 +39,7 @@ describe("runUploadPipeline", () => {
 
   it("maps a resize throw to 'read' without uploading", async () => {
     const d = deps({ resize: vi.fn(async () => Promise.reject(new Error("decode"))) });
-    await expect(runUploadPipeline(d)).resolves.toEqual({ ok: false, reason: "read", path: null, message: null });
+    await expect(runUploadPipeline(d)).resolves.toEqual({ ok: false, reason: "read", path: null, code: null });
     expect(d.upload).not.toHaveBeenCalled();
   });
 
@@ -57,7 +57,7 @@ describe("runUploadPipeline", () => {
   it("rejects a resized blob over MAX_BYTES as 'size' without uploading", async () => {
     const big = { size: MAX_BYTES + 1, type: "image/webp" } as Blob;
     const d = deps({ resize: vi.fn(async () => ({ blob: big, ext: "webp" as const })) });
-    await expect(runUploadPipeline(d)).resolves.toEqual({ ok: false, reason: "size", path: null, message: null });
+    await expect(runUploadPipeline(d)).resolves.toEqual({ ok: false, reason: "size", path: null, code: null });
     expect(d.upload).not.toHaveBeenCalled();
   });
 
@@ -76,28 +76,28 @@ describe("runUploadPipeline", () => {
 
   it("maps an upload error result to 'upload' with no path", async () => {
     const d = deps({ upload: vi.fn(async () => ({ error: new Error("409") })) });
-    await expect(runUploadPipeline(d)).resolves.toEqual({ ok: false, reason: "upload", path: null, message: null });
+    await expect(runUploadPipeline(d)).resolves.toEqual({ ok: false, reason: "upload", path: null, code: null });
     expect(d.save).not.toHaveBeenCalled();
   });
 
   it("maps a thrown upload to 'upload' and never leaks the raw error", async () => {
     const d = deps({ upload: vi.fn(async () => Promise.reject(new Error("raw network text"))) });
-    await expect(runUploadPipeline(d)).resolves.toEqual({ ok: false, reason: "upload", path: null, message: null });
+    await expect(runUploadPipeline(d)).resolves.toEqual({ ok: false, reason: "upload", path: null, code: null });
   });
 
-  it("keeps the uploaded path when save fails, passing the action message through", async () => {
-    const d = deps({ save: vi.fn(async () => ({ ok: false as const, message: "Window closed." })) });
+  it("keeps the uploaded path when save fails, passing the action code through", async () => {
+    const d = deps({ save: vi.fn(async () => ({ ok: false as const, code: "upload_window_closed" as const })) });
     await expect(runUploadPipeline(d)).resolves.toEqual({
       ok: false,
       reason: "save",
       path: PATH,
-      message: "Window closed.",
+      code: "upload_window_closed",
     });
   });
 
   it("keeps the uploaded path when save throws, with no message", async () => {
     const d = deps({ save: vi.fn(async () => Promise.reject(new Error("fetch failed"))) });
-    await expect(runUploadPipeline(d)).resolves.toEqual({ ok: false, reason: "save", path: PATH, message: null });
+    await expect(runUploadPipeline(d)).resolves.toEqual({ ok: false, reason: "save", path: PATH, code: null });
   });
 
   it("never rejects even if a stage callback throws", async () => {

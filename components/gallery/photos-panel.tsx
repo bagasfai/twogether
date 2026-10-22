@@ -55,6 +55,9 @@ function ApprovedPhotos({ photos }: { photos: GalleryPhotoRow[] }) {
       const result = await deleteGalleryPhoto(photoId);
       if (!result.ok) {
         toast.error(result.message);
+        // Another reviewer may have removed it first: refresh to drop the
+        // stale tile.
+        router.refresh();
         return;
       }
       setGone((current) => new Set(current).add(photoId));

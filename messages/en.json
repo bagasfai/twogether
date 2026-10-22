@@ -114,6 +114,15 @@
     "deleteFailed": "Couldn't delete the photo. Try again.",
     "holdHint": "Press and hold to confirm",
     "holdRemaining": "Keep holding, {seconds, plural, one {# second} other {# seconds}} left",
-    "holdCancelled": "Released early. Nothing changed."
+    "holdCancelled": "Released early. Nothing changed.",
+    "error": {
+      "uploadNotEligible": "You can't add photos to this album.",
+      "uploadWindowClosed": "The window for adding photos to this session has closed.",
+      "uploadCapReached": "You have 20 photos waiting for approval. Wait for a host to review them.",
+      "invalidUpload": "That photo couldn't be added. Try again.",
+      "notAuthorized": "You don't have permission to do that.",
+      "invalidState": "This has already changed. Reload and try again.",
+      "notAuthenticated": "Log in again to continue."
+    }
   }
 }

@@ -11,6 +11,7 @@ import { addGalleryPhoto, deleteGalleryPhoto, listMyPhotosAction } from "@/lib/a
 import { ACCEPTED_TYPES, galleryPhotoPath, resizeForUpload, validatePickedFile } from "@/lib/gallery/image";
 import { runWithConcurrency } from "@/lib/gallery/upload-queue";
 import { runUploadPipeline } from "@/lib/gallery/upload-pipeline";
+import { galleryErrorKey } from "@/lib/gallery/upload-errors";
 import { galleryPhotoUrl } from "@/lib/gallery/url";
 import { cn } from "@/lib/utils";
 // Type-only: erased at compile time, so the server-only guard in the DAL never
@@ -142,7 +143,7 @@ export function UploadPanel({ galleryId }: { galleryId: string }) {
             patchRow(id, { state: "failed", error: t("fileUploadFailed") });
             return;
           case "save":
-            patchRow(id, { state: "failed", error: outcome.message ?? t("fileSaveFailed") });
+            patchRow(id, { state: "failed", error: t(galleryErrorKey(outcome.code, "fileSaveFailed")) });
             return;
         }
       } catch {
@@ -197,12 +198,15 @@ export function UploadPanel({ galleryId }: { galleryId: string }) {
     let message: string | null;
     try {
       const result = await deleteGalleryPhoto(photoId);
-      message = result.ok ? null : result.message;
+      message = result.ok ? null : t(galleryErrorKey(result.code, "deleteFailed"));
     } catch {
       message = t("deleteFailed");
     }
     if (message) {
       toast.error(message);
+      // A lost race (a host approved or removed it meanwhile) leaves a stale
+      // tile; refresh so the list shows what is really there.
+      await refreshPhotos();
       return;
     }
     setPhotos((current) => current.filter((photo) => photo.id !== photoId));

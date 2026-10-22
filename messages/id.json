@@ -114,6 +114,15 @@
     "deleteFailed": "Foto tidak bisa dihapus. Coba lagi.",
     "holdHint": "Tekan dan tahan untuk konfirmasi",
     "holdRemaining": "Terus tahan, {seconds, plural, other {# detik}} lagi",
-    "holdCancelled": "Dilepas terlalu cepat. Tidak ada yang berubah."
+    "holdCancelled": "Dilepas terlalu cepat. Tidak ada yang berubah.",
+    "error": {
+      "uploadNotEligible": "Kamu tidak bisa menambahkan foto ke album ini.",
+      "uploadWindowClosed": "Waktu untuk menambahkan foto ke sesi ini sudah habis.",
+      "uploadCapReached": "Ada 20 fotomu yang masih menunggu persetujuan. Tunggu host meninjaunya dulu.",
+      "invalidUpload": "Foto itu tidak bisa ditambahkan. Coba lagi.",
+      "notAuthorized": "Kamu tidak punya izin untuk melakukan itu.",
+      "invalidState": "Ini sudah berubah. Muat ulang halaman lalu coba lagi.",
+      "notAuthenticated": "Masuk lagi untuk melanjutkan."
+    }
   }
 }
