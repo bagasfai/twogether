@@ -85,13 +85,7 @@ export function Lightbox({
 
           {photo ? (
             <>
-              {/* Clicking the empty area around the image closes, like the scrim would. */}
-              <div
-                className="relative min-h-0 flex-1"
-                onClick={(event) => {
-                  if (event.target === event.currentTarget) onClose();
-                }}
-              >
+              <div className="relative min-h-0 flex-1">
                 <Image
                   key={photo.id}
                   src={galleryPhotoUrl(photo.storagePath)}
@@ -128,7 +122,10 @@ export function Lightbox({
                   >
                     <ChevronLeftIcon />
                   </Button>
-                  <span className="min-w-[7ch] text-center font-mono text-sm tabular-nums text-background/80">
+                  <span
+                    aria-live="polite"
+                    className="min-w-[7ch] text-center font-mono text-sm tabular-nums text-background/80"
+                  >
                     {t("position", { current: (index ?? 0) + 1, total })}
                   </span>
                   <Button
