@@ -111,3 +111,12 @@ create policy galleries_update_host_or_admin on public.galleries
 create policy galleries_delete_admin on public.galleries
   for delete to authenticated
   using (public.is_admin());
+
+-- The base grant (20260911000009) gives authenticated table-wide UPDATE, and
+-- the update policy above only checks the row, not which columns change: a
+-- host could re-point session_id at another session they host or null
+-- created_by. RLS cannot restrict columns, so narrow the grant itself to the
+-- two editable fields. Admins go through the same grant; no app path updates
+-- any other galleries column.
+revoke update on public.galleries from authenticated;
+grant update (title, description) on public.galleries to authenticated;

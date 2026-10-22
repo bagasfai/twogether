@@ -5,7 +5,7 @@
 -- and galleries.created_by becoming nullable with on delete set null.
 
 begin;
-select plan(28);
+select plan(29);
 
 insert into auth.users (id, email) values
   ('11111111-5555-5555-5555-555555555555', 'owner-024@test.local'),
@@ -245,6 +245,13 @@ select is(
     where session_id = 'aaaaaaaa-5555-5555-5555-555555555555'),
   'Renamed/Fun night',
   'the host''s album update took effect'
+);
+
+select throws_ok(
+  $$ update public.galleries set session_id = 'dddddddd-5555-5555-5555-555555555555'
+      where session_id = 'aaaaaaaa-5555-5555-5555-555555555555' $$,
+  '42501', null,
+  'the host cannot re-point their album at another session'
 );
 
 select lives_ok(

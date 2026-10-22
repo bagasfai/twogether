@@ -17,7 +17,7 @@
 -- / has_table_privilege), so no fixtures or role switching are needed.
 
 begin;
-select plan(35);
+select plan(40);
 
 -- anon lacks EXECUTE
 
@@ -204,6 +204,33 @@ select ok(
 select ok(
   has_column_privilege('authenticated', 'public.gallery_photos', 'sort_order', 'UPDATE'),
   'authenticated has UPDATE on gallery_photos.sort_order'
+);
+
+-- galleries: only title/description updatable (RLS checks rows, not columns)
+
+select ok(
+  not has_column_privilege('authenticated', 'public.galleries', 'session_id', 'UPDATE'),
+  'authenticated lacks UPDATE on galleries.session_id'
+);
+
+select ok(
+  not has_column_privilege('authenticated', 'public.galleries', 'created_by', 'UPDATE'),
+  'authenticated lacks UPDATE on galleries.created_by'
+);
+
+select ok(
+  not has_column_privilege('authenticated', 'public.galleries', 'id', 'UPDATE'),
+  'authenticated lacks UPDATE on galleries.id'
+);
+
+select ok(
+  has_column_privilege('authenticated', 'public.galleries', 'title', 'UPDATE'),
+  'authenticated has UPDATE on galleries.title'
+);
+
+select ok(
+  has_column_privilege('authenticated', 'public.galleries', 'description', 'UPDATE'),
+  'authenticated has UPDATE on galleries.description'
 );
 
 -- anon: read-only on both tables
