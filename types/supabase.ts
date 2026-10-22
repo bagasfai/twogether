@@ -5,6 +5,7 @@ export type Json =
   | null
   | { [key: string]: Json | undefined }
   | Json[]
+
 export type Database = {
   graphql_public: {
     Tables: {
@@ -81,6 +82,44 @@ export type Database = {
           },
         ]
       }
+      community_about: {
+        Row: {
+          body_en: string
+          body_id: string
+          id: boolean
+          title_en: string
+          title_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          body_en: string
+          body_id: string
+          id?: boolean
+          title_en: string
+          title_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          body_en?: string
+          body_id?: string
+          id?: boolean
+          title_en?: string
+          title_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_about_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       courts: {
         Row: {
           court_number: number
@@ -115,6 +154,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      faq_items: {
+        Row: {
+          answer_en: string
+          answer_id: string
+          created_at: string
+          id: string
+          question_en: string
+          question_id: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          answer_en: string
+          answer_id: string
+          created_at?: string
+          id?: string
+          question_en: string
+          question_id: string
+          sort_order: number
+          updated_at?: string
+        }
+        Update: {
+          answer_en?: string
+          answer_id?: string
+          created_at?: string
+          id?: string
+          question_en?: string
+          question_id?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
       }
       galleries: {
         Row: {
@@ -637,6 +709,7 @@ export type Database = {
         Args: never
         Returns: Database["public"]["Enums"]["user_role"]
       }
+      faq_lock_key: { Args: never; Returns: number }
       host_add_participant: {
         Args: {
           p_session_id: string
@@ -802,8 +875,11 @@ export type Database = {
     }
   }
 }
+
 type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
 type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
@@ -832,6 +908,7 @@ export type Tables<
       ? R
       : never
     : never
+
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
@@ -856,6 +933,7 @@ export type TablesInsert<
       ? I
       : never
     : never
+
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
@@ -880,6 +958,7 @@ export type TablesUpdate<
       ? U
       : never
     : never
+
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
@@ -896,6 +975,7 @@ export type Enums<
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
     ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
     : never
+
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
@@ -912,6 +992,7 @@ export type CompositeTypes<
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
     ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
+
 export const Constants = {
   graphql_public: {
     Enums: {},
@@ -929,3 +1010,4 @@ export const Constants = {
     },
   },
 } as const
+
