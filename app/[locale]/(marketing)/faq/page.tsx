@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ChevronDown } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { listFaqItems } from "@/lib/dal/community-content";
 import { faqJsonLd } from "@/lib/community-content/json-ld";
@@ -42,8 +43,11 @@ export default async function FaqPage({ params }: PageProps<"/[locale]/faq">) {
           <div className="flex flex-col divide-y divide-border/60 border-y border-border/60">
             {items.map((item) => (
               <details key={item.id} className="group">
-                <summary className="flex min-h-11 cursor-pointer items-center py-2 text-base font-medium">
+                <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 py-2 text-base font-medium [&::-webkit-details-marker]:hidden">
                   {item.question}
+                  <span aria-hidden="true" className="shrink-0 text-muted-foreground transition-transform group-open:rotate-180">
+                    <ChevronDown className="size-4" />
+                  </span>
                 </summary>
                 <p className="max-w-[65ch] whitespace-pre-wrap pb-4 text-sm leading-relaxed text-muted-foreground">
                   {item.answer}

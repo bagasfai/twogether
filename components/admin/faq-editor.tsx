@@ -32,8 +32,13 @@ export function FaqEditor({ items }: { items: FaqRow[] }) {
   const run = (action: () => ReturnType<typeof moveFaqItem>) =>
     startTransition(async () => {
       const result = await action();
-      if (result.ok) router.refresh();
-      else toast.error(result.message);
+      if (result.ok) {
+        router.refresh();
+      } else {
+        toast.error(result.message);
+        // Item was deleted elsewhere: reload the list so the stale row goes away.
+        if (result.code === "not_found") router.refresh();
+      }
     });
 
   return (
