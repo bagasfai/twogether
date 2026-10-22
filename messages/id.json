@@ -4,7 +4,9 @@
     "sessions": "Sesi",
     "gallery": "Galeri",
     "dashboard": "Dashboard",
-    "login": "Masuk"
+    "login": "Masuk",
+    "about": "Tentang",
+    "faq": "FAQ"
   },
   "footer": {
     "tagline": "Badminton, dikelola dengan benar.",
@@ -126,5 +128,19 @@
       "invalidState": "Ini sudah berubah. Muat ulang halaman lalu coba lagi.",
       "notAuthenticated": "Masuk lagi untuk melanjutkan."
     }
+  },
+  "about": {
+    "metaTitle": "Tentang — Jakbar Twogether",
+    "metaDescription": "Siapa kami, di mana kami bermain, dan cara bergabung dengan Jakbar Twogether, komunitas badminton di Jakarta Barat.",
+    "ctaTitle": "Siap bermain?",
+    "ctaBody": "Buat akun gratis untuk mendaftar di sesi open play.",
+    "ctaButton": "Daftar",
+    "empty": "Halaman tentang belum tersedia. Silakan kembali lagi nanti."
+  },
+  "faq": {
+    "title": "Pertanyaan yang sering diajukan",
+    "empty": "Belum ada pertanyaan yang dipublikasikan.",
+    "metaTitle": "FAQ — Jakbar Twogether",
+    "metaDescription": "Jawaban atas pertanyaan umum tentang bergabung dan bermain di sesi open play Jakbar Twogether."
   }
 }

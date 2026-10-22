@@ -4,7 +4,9 @@
     "sessions": "Sessions",
     "gallery": "Gallery",
     "dashboard": "Dashboard",
-    "login": "Log in"
+    "login": "Log in",
+    "about": "About",
+    "faq": "FAQ"
   },
   "footer": {
     "tagline": "Badminton, run properly.",
@@ -126,5 +128,19 @@
       "invalidState": "This has already changed. Reload and try again.",
       "notAuthenticated": "Log in again to continue."
     }
+  },
+  "about": {
+    "metaTitle": "About — Jakbar Twogether",
+    "metaDescription": "Who we are, where we play and how to join Jakbar Twogether, a badminton community in West Jakarta.",
+    "ctaTitle": "Ready to play?",
+    "ctaBody": "Create a free account to register for open play sessions.",
+    "ctaButton": "Sign up",
+    "empty": "The about page is not available yet. Please check back soon."
+  },
+  "faq": {
+    "title": "Frequently asked questions",
+    "empty": "No questions have been published yet.",
+    "metaTitle": "FAQ — Jakbar Twogether",
+    "metaDescription": "Answers to common questions about joining and playing at Jakbar Twogether open play sessions."
   }
 }

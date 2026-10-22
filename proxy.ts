@@ -25,13 +25,14 @@ export function isProtected(pathname: string): boolean {
 }
 
 // Only app/[locale]/(marketing) is localized: "/", "/sessions", "/sessions/[id]",
-// "/gallery", "/gallery/[id]" (and their /en counterparts). (app)/(auth)/auth/api share the /sessions
+// "/gallery", "/gallery/[id]", "/about", "/faq" (and their /en counterparts). (app)/(auth)/auth/api share the /sessions
 // prefix with host-only routes ("/sessions/new", "/sessions/[id]/manage"), so
 // this stays a safelist -- a missed exclusion here would let next-intl rewrite
 // a host-only route. Adding a new marketing page requires updating this too.
 function isMarketingPath(pathname: string): boolean {
   const unprefixed = pathname === "/en" ? "/" : pathname.startsWith("/en/") ? pathname.slice(3) : pathname;
   if (unprefixed === "/" || unprefixed === "/sessions" || unprefixed === "/gallery") return true;
+  if (unprefixed === "/about" || unprefixed === "/faq") return true;
   // /gallery/[id] has no (app) sibling, so any single segment is an album id.
   if (/^\/gallery\/[^/]+$/.test(unprefixed)) return true;
   const match = /^\/sessions\/([^/]+)$/.exec(unprefixed);
