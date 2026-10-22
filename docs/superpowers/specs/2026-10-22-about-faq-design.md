@@ -65,7 +65,7 @@ Singleton row.
 | Column | Type | Notes |
 |---|---|---|
 | `id` | `boolean` | primary key, `default true`, `check (id)` — a second row is impossible |
-| `title_en`, `title_id` | `text` | `not null`, `check (length(btrim(...)) > 0)`, max 120 chars |
+| `title_en`, `title_id` | `text` | `not null`, `check (length(btrim(..., E' \t\r\n')) > 0)`, max 120 chars (the check strips space, tab, CR and LF) |
 | `body_en`, `body_id` | `text` | `not null`, non-blank check, max 8000 chars |
 | `updated_at` | `timestamptz` | `not null default now()`, maintained by a trigger using the existing `public.set_updated_at()` (`20260911000001_enums_and_utils.sql`) |
 | `updated_by` | `uuid` | references `profiles(id)` `on delete set null` |

@@ -3,7 +3,7 @@
 -- INSERT/DELETE. Hosts are deliberately not admins here.
 
 begin;
-select plan(67);
+select plan(83);
 
 -- ---- fixtures ----
 
@@ -186,6 +186,18 @@ select throws_ok(
 );
 
 select throws_ok(
+  $$ update public.community_about set title_en = E'\t\t' where id = true $$,
+  '23514', null,
+  'community_about.title_en: tab-only is rejected'
+);
+
+select throws_ok(
+  $$ update public.community_about set title_en = E'\n\r\n' where id = true $$,
+  '23514', null,
+  'community_about.title_en: newline-only is rejected'
+);
+
+select throws_ok(
   $$ update public.community_about set title_en = repeat('x', 121) where id = true $$,
   '23514', null,
   'community_about.title_en: over-length (121 chars) is rejected'
@@ -201,6 +213,18 @@ select throws_ok(
   $$ update public.community_about set title_id = '   ' where id = true $$,
   '23514', null,
   'community_about.title_id: whitespace-only is rejected'
+);
+
+select throws_ok(
+  $$ update public.community_about set title_id = E'\t\t' where id = true $$,
+  '23514', null,
+  'community_about.title_id: tab-only is rejected'
+);
+
+select throws_ok(
+  $$ update public.community_about set title_id = E'\n\r\n' where id = true $$,
+  '23514', null,
+  'community_about.title_id: newline-only is rejected'
 );
 
 select throws_ok(
@@ -222,6 +246,18 @@ select throws_ok(
 );
 
 select throws_ok(
+  $$ update public.community_about set body_en = E'\t\t' where id = true $$,
+  '23514', null,
+  'community_about.body_en: tab-only is rejected'
+);
+
+select throws_ok(
+  $$ update public.community_about set body_en = E'\n\r\n' where id = true $$,
+  '23514', null,
+  'community_about.body_en: newline-only is rejected'
+);
+
+select throws_ok(
   $$ update public.community_about set body_en = repeat('x', 8001) where id = true $$,
   '23514', null,
   'community_about.body_en: over-length (8001 chars) is rejected'
@@ -237,6 +273,18 @@ select throws_ok(
   $$ update public.community_about set body_id = '   ' where id = true $$,
   '23514', null,
   'community_about.body_id: whitespace-only is rejected'
+);
+
+select throws_ok(
+  $$ update public.community_about set body_id = E'\t\t' where id = true $$,
+  '23514', null,
+  'community_about.body_id: tab-only is rejected'
+);
+
+select throws_ok(
+  $$ update public.community_about set body_id = E'\n\r\n' where id = true $$,
+  '23514', null,
+  'community_about.body_id: newline-only is rejected'
 );
 
 select throws_ok(
@@ -258,6 +306,18 @@ select throws_ok(
 );
 
 select throws_ok(
+  $$ update public.faq_items set question_en = E'\t\t' where id = 'f0000001-7777-7777-7777-777777777777' $$,
+  '23514', null,
+  'faq_items.question_en: tab-only is rejected'
+);
+
+select throws_ok(
+  $$ update public.faq_items set question_en = E'\n\r\n' where id = 'f0000001-7777-7777-7777-777777777777' $$,
+  '23514', null,
+  'faq_items.question_en: newline-only is rejected'
+);
+
+select throws_ok(
   $$ update public.faq_items set question_en = repeat('x', 201) where id = 'f0000001-7777-7777-7777-777777777777' $$,
   '23514', null,
   'faq_items.question_en: over-length (201 chars) is rejected'
@@ -273,6 +333,18 @@ select throws_ok(
   $$ update public.faq_items set question_id = '   ' where id = 'f0000001-7777-7777-7777-777777777777' $$,
   '23514', null,
   'faq_items.question_id: whitespace-only is rejected'
+);
+
+select throws_ok(
+  $$ update public.faq_items set question_id = E'\t\t' where id = 'f0000001-7777-7777-7777-777777777777' $$,
+  '23514', null,
+  'faq_items.question_id: tab-only is rejected'
+);
+
+select throws_ok(
+  $$ update public.faq_items set question_id = E'\n\r\n' where id = 'f0000001-7777-7777-7777-777777777777' $$,
+  '23514', null,
+  'faq_items.question_id: newline-only is rejected'
 );
 
 select throws_ok(
@@ -294,6 +366,18 @@ select throws_ok(
 );
 
 select throws_ok(
+  $$ update public.faq_items set answer_en = E'\t\t' where id = 'f0000001-7777-7777-7777-777777777777' $$,
+  '23514', null,
+  'faq_items.answer_en: tab-only is rejected'
+);
+
+select throws_ok(
+  $$ update public.faq_items set answer_en = E'\n\r\n' where id = 'f0000001-7777-7777-7777-777777777777' $$,
+  '23514', null,
+  'faq_items.answer_en: newline-only is rejected'
+);
+
+select throws_ok(
   $$ update public.faq_items set answer_en = repeat('x', 4001) where id = 'f0000001-7777-7777-7777-777777777777' $$,
   '23514', null,
   'faq_items.answer_en: over-length (4001 chars) is rejected'
@@ -309,6 +393,18 @@ select throws_ok(
   $$ update public.faq_items set answer_id = '   ' where id = 'f0000001-7777-7777-7777-777777777777' $$,
   '23514', null,
   'faq_items.answer_id: whitespace-only is rejected'
+);
+
+select throws_ok(
+  $$ update public.faq_items set answer_id = E'\t\t' where id = 'f0000001-7777-7777-7777-777777777777' $$,
+  '23514', null,
+  'faq_items.answer_id: tab-only is rejected'
+);
+
+select throws_ok(
+  $$ update public.faq_items set answer_id = E'\n\r\n' where id = 'f0000001-7777-7777-7777-777777777777' $$,
+  '23514', null,
+  'faq_items.answer_id: newline-only is rejected'
 );
 
 select throws_ok(
@@ -401,24 +497,24 @@ set local request.jwt.claims = '{"sub":"33333333-7777-7777-7777-777777777777","r
 
 select lives_ok(
   $$ update public.community_about set title_en = 'member hack' $$,
-  'a member update of community_about runs (0 rows)'
+  'a member update of community_about runs without error'
 );
 
 select lives_ok(
   $$ update public.faq_items set question_en = 'member hack' $$,
-  'a member update of faq_items runs (0 rows)'
+  'a member update of faq_items runs without error'
 );
 
 set local request.jwt.claims = '{"sub":"22222222-7777-7777-7777-777777777777","role":"authenticated"}';
 
 select lives_ok(
   $$ update public.community_about set title_en = 'host hack' $$,
-  'a host update of community_about runs (0 rows)'
+  'a host update of community_about runs without error'
 );
 
 select lives_ok(
   $$ update public.faq_items set question_en = 'host hack' $$,
-  'a host update of faq_items runs (0 rows)'
+  'a host update of faq_items runs without error'
 );
 
 set local role anon;
