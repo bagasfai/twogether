@@ -14,7 +14,12 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+// Absolute base for relative canonical/hreflang URLs. Omitted when unset so a
+// missing env var never breaks the build (auth.ts already fails loudly in prod).
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+
 export const metadata: Metadata = {
+  ...(siteUrl ? { metadataBase: new URL(siteUrl) } : {}),
   title: "Jakbar Twogether",
   description: "Badminton community operations platform",
 };

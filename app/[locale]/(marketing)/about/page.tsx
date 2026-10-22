@@ -4,7 +4,8 @@ import { getTranslations } from "next-intl/server";
 import { Button } from "@/components/ui/button";
 import { getAbout } from "@/lib/dal/community-content";
 
-// ISR, same as the other marketing pages: anon client only, no cookies.
+// Inert while the marketing layout reads cookies (getCurrentUser), same as
+// gallery: the page renders dynamically. Kept per spec.
 export const revalidate = 60;
 
 export async function generateMetadata({

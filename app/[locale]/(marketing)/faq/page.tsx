@@ -3,6 +3,8 @@ import { getTranslations } from "next-intl/server";
 import { listFaqItems } from "@/lib/dal/community-content";
 import { faqJsonLd } from "@/lib/community-content/json-ld";
 
+// Inert while the marketing layout reads cookies (getCurrentUser), same as
+// gallery: the page renders dynamically. Kept per spec.
 export const revalidate = 60;
 
 export async function generateMetadata({
