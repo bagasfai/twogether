@@ -3,12 +3,21 @@ import { listAllMembers } from "@/lib/dal/admin";
 import { MemberRoleTable } from "@/components/admin/member-role-table";
 import { listCommunityAnnouncementsForAdmin } from "@/lib/dal/announcements";
 import { AnnouncementList } from "@/components/sessions/announcement-list";
+import { NextIntlClientProvider } from "next-intl";
+import { getMessages } from "next-intl/server";
+import { listAdminAlbums, listAllPendingForAdmin } from "@/lib/dal/galleries";
+import { AlbumAdminSection } from "@/components/gallery/album-admin-section";
 
 export default async function AdminPage() {
   const user = await requireAdmin("/admin");
-  const [members, announcements] = await Promise.all([
+  const [members, announcements, albums, pending, messages] = await Promise.all([
     listAllMembers(),
     listCommunityAnnouncementsForAdmin(),
+    listAdminAlbums(),
+    listAllPendingForAdmin(),
+    // (app) has no NextIntlClientProvider; the gallery components read the
+    // "gallery" namespace, so provide just that, in English.
+    getMessages({ locale: "en" }),
   ]);
 
   return (
@@ -26,6 +35,12 @@ export default async function AdminPage() {
 
       <section>
         <AnnouncementList sessionId={null} announcements={announcements} />
+      </section>
+
+      <section>
+        <NextIntlClientProvider locale="en" messages={{ gallery: messages.gallery }}>
+          <AlbumAdminSection albums={albums} pending={pending} />
+        </NextIntlClientProvider>
       </section>
     </div>
   );

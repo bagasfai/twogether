@@ -19,7 +19,14 @@ import type { GalleryPhotoRow } from "@/lib/dal/galleries";
 // and is not optimistic. When another reviewer got there first the action
 // returns invalid_state (JB008/JB016): the row stays gone, the message is
 // shown, and the page is refreshed so the lists match the database.
-export function ReviewQueue({ photos }: { photos: GalleryPhotoRow[] }) {
+export function ReviewQueue({
+  photos,
+  albumTitles,
+}: {
+  photos: GalleryPhotoRow[];
+  // Optional: when set (cross-album admin queue), each row shows its album.
+  albumTitles?: Readonly<Record<string, string>>;
+}) {
   const router = useRouter();
   const [gone, setGone] = useState<ReadonlySet<string>>(() => new Set());
 
@@ -79,6 +86,11 @@ export function ReviewQueue({ photos }: { photos: GalleryPhotoRow[] }) {
                 </div>
                 <div className="flex min-w-0 flex-col gap-0.5">
                   <span className="truncate text-sm font-medium">{photo.uploaderName ?? "Unknown"}</span>
+                  {albumTitles?.[photo.galleryId] ? (
+                    <span className="truncate text-xs text-muted-foreground">
+                      in {albumTitles[photo.galleryId]}
+                    </span>
+                  ) : null}
                   <time dateTime={photo.createdAt} className="font-mono text-xs tabular-nums text-muted-foreground">
                     {formatPhotoTime(photo.createdAt)}
                   </time>
