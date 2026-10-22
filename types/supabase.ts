@@ -709,7 +709,21 @@ export type Database = {
         Args: never
         Returns: Database["public"]["Enums"]["user_role"]
       }
+      faq_create: {
+        Args: {
+          p_answer_en: string
+          p_answer_id: string
+          p_question_en: string
+          p_question_id: string
+        }
+        Returns: string
+      }
+      faq_delete: { Args: { p_id: string }; Returns: undefined }
       faq_lock_key: { Args: never; Returns: number }
+      faq_move: {
+        Args: { p_direction: string; p_id: string }
+        Returns: undefined
+      }
       host_add_participant: {
         Args: {
           p_session_id: string
