@@ -14,6 +14,11 @@ import { SessionActionsMenu } from "@/components/sessions/session-actions-menu";
 import { Badge } from "@/components/ui/badge";
 import { listHostAnnouncements } from "@/lib/dal/announcements";
 import { AnnouncementList } from "@/components/sessions/announcement-list";
+import { NextIntlClientProvider } from "next-intl";
+import { getMessages } from "next-intl/server";
+import { getHostAlbum, listApprovedPhotos, listPendingPhotos } from "@/lib/dal/galleries";
+import { PhotosPanel } from "@/components/gallery/photos-panel";
+import { StartSessionButton } from "@/components/sessions/start-session-button";
 
 export default async function ManageSessionPage({ params }: PageProps<"/sessions/[id]/manage">) {
   const { id } = await params;
@@ -30,6 +35,17 @@ export default async function ManageSessionPage({ params }: PageProps<"/sessions
   const matches = await listMatches(id);
   const rotationQueue = await getRotationQueue(id);
   const announcements = await listHostAnnouncements(id);
+  // The album exists from the moment the session starts (start_session
+  // trigger); before that the Photos tab only says so.
+  const album = await getHostAlbum(id);
+  const [pendingPhotos, approvedPhotos] = album
+    ? await Promise.all([listPendingPhotos(album.id), listApprovedPhotos(album.id)])
+    : [[], []];
+  // (app) has no NextIntlClientProvider (only app/[locale] does), but the
+  // shared gallery components (UploadPanel, HoldToConfirmButton) read the
+  // "gallery" namespace. Provide just that namespace, in English to match the
+  // rest of the (app) UI.
+  const messages = await getMessages({ locale: "en" });
   const confirmed = roster.filter((entry) => entry.status === "confirmed").length;
   const waiting = roster.filter((entry) => entry.status === "waiting_list").length;
   const checkedIn = roster.filter((entry) => entry.checkedInAt !== null).length;
@@ -39,14 +55,19 @@ export default async function ManageSessionPage({ params }: PageProps<"/sessions
     <div className="flex flex-col gap-4 sm:gap-6 lg:mx-auto lg:max-w-6xl">
       <SessionRealtimeWatcher sessionId={session.id} />
 
-      <header className="flex items-start justify-between gap-2">
+      {/* Wraps so the header actions drop below a long title on a phone
+          instead of squeezing it into a narrow column. */}
+      <header className="flex flex-wrap items-start justify-between gap-2">
         <div className="flex flex-col gap-1">
           <h1 className="text-xl font-semibold tracking-tight">{session.title}</h1>
           <p className="text-sm text-muted-foreground">
             {new Date(session.startsAt).toLocaleString()} · {session.location}
           </p>
         </div>
-        <SessionActionsMenu session={session} showManageLink={false} />
+        <div className="flex shrink-0 items-center gap-2">
+          {session.status === "scheduled" ? <StartSessionButton sessionId={session.id} /> : null}
+          <SessionActionsMenu session={session} showManageLink={false} />
+        </div>
       </header>
 
       {/* Sticky so confirmed/waiting/checked-in counts stay visible while
@@ -79,11 +100,17 @@ export default async function ManageSessionPage({ params }: PageProps<"/sessions
         courtCount={courts.length}
         matchCount={activeMatches}
         rosterCount={roster.length}
+        photosCount={pendingPhotos.length}
         courts={<CourtPanel sessionId={session.id} courts={courts} courtCount={session.courtCount} />}
         matches={
           <MatchPanel sessionId={session.id} matches={matches} courts={courts} rotationQueue={rotationQueue} />
         }
         roster={<RosterTable sessionId={session.id} entries={roster} sessionStatus={session.status} />}
+        photos={
+          <NextIntlClientProvider locale="en" messages={{ gallery: messages.gallery }}>
+            <PhotosPanel album={album} pending={pendingPhotos} approved={approvedPhotos} />
+          </NextIntlClientProvider>
+        }
       />
     </div>
   );

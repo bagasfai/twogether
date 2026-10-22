@@ -15,11 +15,15 @@ export function HoldToConfirmButton({
   label,
   holdMs = 600,
   disabled = false,
+  className,
 }: {
   onConfirm: () => void | Promise<void>;
   label: string;
   holdMs?: number;
   disabled?: boolean;
+  // Lets a caller raise the tap target (e.g. h-11 for 44px) without forking
+  // the component.
+  className?: string;
 }) {
   const t = useTranslations("gallery");
   const [holding, setHolding] = useState(false);
@@ -117,7 +121,10 @@ export function HoldToConfirmButton({
           cancel();
         }}
         style={{ "--hold-duration": `${holdMs}ms` } as CSSProperties}
-        className="relative inline-flex h-9 touch-none select-none items-center justify-center overflow-hidden rounded-full border border-destructive px-4 text-sm font-medium text-destructive outline-none focus-visible:ring-[3px] focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
+        className={cn(
+          "relative inline-flex h-9 touch-none select-none items-center justify-center overflow-hidden rounded-full border border-destructive px-4 text-sm font-medium text-destructive outline-none focus-visible:ring-[3px] focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 aria-disabled:cursor-not-allowed aria-disabled:opacity-50",
+          className,
+        )}
       >
         <span>{label}</span>
         {/* The filled state is a clipped copy of the label, so the text flips

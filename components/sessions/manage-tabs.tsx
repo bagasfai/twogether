@@ -3,12 +3,13 @@
 import { useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
-type TabId = "courts" | "matches" | "roster";
+type TabId = "courts" | "matches" | "roster" | "photos";
 
 const TABS: { id: TabId; label: string }[] = [
   { id: "courts", label: "Courts" },
   { id: "matches", label: "Matches" },
   { id: "roster", label: "Roster" },
+  { id: "photos", label: "Photos" },
 ];
 
 // Mobile: one panel visible at a time via a tab strip -- the host glances at
@@ -19,31 +20,42 @@ const TABS: { id: TabId; label: string }[] = [
 // transition, a half-built match team selection -- survives a tab switch.
 // Desktop (lg+): the tab strip disappears and every panel renders
 // side-by-side, since there's room to show court status and roster at once
-// without navigation.
+// without navigation. Photos (review queue, captions, uploads) is wide and
+// not glanced at mid-game, so on desktop it sits full width below the grid.
 export function ManageTabs({
   courtCount,
   matchCount,
   rosterCount,
+  photosCount,
   courts,
   matches,
   roster,
+  photos,
 }: {
   courtCount: number;
   matchCount: number;
   rosterCount: number;
+  // Pending photos waiting for review.
+  photosCount: number;
   courts: ReactNode;
   matches: ReactNode;
   roster: ReactNode;
+  photos: ReactNode;
 }) {
   const [active, setActive] = useState<TabId>("roster");
-  const counts: Record<TabId, number> = { courts: courtCount, matches: matchCount, roster: rosterCount };
+  const counts: Record<TabId, number> = {
+    courts: courtCount,
+    matches: matchCount,
+    roster: rosterCount,
+    photos: photosCount,
+  };
 
   return (
     <div className="flex flex-col gap-4">
       <div
         role="tablist"
         aria-label="Session panels"
-        className="grid grid-cols-3 gap-1 rounded-lg border bg-muted p-1 lg:hidden"
+        className="grid grid-cols-4 gap-1 rounded-lg border bg-muted p-1 lg:hidden"
       >
         {TABS.map((tab) => (
           <button
@@ -94,6 +106,15 @@ export function ManageTabs({
         >
           {roster}
         </div>
+      </div>
+
+      <div
+        id="panel-photos"
+        role="tabpanel"
+        aria-labelledby="tab-photos"
+        className={cn(active === "photos" ? "block" : "hidden", "lg:block lg:border-t lg:pt-6")}
+      >
+        {photos}
       </div>
     </div>
   );

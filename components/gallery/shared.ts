@@ -19,3 +19,15 @@ export function formatAlbumDate(iso: string, locale: string): string {
 // The first row at the widest layout (4 columns) is above the fold and holds
 // the LCP image, so those load eagerly; the rest stay lazy.
 export const GALLERY_EAGER_COUNT = 4;
+
+// Upload time on the manage-page Photos tab. Fixed locale and zone so the
+// server render and the client hydration produce the same string.
+export function formatPhotoTime(iso: string): string {
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "Asia/Jakarta",
+  }).format(new Date(iso));
+}

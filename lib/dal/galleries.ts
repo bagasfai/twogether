@@ -269,19 +269,41 @@ export async function listAdminAlbums(): Promise<AdminAlbum[]> {
 // For the manage-page Photos tab. RLS limits galleries to ones the caller may
 // see; a non-host simply gets the public album row, and the tab itself is
 // only rendered for hosts.
+// The title is returned because updateAlbum takes title and description
+// together, so the description editor re-sends the current title.
 export async function getHostAlbum(
   sessionId: string,
-): Promise<{ id: string; description: string | null } | null> {
+): Promise<{ id: string; title: string; description: string | null } | null> {
   const user = await getCurrentUser();
   if (!user) return null;
 
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("galleries")
-    .select("id, description")
+    .select("id, title, description")
     .eq("session_id", sessionId)
     .maybeSingle();
 
   if (error) throw error;
-  return data ? { id: data.id, description: data.description } : null;
+  return data ? { id: data.id, title: data.title, description: data.description } : null;
+}
+
+// Every approved photo in one album, in display order, for the manage-page
+// Photos tab (caption editing and delete). Approved rows are public, so RLS
+// returns them to anyone; the page itself is gated to hosts.
+export async function listApprovedPhotos(galleryId: string): Promise<GalleryPhotoRow[]> {
+  const user = await getCurrentUser();
+  if (!user) return [];
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("gallery_photos")
+    .select(PHOTO_COLUMNS)
+    .eq("gallery_id", galleryId)
+    .eq("status", "approved")
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: true });
+
+  if (error) throw error;
+  return ((data ?? []) as unknown as PhotoQueryRow[]).map(toPhotoRow);
 }
