@@ -120,6 +120,27 @@ found by review, triaged, and deliberately left. Verdicts are from the final who
   the consent fix above — see that entry.
 - No E2E coverage — signup, login, registration and override flows are verified by hand only.
 
+## From the gallery work
+
+- **Orphan Storage files cleanup script.** An upload that succeeds but whose RPC fails, or
+  a reject whose Storage remove fails, leaves a file with no row. Harmless (unguessable
+  paths) but unreclaimed; write a script that lists bucket objects with no
+  `gallery_photos.storage_path`.
+- **Reorder UI.** `gallery_photos.sort_order` is append-order only; no drag-to-reorder yet
+  (migration-free).
+- **Member-created albums are not a small follow-up.** Today only admins create unlinked
+  albums. Letting members create them needs new RLS, an ownership model for albums, and
+  moderation rules for who approves photos there.
+- **Types regen prints CLI noise to stdout.** `supabase gen types typescript` emits
+  "connecting", MaxListeners warnings and an upgrade notice into the output; strip them
+  before writing `types/supabase.ts`.
+- **Hosted-deploy checks for the gallery.** Confirm the `gallery` bucket exists (migration
+  3); confirm `postgres` can create policies on `storage.objects`; set
+  `NEXT_PUBLIC_SUPABASE_URL` at build time, because `next.config.ts` derives
+  `remotePatterns` from its host.
+- **Approve-vs-reject contention** is only covered structurally in pgTAP (single
+  connection); no concurrent script exercises it.
+
 ## Process note
 
 The "delete the code, the suite still passes" gap was found **five** separate times across this

@@ -177,17 +177,29 @@ the photo's album session, and `status = 'pending'`.
 
 ## Storage
 
-Bucket created by migration (`insert into storage.buckets ... on conflict do
-nothing`) so it works locally and on hosted Supabase: `id = 'gallery'`, `public =
-true`, `file_size_limit` 5 MB, `allowed_mime_types` jpeg/png/webp.
+Bucket created by migration (`insert into storage.buckets ... on conflict (id)
+do update`) so it works locally and on hosted Supabase: `id = 'gallery'`, `public =
+true`, `file_size_limit` 5 MB, `allowed_mime_types` jpeg/png/webp. `do update`
+refreshes the limits on re-run, but it would also flip a pre-existing private
+`gallery` bucket to public.
 
 `storage.objects` policies for `bucket_id = 'gallery'`:
 - INSERT: the first path segment must match a UUID regex (so a malformed path is
   denied rather than raising a cast error) and `can_upload_to_gallery(that
-  uuid)` must be true.
-- DELETE: admin, or `is_session_host` of that album's session, or `owner =
-  auth.uid()`.
-- No SELECT policy is needed; the bucket is public.
+  uuid)` must be true. The regex is lower-case only, so upload paths must use the
+  lower-case album id.
+- DELETE: admin, or `is_session_host` of that album's session, or the uploader.
+  Ownership rule: `(owner_id = auth.uid()::text or owner = auth.uid())`.
+- SELECT (`gallery_select`, authenticated): owner or reviewer. It exists even
+  though the bucket is public, because a DELETE with a WHERE clause needs a
+  SELECT-visible row (probed on local storage-api).
+- No UPDATE policy, so client uploads use `upsert: false`.
+
+An unknown album makes `add_gallery_photo` raise JB012 for every caller (see the
+RPCs section). Gallery error codes: JB012 not eligible to upload (or unknown
+album), JB013 upload window closed, JB014 pending cap reached, JB015 invalid
+upload path (wrong prefix, path already used, or no uploaded file), JB016
+invalid state (session not scheduled, photo not pending, or bad review action).
 
 **File deletion goes through the Storage API, not SQL.** Deleting from
 `storage.objects` in SQL does not remove the file from the backend. Rejecting a

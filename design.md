@@ -128,8 +128,11 @@ never a full button fill, never more than ~5% of a viewport.
 
 ## Out of scope for this pass
 
-`about`, `gallery`, `FAQ` pages don't exist yet (CLAUDE.md marks them
-unbuilt Growth/Branding tier). This redesign restyles what exists — the
+`about` and `FAQ` pages don't exist yet (CLAUDE.md marks them
+unbuilt Growth/Branding tier). The gallery is built; its design direction
+(Catalogue + Portfolio Grid within the marketing family, Workbench for the
+app-side UI) lives in `docs/superpowers/specs/2026-10-21-gallery-design.md`.
+This redesign restyles what exists — the
 landing stub, sessions browsing, every `(app)` screen, and the auth
 screens — it does not invent new marketing pages.
 
