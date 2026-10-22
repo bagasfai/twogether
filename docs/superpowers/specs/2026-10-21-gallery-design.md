@@ -54,8 +54,8 @@ session" action.
 | Who approves | An admin, or any `session_hosts` row for the album's session (owner or co-host). One signature |
 | Reject | Hard delete of the row and the Storage file |
 | Album creation | Automatic when a session goes `live`; manual creation is admin-only |
-| Storage | One public bucket `gallery`, paths `{gallery_id}/{uuid}.webp` |
-| Resize | Client-side, max 2000px long edge, webp ~0.82 |
+| Storage | One public bucket `gallery`, paths `{gallery_id}/{uuid}.webp` (`.jpg` for the jpeg fallback) |
+| Resize | Client-side, max 2000px long edge, webp ~0.82; jpeg ~0.82 fallback where the browser cannot encode webp (WebKit/iOS) |
 
 `is_session_host(session_id)` is `is_admin() OR exists (session_hosts row)`, so
 it already covers co-hosts. The existing practice of a host nominating a temporary
@@ -212,9 +212,13 @@ action still reports success because the row is gone.
 ## Upload flow
 
 1. The member picks files. A client helper resizes each on a canvas to a maximum
-   of 2000px on the long edge and encodes webp at ~0.82 quality. Resize is a
-   convenience; the bucket's size and MIME limits are the enforcement.
-2. Upload to `{gallery_id}/{uuid}.webp` with the browser Supabase client, up to 3
+   of 2000px on the long edge and encodes webp at ~0.82 quality, falling back to
+   jpeg at ~0.82 when the browser cannot encode webp (WebKit, so every iOS
+   browser). Originals up to 40 MB are accepted; the resized file must be at
+   most 5 MB. Resize is a convenience; the bucket's size and MIME limits are the
+   enforcement.
+2. Upload to `{gallery_id}/{uuid}.webp` (or `.jpg` for the jpeg fallback, with a
+   matching content type) with the browser Supabase client, up to 3
    at a time, with per-file progress and a per-file retry.
 3. For each uploaded file, call the Server Action `addGalleryPhoto` (input
    validated by one zod schema shared with the form), which calls

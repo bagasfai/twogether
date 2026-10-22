@@ -635,8 +635,22 @@ describe("gallery schemas", () => {
     expect(addGalleryPhotoSchema.safeParse({ ...valid, path: `${other}/${photoUuid}.webp` }).success).toBe(false);
   });
 
-  it("rejects a .jpg path", () => {
-    expect(addGalleryPhotoSchema.safeParse({ ...valid, path: `${galleryId}/${photoUuid}.jpg` }).success).toBe(false);
+  it("accepts a .jpg path (jpeg fallback)", () => {
+    expect(addGalleryPhotoSchema.safeParse({ ...valid, path: `${galleryId}/${photoUuid}.jpg` }).success).toBe(true);
+  });
+
+  it("rejects other extensions", () => {
+    for (const ext of ["jpeg", "png", "JPG", "WEBP", "gif"]) {
+      expect(addGalleryPhotoSchema.safeParse({ ...valid, path: `${galleryId}/${photoUuid}.${ext}` }).success).toBe(
+        false,
+      );
+    }
+  });
+
+  it("rejects an uppercase uuid in a .jpg path", () => {
+    expect(
+      addGalleryPhotoSchema.safeParse({ ...valid, path: `${galleryId}/${photoUuid.toUpperCase()}.jpg` }).success,
+    ).toBe(false);
   });
 
   it("rejects a path with ..", () => {

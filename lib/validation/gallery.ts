@@ -3,7 +3,8 @@ import { z } from "zod";
 // Lowercase only: the Storage policy regex is lowercase, so a path with
 // uppercase hex would pass here and be rejected there.
 const UUID_LOWER = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
-const PHOTO_PATH = new RegExp(`^${UUID_LOWER}/${UUID_LOWER}\\.webp$`);
+// .jpg is the jpeg fallback for browsers that cannot encode webp (WebKit).
+const PHOTO_PATH = new RegExp(`^${UUID_LOWER}/${UUID_LOWER}\\.(webp|jpg)$`);
 const LOWER_UUID = z.uuid().refine((v) => v === v.toLowerCase(), "Invalid id");
 
 const caption = z

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { runUploadPipeline, type UploadPipelineDeps } from "@/lib/gallery/upload-pipeline";
-import { WebpUnsupportedError } from "@/lib/gallery/image";
+import { ImageEncodeError, MAX_BYTES } from "@/lib/gallery/image";
 
 const PATH = "g/p.webp";
 const blob = new Blob(["x"], { type: "image/webp" });
@@ -8,7 +8,7 @@ const blob = new Blob(["x"], { type: "image/webp" });
 function deps(overrides: Partial<UploadPipelineDeps> = {}): UploadPipelineDeps {
   return {
     existingPath: null,
-    resize: vi.fn(async () => blob),
+    resize: vi.fn(async () => ({ blob, ext: "webp" as const })),
     makePath: vi.fn(() => PATH),
     upload: vi.fn(async () => ({ error: null })),
     save: vi.fn(async () => ({ ok: true as const })),
@@ -20,6 +20,7 @@ describe("runUploadPipeline", () => {
   it("resizes, uploads and saves, reporting the uploaded path", async () => {
     const d = deps({ onUploaded: vi.fn(), onStage: vi.fn() });
     await expect(runUploadPipeline(d)).resolves.toEqual({ ok: true, path: PATH });
+    expect(d.makePath).toHaveBeenCalledWith("webp");
     expect(d.upload).toHaveBeenCalledWith(PATH, blob);
     expect(d.save).toHaveBeenCalledWith(PATH);
     expect(d.onUploaded).toHaveBeenCalledWith(PATH);
@@ -42,8 +43,33 @@ describe("runUploadPipeline", () => {
     expect(d.upload).not.toHaveBeenCalled();
   });
 
-  it("maps a webp-unsupported encode to 'encode'", async () => {
-    const d = deps({ resize: vi.fn(async () => Promise.reject(new WebpUnsupportedError())) });
+  it("builds the path from the jpeg fallback's extension and uploads that blob", async () => {
+    const jpeg = new Blob(["j"], { type: "image/jpeg" });
+    const d = deps({
+      resize: vi.fn(async () => ({ blob: jpeg, ext: "jpg" as const })),
+      makePath: vi.fn((ext: string) => `g/p.${ext}`),
+    });
+    await expect(runUploadPipeline(d)).resolves.toEqual({ ok: true, path: "g/p.jpg" });
+    expect(d.makePath).toHaveBeenCalledWith("jpg");
+    expect(d.upload).toHaveBeenCalledWith("g/p.jpg", jpeg);
+  });
+
+  it("rejects a resized blob over MAX_BYTES as 'size' without uploading", async () => {
+    const big = { size: MAX_BYTES + 1, type: "image/webp" } as Blob;
+    const d = deps({ resize: vi.fn(async () => ({ blob: big, ext: "webp" as const })) });
+    await expect(runUploadPipeline(d)).resolves.toEqual({ ok: false, reason: "size", path: null, message: null });
+    expect(d.upload).not.toHaveBeenCalled();
+  });
+
+  it("uploads a resized blob of exactly MAX_BYTES", async () => {
+    const edge = { size: MAX_BYTES, type: "image/webp" } as Blob;
+    const d = deps({ resize: vi.fn(async () => ({ blob: edge, ext: "webp" as const })) });
+    await expect(runUploadPipeline(d)).resolves.toEqual({ ok: true, path: PATH });
+    expect(d.upload).toHaveBeenCalledWith(PATH, edge);
+  });
+
+  it("maps an encode failure (neither webp nor jpeg) to 'encode'", async () => {
+    const d = deps({ resize: vi.fn(async () => Promise.reject(new ImageEncodeError())) });
     await expect(runUploadPipeline(d)).resolves.toMatchObject({ ok: false, reason: "encode", path: null });
     expect(d.upload).not.toHaveBeenCalled();
   });

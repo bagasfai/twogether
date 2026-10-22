@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { HoldToConfirmButton } from "@/components/gallery/hold-to-confirm-button";
 import { createClient } from "@/lib/supabase/client";
 import { addGalleryPhoto, deleteGalleryPhoto, listMyPhotosAction } from "@/lib/actions/galleries";
-import { ACCEPTED_TYPES, galleryPhotoPath, resizeToWebp, validatePickedFile } from "@/lib/gallery/image";
+import { ACCEPTED_TYPES, galleryPhotoPath, resizeForUpload, validatePickedFile } from "@/lib/gallery/image";
 import { runWithConcurrency } from "@/lib/gallery/upload-queue";
 import { runUploadPipeline } from "@/lib/gallery/upload-pipeline";
 import { galleryPhotoUrl } from "@/lib/gallery/url";
@@ -106,12 +106,13 @@ export function UploadPanel({ galleryId }: { galleryId: string }) {
       try {
         const outcome = await runUploadPipeline({
           existingPath: uploadedPaths.current.get(id) ?? null,
-          resize: () => resizeToWebp(file),
-          makePath: () => galleryPhotoPath(galleryId, crypto.randomUUID()),
+          resize: () => resizeForUpload(file),
+          makePath: (ext) => galleryPhotoPath(galleryId, crypto.randomUUID(), ext),
           // upsert: false because the bucket has no UPDATE policy, and a fresh
-          // uuid path never needs overwriting.
+          // uuid path never needs overwriting. blob.type is webp or the jpeg
+          // fallback, matching the path's extension.
           upload: (path, blob) =>
-            supabase.storage.from("gallery").upload(path, blob, { contentType: "image/webp", upsert: false }),
+            supabase.storage.from("gallery").upload(path, blob, { contentType: blob.type, upsert: false }),
           // The schema's caption is a string that trims "" to null, so "no
           // caption" is sent as "".
           save: (path) => addGalleryPhoto({ galleryId, path, caption: "" }),
@@ -133,6 +134,9 @@ export function UploadPanel({ galleryId }: { galleryId: string }) {
             return;
           case "encode":
             patchRow(id, { state: "invalid", error: t("fileEncodeFailed") });
+            return;
+          case "size":
+            patchRow(id, { state: "invalid", error: t("fileTooLarge") });
             return;
           case "upload":
             patchRow(id, { state: "failed", error: t("fileUploadFailed") });
@@ -161,7 +165,11 @@ export function UploadPanel({ galleryId }: { galleryId: string }) {
         const check = validatePickedFile(file);
         if (check.ok) return { id, name: file.name, file, state: "working", stage: "queued" };
         const error =
-          check.reason === "type" ? t("fileInvalidType") : check.reason === "empty" ? t("fileEmpty") : t("fileTooLarge");
+                    check.reason === "type"
+            ? t("fileInvalidType")
+            : check.reason === "empty"
+              ? t("fileEmpty")
+              : t("fileOriginalTooLarge");
         return { id, name: file.name, file, state: "invalid", error };
       });
 
