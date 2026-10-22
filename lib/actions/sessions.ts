@@ -221,7 +221,11 @@ export async function startSession(id: string): Promise<ActionResult<null>> {
 
   revalidatePath(`/sessions/${idParsed.data.id}/manage`);
   revalidatePath("/dashboard");
-  revalidatePath("/sessions");
+  // Pattern forms reach every locale; a literal "/sessions" only hit the
+  // default-locale URL, and the public detail page (now live, with an album)
+  // was not revalidated at all.
+  revalidatePath("/[locale]/(marketing)/sessions", "page");
+  revalidatePath("/[locale]/(marketing)/sessions/[id]", "page");
   return ok(null);
 }
 
