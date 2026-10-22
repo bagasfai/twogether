@@ -90,11 +90,16 @@ swap two values inside one statement without a transient violation.
 
 - RLS enabled on both tables.
 - `select` policy `using (true)` for `anon` and `authenticated`.
-- `insert`, `update`, `delete` policies `using/with check (public.is_admin())`.
-- Table grants follow the repo's narrowing practice: `anon` gets `select` only;
-  `authenticated` gets `select` plus the write grants that the policies then
-  restrict to admins. `sort_order` is excluded from the `update` column grant on
-  `faq_items`, so ordering can only change through `faq_move`.
+- One `update` policy per table, `using/with check (public.is_admin())`. There are
+  no insert or delete policies on either table: the singleton is seeded by the
+  migration and never created or deleted by a client, and FAQ rows are created and
+  deleted only through RPCs.
+- Table grants follow the repo's narrowing practice (compare
+  `20261021000002_gallery_photos_moderation.sql`): `anon` gets `select` only.
+  `authenticated` gets `select`, plus column-level `update` on the text columns
+  (and `updated_by` on `community_about`). `insert` and `delete` are revoked, and
+  `sort_order` is excluded from the `faq_items` update grant, so ordering can only
+  change through the RPCs below.
 - Role checks live in RLS first. The Server Action's role check is a UX
   convenience on top, per CLAUDE.md §3.2.
 
@@ -180,7 +185,7 @@ the request (`getLocale()` from `next-intl/server`).
 `(marketing)/layout.tsx` calls `getCurrentUser()`, which forces every page in the
 group to render dynamically. These pages follow suit and set `revalidate = 60`
 for consistency with the landing and sessions pages, as the landing page's
-comment explains. Admin writes call `revalidatePath` for both locales so the
+comment explains. Admin writes call `revalidatePath` for every locale so the
 change is visible immediately even if the group later becomes static.
 
 ## Admin editor
@@ -220,7 +225,7 @@ constraints are the backstop, not the first line.
 `updateFaqItem`, `deleteFaqItem`, `moveFaqItem`. They return the `ActionResult`
 shape from `lib/actions/result.ts`, validate with zod (`failFromZod`), call the
 RPC or the RLS-guarded update, map RPC errors with `failFromRpc`, and
-`revalidatePath` for `/en/about`, `/id/about`, `/en/faq`, `/id/faq`.
+`revalidatePath` with the `[locale]` pattern form (`/[locale]/(marketing)/about`, type `page`), which invalidates every locale in one call, as `lib/gallery/revalidate.ts` does.
 
 Registration and waitlist are not touched, so the concurrency rule in CLAUDE.md
 §3.1 is not engaged here. The advisory lock above covers the one genuinely shared
