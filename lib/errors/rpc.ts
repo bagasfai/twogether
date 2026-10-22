@@ -9,15 +9,16 @@
 //   JB005 invalid match player
 //   JB006 wrong transaction isolation
 //   JB007 not authorized
-//   JB008 session or participant not found
+//   JB008 session, participant or gallery photo not found
 //   JB009 court not available for a new/starting match
 //   JB010 court has an active match, cannot delete
 //   JB011 guest registration missing a required field
 //   JB012 not eligible to add photos to this gallery
 //   JB013 photo upload window for the session has closed
 //   JB014 pending-photo cap reached
-//   JB015 invalid upload (bad path or caption)
-//   JB016 photo or album already changed (stale state)
+//   JB015 invalid upload path or missing/foreign uploaded object
+//   JB016 stale or invalid state: photo not pending, unknown review action,
+//         or session not scheduled (start_session)
 
 export const RPC_CODE_MAP = {
   JB001: "registration_closed",
