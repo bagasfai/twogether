@@ -192,7 +192,7 @@ export function localizedUrls(path: string): {
 
 ```ts
 export const DISALLOWED_PATHS = [
-  "/dashboard", "/profile", "/admin", "/login", "/signup",
+  "/dashboard", "/profile", "/admin", "/history", "/login", "/signup",
   "/auth", "/api", "/sessions/new",
 ];
 ```
