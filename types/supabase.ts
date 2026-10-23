@@ -5,7 +5,6 @@ export type Json =
   | null
   | { [key: string]: Json | undefined }
   | Json[]
-
 export type Database = {
   graphql_public: {
     Tables: {
@@ -78,6 +77,35 @@ export type Database = {
             columns: ["session_id"]
             isOneToOne: false
             referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bump_notifications: {
+        Row: {
+          created_at: string
+          id: string
+          participant_id: string
+          sent_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          participant_id: string
+          sent_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          participant_id?: string
+          sent_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bump_notifications_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
             referencedColumns: ["id"]
           },
         ]
@@ -378,9 +406,158 @@ export type Database = {
           },
         ]
       }
+      membership_plans: {
+        Row: {
+          created_at: string
+          duration_days: number
+          id: string
+          is_active: boolean
+          name: string
+          price_idr: number
+          quota: number
+          refund_cutoff_hours: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          duration_days: number
+          id?: string
+          is_active?: boolean
+          name: string
+          price_idr: number
+          quota: number
+          refund_cutoff_hours?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          duration_days?: number
+          id?: string
+          is_active?: boolean
+          name?: string
+          price_idr?: number
+          quota?: number
+          refund_cutoff_hours?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      membership_usages: {
+        Row: {
+          consumed_at: string
+          id: string
+          membership_id: string
+          participant_id: string
+          refund_reason: string | null
+          refunded_at: string | null
+        }
+        Insert: {
+          consumed_at?: string
+          id?: string
+          membership_id: string
+          participant_id: string
+          refund_reason?: string | null
+          refunded_at?: string | null
+        }
+        Update: {
+          consumed_at?: string
+          id?: string
+          membership_id?: string
+          participant_id?: string
+          refund_reason?: string | null
+          refunded_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "membership_usages_membership_id_fkey"
+            columns: ["membership_id"]
+            isOneToOne: false
+            referencedRelation: "memberships"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "membership_usages_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      memberships: {
+        Row: {
+          activated_by: string | null
+          cancelled_at: string | null
+          created_at: string
+          duration_days: number
+          expires_at: string | null
+          id: string
+          payment_received_at: string | null
+          plan_id: string | null
+          price_idr: number
+          quota_total: number
+          refund_cutoff_hours: number
+          started_at: string | null
+          user_id: string
+        }
+        Insert: {
+          activated_by?: string | null
+          cancelled_at?: string | null
+          created_at?: string
+          duration_days: number
+          expires_at?: string | null
+          id?: string
+          payment_received_at?: string | null
+          plan_id?: string | null
+          price_idr: number
+          quota_total: number
+          refund_cutoff_hours?: number
+          started_at?: string | null
+          user_id: string
+        }
+        Update: {
+          activated_by?: string | null
+          cancelled_at?: string | null
+          created_at?: string
+          duration_days?: number
+          expires_at?: string | null
+          id?: string
+          payment_received_at?: string | null
+          plan_id?: string | null
+          price_idr?: number
+          quota_total?: number
+          refund_cutoff_hours?: number
+          started_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "memberships_activated_by_fkey"
+            columns: ["activated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "memberships_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "membership_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "memberships_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       participants: {
         Row: {
           added_by: string | null
+          bumped_at: string | null
           cancelled_at: string | null
           checked_in_at: string | null
           consented_at: string | null
@@ -388,6 +565,8 @@ export type Database = {
           guest_name: string | null
           guest_phone: string | null
           id: string
+          is_premium: boolean
+          membership_id: string | null
           no_show_at: string | null
           paid_at: string | null
           registered_at: string
@@ -399,6 +578,7 @@ export type Database = {
         }
         Insert: {
           added_by?: string | null
+          bumped_at?: string | null
           cancelled_at?: string | null
           checked_in_at?: string | null
           consented_at?: string | null
@@ -406,6 +586,8 @@ export type Database = {
           guest_name?: string | null
           guest_phone?: string | null
           id?: string
+          is_premium?: boolean
+          membership_id?: string | null
           no_show_at?: string | null
           paid_at?: string | null
           registered_at?: string
@@ -417,6 +599,7 @@ export type Database = {
         }
         Update: {
           added_by?: string | null
+          bumped_at?: string | null
           cancelled_at?: string | null
           checked_in_at?: string | null
           consented_at?: string | null
@@ -424,6 +607,8 @@ export type Database = {
           guest_name?: string | null
           guest_phone?: string | null
           id?: string
+          is_premium?: boolean
+          membership_id?: string | null
           no_show_at?: string | null
           paid_at?: string | null
           registered_at?: string
@@ -439,6 +624,13 @@ export type Database = {
             columns: ["added_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "participants_membership_id_fkey"
+            columns: ["membership_id"]
+            isOneToOne: false
+            referencedRelation: "memberships"
             referencedColumns: ["id"]
           },
           {
@@ -647,6 +839,61 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      admin_cancel_membership: {
+        Args: { p_membership_id: string }
+        Returns: {
+          activated_by: string | null
+          cancelled_at: string | null
+          created_at: string
+          duration_days: number
+          expires_at: string | null
+          id: string
+          payment_received_at: string | null
+          plan_id: string | null
+          price_idr: number
+          quota_total: number
+          refund_cutoff_hours: number
+          started_at: string | null
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "memberships"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      admin_grant_membership: {
+        Args: {
+          p_duration_days?: number
+          p_payment_received_at: string
+          p_plan_id: string
+          p_price_idr?: number
+          p_quota?: number
+          p_user_id: string
+        }
+        Returns: {
+          activated_by: string | null
+          cancelled_at: string | null
+          created_at: string
+          duration_days: number
+          expires_at: string | null
+          id: string
+          payment_received_at: string | null
+          plan_id: string | null
+          price_idr: number
+          quota_total: number
+          refund_cutoff_hours: number
+          started_at: string | null
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "memberships"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       can_review_gallery: { Args: { p_gallery_id: string }; Returns: boolean }
       can_upload_to_gallery: {
         Args: { p_gallery_id: string }
@@ -732,6 +979,7 @@ export type Database = {
         }
         Returns: {
           added_by: string | null
+          bumped_at: string | null
           cancelled_at: string | null
           checked_in_at: string | null
           consented_at: string | null
@@ -739,6 +987,8 @@ export type Database = {
           guest_name: string | null
           guest_phone: string | null
           id: string
+          is_premium: boolean
+          membership_id: string | null
           no_show_at: string | null
           paid_at: string | null
           registered_at: string
@@ -762,6 +1012,7 @@ export type Database = {
         }
         Returns: {
           added_by: string | null
+          bumped_at: string | null
           cancelled_at: string | null
           checked_in_at: string | null
           consented_at: string | null
@@ -769,6 +1020,8 @@ export type Database = {
           guest_name: string | null
           guest_phone: string | null
           id: string
+          is_premium: boolean
+          membership_id: string | null
           no_show_at: string | null
           paid_at: string | null
           registered_at: string
@@ -788,10 +1041,35 @@ export type Database = {
       is_admin: { Args: never; Returns: boolean }
       is_session_host: { Args: { p_session_id: string }; Returns: boolean }
       is_session_owner: { Args: { p_session_id: string }; Returns: boolean }
+      lock_current_membership: {
+        Args: { p_user_id: string }
+        Returns: {
+          activated_by: string | null
+          cancelled_at: string | null
+          created_at: string
+          duration_days: number
+          expires_at: string | null
+          id: string
+          payment_received_at: string | null
+          plan_id: string | null
+          price_idr: number
+          quota_total: number
+          refund_cutoff_hours: number
+          started_at: string | null
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "memberships"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       member_confirm_participation: {
         Args: { p_session_id: string }
         Returns: {
           added_by: string | null
+          bumped_at: string | null
           cancelled_at: string | null
           checked_in_at: string | null
           consented_at: string | null
@@ -799,6 +1077,8 @@ export type Database = {
           guest_name: string | null
           guest_phone: string | null
           id: string
+          is_premium: boolean
+          membership_id: string | null
           no_show_at: string | null
           paid_at: string | null
           registered_at: string
@@ -814,6 +1094,10 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      membership_quota_left: {
+        Args: { p_membership_id: string }
+        Returns: number
       }
       public_community_stats: {
         Args: never
@@ -898,11 +1182,8 @@ export type Database = {
     }
   }
 }
-
 type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
-
 type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
-
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
@@ -931,7 +1212,6 @@ export type Tables<
       ? R
       : never
     : never
-
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
@@ -956,7 +1236,6 @@ export type TablesInsert<
       ? I
       : never
     : never
-
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
@@ -981,7 +1260,6 @@ export type TablesUpdate<
       ? U
       : never
     : never
-
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
@@ -998,7 +1276,6 @@ export type Enums<
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
     ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
     : never
-
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
@@ -1015,7 +1292,6 @@ export type CompositeTypes<
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
     ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
-
 export const Constants = {
   graphql_public: {
     Enums: {},

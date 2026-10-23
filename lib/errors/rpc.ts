@@ -19,6 +19,9 @@
 //   JB015 invalid upload path or missing/foreign uploaded object
 //   JB016 stale or invalid state: photo not pending, unknown review action,
 //         or session not scheduled (start_session)
+//   JB017 membership or plan not found or inactive (admin membership RPCs;
+//         also a grant to a missing user)
+//   JB018 membership already cancelled
 
 export const RPC_CODE_MAP = {
   JB001: "registration_closed",
@@ -37,6 +40,8 @@ export const RPC_CODE_MAP = {
   JB014: "upload_cap_reached",
   JB015: "invalid_upload",
   JB016: "invalid_state",
+  JB017: "not_found",
+  JB018: "invalid_state",
 } as const;
 
 export type RpcErrorCode = Exclude<(typeof RPC_CODE_MAP)[keyof typeof RPC_CODE_MAP], "validation">;
