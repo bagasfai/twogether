@@ -815,6 +815,15 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      public_community_stats: {
+        Args: never
+        Returns: {
+          active_members: number
+          matches_played: number
+          sessions_held: number
+          total_checkins: number
+        }[]
+      }
       register_for_session: {
         Args: { p_session_id: string }
         Returns: Database["public"]["CompositeTypes"]["registration_result"]
