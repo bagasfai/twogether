@@ -165,7 +165,9 @@ found by review, triaged, and deliberately left. Verdicts are from the final who
 ## From the About/FAQ work
 
 - The seeded `community_about` text is a placeholder. An admin must replace it (EN and ID) before launch.
-- Still to do for the marketing site: sitemap, robots and community stats.
+- Sitemap, robots and community stats shipped (`app/sitemap.ts`, `app/robots.ts`, `public_community_stats()`).
+- `/history` is not in `isProtected` in `proxy.ts`; it is guarded only by the page-level DAL check.
+- `STATS_MIN_SESSIONS` (10) is a code constant, not an admin setting.
 - `scripts/test-concurrent-faq-order.sh` has no `faq_delete` racer: removing the advisory lock from `faq_delete` turns nothing red. Its `EXIT:$?` line under `set -e` never shows a nonzero value, so it cannot report a failing exit code.
 - The DB `btrim` check only strips space, tab, CR and LF. NBSP and other Unicode-only whitespace pass it, while zod `trim()` is wider than the DB. A value that is blank to zod but Unicode-whitespace-only is accepted if it bypasses the form.
 - A malformed `NEXT_PUBLIC_SITE_URL` makes `new URL()` throw in `app/layout.tsx`, contrary to the "never breaks the build" comment there.

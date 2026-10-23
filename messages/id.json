@@ -20,7 +20,14 @@
     "ctaJoin": "Gabung komunitas",
     "runningTitle": "Yang sedang berjalan",
     "runningBody": "Setiap sesi — status pendaftaran, waiting list, lapangan — ada di satu halaman.",
-    "runningLink": "Lihat sesi mendatang →"
+    "runningLink": "Lihat sesi mendatang →",
+    "stats": {
+      "title": "Komunitas sejauh ini",
+      "sessionsHeld": "Sesi terlaksana",
+      "matchesPlayed": "Pertandingan dimainkan",
+      "totalCheckins": "Check-in",
+      "activeMembers": "Anggota aktif (90 hari terakhir)"
+    }
   },
   "sessionsList": {
     "title": "Sesi mendatang",

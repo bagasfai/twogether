@@ -2,7 +2,10 @@ import NextLink from "next/link";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
+import { CommunityStatsStrip } from "@/components/community-stats";
 import { listPublicCommunityAnnouncements } from "@/lib/dal/announcements";
+import { getCommunityStats } from "@/lib/dal/community-stats";
+import { shouldShowStats } from "@/lib/community-stats";
 
 // This page previously did no data fetching. `revalidate` is set here for
 // when/if this route group stops being forced dynamic (currently
@@ -13,10 +16,11 @@ import { listPublicCommunityAnnouncements } from "@/lib/dal/announcements";
 export const revalidate = 60;
 
 export default async function Home() {
-  const [t, tAnnouncements, announcements] = await Promise.all([
+  const [t, tAnnouncements, announcements, stats] = await Promise.all([
     getTranslations("home"),
     getTranslations("announcements"),
     listPublicCommunityAnnouncements(),
+    getCommunityStats(),
   ]);
 
   return (
@@ -41,6 +45,14 @@ export default async function Home() {
       </section>
 
       <hr className="border-t-2 border-border" />
+
+      {shouldShowStats(stats) ? (
+        <>
+          <CommunityStatsStrip stats={stats} />
+
+          <hr className="border-t-2 border-border" />
+        </>
+      ) : null}
 
       <section className="px-6 py-16">
         <div className="mx-auto flex max-w-3xl flex-col gap-3">

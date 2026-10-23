@@ -20,7 +20,14 @@
     "ctaJoin": "Join the community",
     "runningTitle": "What’s running",
     "runningBody": "Every session — open registration, waitlist status, courts — lives on one page.",
-    "runningLink": "Browse upcoming sessions →"
+    "runningLink": "Browse upcoming sessions →",
+    "stats": {
+      "title": "Community so far",
+      "sessionsHeld": "Sessions held",
+      "matchesPlayed": "Matches played",
+      "totalCheckins": "Check-ins",
+      "activeMembers": "Active members (last 90 days)"
+    }
   },
   "sessionsList": {
     "title": "Upcoming sessions",
