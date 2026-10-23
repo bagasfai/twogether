@@ -514,17 +514,17 @@ select is(
 
 -- ======== reregistration_over_live_usage_repoints_it_to_current_membership ========
 -- P9 registers on M1 (quota 1, so M1 is then exhausted). The row is then
--- cancelled directly with no refund: the Task 4 refund triggers do not exist
--- yet, and a late cancel will keep the usage live the same way. P9 is
--- granted M2; with M1 exhausted, lock_current_membership returns M2.
+-- cancelled directly. The session starts in 1 hour, past M1's 24h refund
+-- cutoff, so the cancel is late and the refund trigger keeps the usage live.
+-- P9 is granted M2; with M1 exhausted, lock_current_membership returns M2.
 
 insert into auth.users (id, email) values
   ('00000021-0033-0033-0033-000000000000', 'p9-033@test.local');
 insert into public.sessions
   (id, title, starts_at, ends_at, location, max_participants, waitlist_capacity,
    created_by, status, registration_state)
-values ('a3300011-0000-0000-0000-000000000000', 'S', now() + interval '3 days',
-        now() + interval '3 days 2 hours', 'GOR', 2, 0,
+values ('a3300011-0000-0000-0000-000000000000', 'S', now() + interval '1 hour',
+        now() + interval '3 hours', 'GOR', 2, 0,
         '00000001-0033-0033-0033-000000000000', 'scheduled', 'open');
 insert into public.memberships
   (id, user_id, price_idr, quota_total, duration_days, started_at, expires_at, created_at)

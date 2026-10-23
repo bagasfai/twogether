@@ -179,6 +179,23 @@ found by review, triaged, and deliberately left. Verdicts are from the final who
 - `faq_lock_key()` keeps the default PUBLIC `EXECUTE`. It is an immutable constant and harmless; `030_about_faq_grant_surface_negatives.test.sql` pins that state deliberately so a change is conscious.
 - Mutation check (Task 7) confirmed the pins bite: dropping the `faq_move` revoke, adding `sort_order` to the `faq_items` column grant, and dropping `is_admin()` from either update policy each turn at least one pgTAP assertion red.
 
+## From the premium membership work
+
+- **Accepted risk: a session cancel racing `start_session` can deadlock (40P01).** `cancelSession`
+  (`lib/actions/sessions.ts`) cancels with a direct `update sessions set status = 'cancelled'`.
+  That takes the sessions row lock first, then the `sessions_refund_usages` trigger
+  (`20261023000005_premium_refunds.sql`) takes the session advisory lock. `start_session`
+  takes the advisory lock first, then the row lock (`for update`). If both run on the same session,
+  Postgres aborts one with 40P01. The abort is clean and the action can be retried. The trade was
+  deliberate: the old order let `start_session` (holding the row) deadlock against any concurrent
+  registration (holding the advisory lock and waiting for its FK `key share` on the row). Fix
+  later with a `cancel_session` RPC that takes the advisory lock first.
+- **Must decide: a waitlister refunded at session start can still be promoted and play uncharged.**
+  `refund_usages_on_session_change` refunds premium waitlisters when the session goes live.
+  But `promote_from_waitlist` still runs while the session is live (premium first), so a refunded
+  premium waitlister can be promoted to confirmed and play with no quota charged. Owner call:
+  re-consume a unit on promotion while live, or drop `is_premium` on the row after the start refund.
+
 ## Process note
 
 The "delete the code, the suite still passes" gap was found **five** separate times across this
