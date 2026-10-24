@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/dal/user";
-import { fail, failFromRpc, failFromZod, ok, type ActionResult } from "@/lib/actions/result";
+import { sendPendingBumpNotifications } from "@/lib/email/send-bump-notifications";
+import { fail,failFromRpc, failFromZod, ok, type ActionResult } from "@/lib/actions/result";
 import { cancelGuestRegistrationSchema, registerGuestSchema } from "@/lib/validation/participants";
 
 export type RegisterOutcome = {
@@ -29,6 +30,15 @@ export async function registerForSession(sessionId: string): Promise<ActionResul
   const status = data?.status;
   if (status !== "confirmed" && status !== "waiting_list") {
     return fail("unknown");
+  }
+
+  // A premium registration may have bumped a regular member to the waitlist;
+  // the RPC queued a bump_notifications row for them. Email is best effort and
+  // must never change the registration result.
+  try {
+    await sendPendingBumpNotifications();
+  } catch (e) {
+    console.error("bump notifications failed", e instanceof Error ? e.message : e);
   }
 
   // The public session page shows capacity, not a live count, so it is not
