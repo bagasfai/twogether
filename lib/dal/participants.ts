@@ -51,6 +51,9 @@ export type RosterEntry = {
   /** true when this row is a guest brought by a member, not their own account */
   isGuest: boolean;
   guestPhone: string | null;
+  isPremium: boolean;
+  /** set when a premium registration moved this participant to the waitlist */
+  bumpedAt: string | null;
 };
 
 export type AddableMember = {
@@ -293,7 +296,7 @@ export async function listRoster(sessionId: string): Promise<RosterEntry[]> {
   const { data, error } = await supabase
     .from("participants")
     .select(
-      "id, user_id, status, registered_at, checked_in_at, paid_at, no_show_at, added_by, consented_at, guest_name, guest_phone, profiles!participants_user_id_fkey(full_name, avatar_url)",
+      "id, user_id, status, registered_at, checked_in_at, paid_at, no_show_at, added_by, consented_at, guest_name, guest_phone, is_premium, bumped_at, profiles!participants_user_id_fkey(full_name, avatar_url)",
     )
     .eq("session_id", sessionId)
     .order("registered_at", { ascending: true });
@@ -314,6 +317,8 @@ export async function listRoster(sessionId: string): Promise<RosterEntry[]> {
     avatarUrl: row.profiles?.avatar_url ?? null,
     isGuest: row.guest_name !== null,
     guestPhone: row.guest_phone,
+    isPremium: row.is_premium,
+    bumpedAt: row.bumped_at,
   }));
 }
 
