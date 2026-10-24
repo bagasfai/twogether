@@ -2,6 +2,8 @@
 -- (docs/superpowers/specs/2026-10-23-premium-membership-design.md, sections 3 and 5).
 -- All writes to memberships, membership_usages and bump_notifications are
 -- RPC/trigger only; membership_plans is admin-writable through RLS.
+-- Visibility counts are scoped to this file's fixture ids so rows left in
+-- the local DB by app runs do not turn the suite red.
 
 begin;
 select plan(35);
@@ -128,7 +130,9 @@ select throws_ok(
   '42501', null, 'member has no select on bump_notifications');
 
 select is(
-  (select array_agg(name order by name) from public.membership_plans),
+  (select array_agg(name order by name) from public.membership_plans
+    where id in ('a0000000-4444-4444-4444-444444444444',
+                 'b0000000-4444-4444-4444-444444444444')),
   array['Active Plan'], 'member sees only active plans');
 
 select throws_ok(
@@ -149,7 +153,9 @@ select is(
 set local request.jwt.claims = '{"sub":"33333333-4444-4444-4444-444444444444","role":"authenticated"}';
 
 select is(
-  (select count(*)::int from public.membership_plans),
+  (select count(*)::int from public.membership_plans
+    where id in ('a0000000-4444-4444-4444-444444444444',
+                 'b0000000-4444-4444-4444-444444444444')),
   2, 'admin sees all plans');
 
 select lives_ok(
@@ -162,7 +168,9 @@ select lives_ok(
   'admin can update a plan');
 
 select is(
-  (select count(*)::int from public.memberships),
+  (select count(*)::int from public.memberships
+    where id in ('c0000000-4444-4444-4444-444444444444',
+                 'd0000000-4444-4444-4444-444444444444')),
   2, 'admin sees all memberships');
 
 -- ======== anon ========

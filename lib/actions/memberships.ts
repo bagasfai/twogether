@@ -88,5 +88,6 @@ export async function cancelMembership(membershipId: string): Promise<ActionResu
   if (error) return failFromRpc(error);
 
   revalidatePath("/admin");
+  revalidatePath("/dashboard");
   return ok(null);
 }

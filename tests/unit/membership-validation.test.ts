@@ -18,6 +18,13 @@ describe("planSchema", () => {
     expect(planSchema.safeParse(validPlan).success).toBe(true);
   });
 
+  it("caps the name at 120 characters (DB check)", () => {
+    expect(planSchema.safeParse({ ...validPlan, name: "a".repeat(120) }).success).toBe(true);
+    const tooLong = planSchema.safeParse({ ...validPlan, name: "a".repeat(121) });
+    expect(tooLong.success).toBe(false);
+    expect(tooLong.error?.issues[0]?.message).toBe("Name must be at most 120 characters");
+  });
+
   it("defaults refundCutoffHours to 24", () => {
     const parsed = planSchema.parse(validPlan);
     expect(parsed.refundCutoffHours).toBe(24);

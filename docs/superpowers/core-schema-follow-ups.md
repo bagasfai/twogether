@@ -190,11 +190,17 @@ found by review, triaged, and deliberately left. Verdicts are from the final who
   deliberate: the old order let `start_session` (holding the row) deadlock against any concurrent
   registration (holding the advisory lock and waiting for its FK `key share` on the row). Fix
   later with a `cancel_session` RPC that takes the advisory lock first.
-- **Must decide: a waitlister refunded at session start can still be promoted and play uncharged.**
+  Since `20261023000007_premium_review_fixes.sql` the trigger also fires on `completed`, so
+  `closeSession` (a direct `update sessions set status = 'completed'`) joins the same edge: a close
+  racing a start of the same session can abort with 40P01. Same fix later (a `close_session` RPC).
+- **Resolved (Ruling 6, `20261023000007_premium_review_fixes.sql`): a waitlister refunded at session start can still be promoted and play uncharged.**
   `refund_usages_on_session_change` refunds premium waitlisters when the session goes live.
   But `promote_from_waitlist` still runs while the session is live (premium first), so a refunded
   premium waitlister can be promoted to confirmed and play with no quota charged. Owner call:
   re-consume a unit on promotion while live, or drop `is_premium` on the row after the start refund.
+  Chosen: the live (and completed) sweep sets `is_premium = false, membership_id = null` on the
+  refunded waitlist rows, so a promoted row is honestly non-premium. Revisit if the owner prefers
+  re-consuming a unit on promotion while live.
 
 ## Process note
 
