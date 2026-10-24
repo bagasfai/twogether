@@ -32,7 +32,10 @@
 --    host-added rows are non-premium). host_add_participant's conflict
 --    branch and host_set_participant_status's cancelled -> active path
 --    re-used a participant row and kept is_premium / membership_id /
---    bumped_at from an earlier premium registration. Both now reset them.
+--    bumped_at from an earlier premium registration. Both now reset them,
+--    but only when the existing row is cancelled: host_add_participant's
+--    conflict branch leaves a still-active premium row's snapshot alone
+--    (its usage is live and must stay refundable).
 --    Any usage still live on such a row (a late cancel that was not
 --    refunded) stays a forfeited unit, per Ruling 4.
 --
@@ -140,10 +143,17 @@ begin
         -- re-entering the queue is not re-entering the checked-in pool
         checked_in_at = null,
         -- a host-added row is non-premium (spec s5), even when it re-uses a
-        -- row from an earlier premium registration
-        is_premium = false,
-        membership_id = null,
-        bumped_at = null
+        -- row from an earlier premium registration. Only a cancelled row is
+        -- reset: a still-active (confirmed / waiting_list) premium row keeps
+        -- its snapshot, because its membership_usages unit is still live and
+        -- refund_usage_on_cancel (gated on old.is_premium) must be able to
+        -- refund it later. (participants.status is the pre-update value.)
+        is_premium = case when participants.status = 'cancelled'
+                          then false else participants.is_premium end,
+        membership_id = case when participants.status = 'cancelled'
+                             then null else participants.membership_id end,
+        bumped_at = case when participants.status = 'cancelled'
+                         then null else participants.bumped_at end
   returning * into v_row;
 
   return v_row;

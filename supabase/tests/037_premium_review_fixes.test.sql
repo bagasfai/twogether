@@ -9,12 +9,15 @@
 --       row makes it non-premium: it sorts behind a premium waiter and a
 --       later cancel does not refund the forfeited unit.
 --   SE: host_set_participant_status un-cancel does the same.
+--   SF: host_add_participant on a still-active premium row (confirmed or
+--       waiting_list) keeps the snapshot, so a later cancel before the cutoff
+--       still refunds the unit.
 --
 -- now() is the transaction start time, so starts_at = now() + 1 hour is past
 -- the 24h refund cutoff for every member cancel below.
 
 begin;
-select plan(24);
+select plan(29);
 
 create function pg_temp.usage_state(p_session uuid, p_user uuid)
 returns text
@@ -70,7 +73,9 @@ insert into auth.users (id, email) values
   ('00000011-0037-0037-0037-000000000000', 'sd-readded-037@test.local'),
   ('00000012-0037-0037-0037-000000000000', 'sd-premium-037@test.local'),
   ('00000013-0037-0037-0037-000000000000', 'se-uncancelled-037@test.local'),
-  ('00000014-0037-0037-0037-000000000000', 'se-premium-037@test.local');
+  ('00000014-0037-0037-0037-000000000000', 'se-premium-037@test.local'),
+  ('00000015-0037-0037-0037-000000000000', 'sf-confirmed-037@test.local'),
+  ('00000016-0037-0037-0037-000000000000', 'sf-waiting-037@test.local');
 
 update public.profiles set role = 'host'
  where id = '00000001-0037-0037-0037-000000000000';
@@ -85,7 +90,8 @@ select s.id::uuid, 'S', s.starts, s.starts + interval '2 hours', 'GOR',
     ('a3700002-0000-0000-0000-000000000000', now() + interval '3 days', 1), -- SB start then close
     ('a3700003-0000-0000-0000-000000000000', now() + interval '3 days', 1), -- SC promotion while live
     ('a3700004-0000-0000-0000-000000000000', now() + interval '1 hour', 2), -- SD host re-add
-    ('a3700005-0000-0000-0000-000000000000', now() + interval '1 hour', 2)  -- SE host un-cancel
+    ('a3700005-0000-0000-0000-000000000000', now() + interval '1 hour', 2), -- SE host un-cancel
+    ('a3700006-0000-0000-0000-000000000000', now() + interval '3 days', 1)  -- SF host re-add of active premium rows
   ) as s(id, starts, max_p);
 
 insert into public.memberships
@@ -93,7 +99,7 @@ insert into public.memberships
 select ('e37000' || lpad(u, 2, '0') || '-0000-0000-0000-000000000000')::uuid,
        ('000000' || lpad(u, 2, '0') || '-0037-0037-0037-000000000000')::uuid,
        0, 5, 30, 24, now() - interval '1 day', now() + interval '29 days'
-  from unnest(array['02', '03', '05', '06', '07', '08', '11', '12', '13', '14']) as u;
+  from unnest(array['02', '03', '05', '06', '07', '08', '11', '12', '13', '14', '15', '16']) as u;
 
 -- SD/SE: a premium seat holder (cannot be bumped).
 insert into public.participants (session_id, user_id, status, is_premium, registered_at)
@@ -121,6 +127,11 @@ set local request.jwt.claims = '{"sub":"00000007-0037-0037-0037-000000000000","r
 select public.register_for_session('a3700003-0000-0000-0000-000000000000') is not null as registered;
 set local request.jwt.claims = '{"sub":"00000008-0037-0037-0037-000000000000","role":"authenticated"}';
 select public.register_for_session('a3700003-0000-0000-0000-000000000000') is not null as registered;
+-- SF: premium confirmed + premium waitlisted (1 seat).
+set local request.jwt.claims = '{"sub":"00000015-0037-0037-0037-000000000000","role":"authenticated"}';
+select public.register_for_session('a3700006-0000-0000-0000-000000000000') is not null as registered;
+set local request.jwt.claims = '{"sub":"00000016-0037-0037-0037-000000000000","role":"authenticated"}';
+select public.register_for_session('a3700006-0000-0000-0000-000000000000') is not null as registered;
 -- SD/SE: premium, confirmed into the second seat, then a late cancel (past
 -- the 24h cutoff) that keeps the unit consumed.
 set local request.jwt.claims = '{"sub":"00000011-0037-0037-0037-000000000000","role":"authenticated"}';
@@ -352,6 +363,52 @@ select is(
   pg_temp.usage_state('a3700005-0000-0000-0000-000000000000', '00000013-0037-0037-0037-000000000000'),
   'live',
   'host_uncancel: a host cancel of the non-premium row does not refund the forfeited unit'
+);
+
+-- ======== SF: host_add_participant_keeps_active_premium_snapshot ========
+
+select is(
+  pg_temp.snapshot('a3700006-0000-0000-0000-000000000000', '00000015-0037-0037-0037-000000000000'),
+  '(confirmed,t,e3700015-0000-0000-0000-000000000000,)',
+  'host_readd_active: fixture -- confirmed premium'
+);
+
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"00000001-0037-0037-0037-000000000000","role":"authenticated"}';
+select (public.host_add_participant('a3700006-0000-0000-0000-000000000000',
+  '00000015-0037-0037-0037-000000000000', 'confirmed')).status;
+select (public.host_add_participant('a3700006-0000-0000-0000-000000000000',
+  '00000016-0037-0037-0037-000000000000', 'waiting_list')).status;
+reset role;
+
+select is(
+  pg_temp.snapshot('a3700006-0000-0000-0000-000000000000', '00000015-0037-0037-0037-000000000000'),
+  '(confirmed,t,e3700015-0000-0000-0000-000000000000,)',
+  'host_readd_active: confirmed premium row keeps its snapshot'
+);
+select is(
+  pg_temp.snapshot('a3700006-0000-0000-0000-000000000000', '00000016-0037-0037-0037-000000000000'),
+  '(waiting_list,t,e3700016-0000-0000-0000-000000000000,)',
+  'host_readd_active: waiting_list premium row keeps its snapshot'
+);
+
+-- Waitlister cancels first (a confirmed cancel would promote it).
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"00000016-0037-0037-0037-000000000000","role":"authenticated"}';
+select public.cancel_registration('a3700006-0000-0000-0000-000000000000');
+set local request.jwt.claims = '{"sub":"00000015-0037-0037-0037-000000000000","role":"authenticated"}';
+select public.cancel_registration('a3700006-0000-0000-0000-000000000000');
+reset role;
+
+select is(
+  pg_temp.usage_state('a3700006-0000-0000-0000-000000000000', '00000015-0037-0037-0037-000000000000'),
+  'member_cancel_before_cutoff',
+  'host_readd_active: cancel of the re-added confirmed premium row refunds the unit'
+);
+select is(
+  pg_temp.usage_state('a3700006-0000-0000-0000-000000000000', '00000016-0037-0037-0037-000000000000'),
+  'waitlist_cancel',
+  'host_readd_active: cancel of the re-added waiting_list premium row refunds the unit'
 );
 
 select * from finish();
