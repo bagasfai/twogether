@@ -10,16 +10,22 @@ import { AlbumAdminSection } from "@/components/gallery/album-admin-section";
 import { getAboutForAdmin, listFaqItemsForAdmin } from "@/lib/dal/community-content-admin";
 import { AboutEditor } from "@/components/admin/about-editor";
 import { FaqEditor } from "@/components/admin/faq-editor";
+import { listMembershipsForAdmin, listPlans } from "@/lib/dal/memberships";
+import { MembershipPlansPanel } from "@/components/admin/membership-plans-panel";
+import { GrantMembershipDialog } from "@/components/admin/grant-membership-dialog";
+import { MembershipsTable } from "@/components/admin/memberships-table";
 
 export default async function AdminPage() {
   const user = await requireAdmin("/admin");
-  const [members, announcements, albums, pending, about, faqItems, messages] = await Promise.all([
+  const [members, announcements, albums, pending, about, faqItems, plans, memberships, messages] = await Promise.all([
     listAllMembers(),
     listCommunityAnnouncementsForAdmin(),
     listAdminAlbums(),
     listAllPendingForAdmin(),
     getAboutForAdmin(),
     listFaqItemsForAdmin(),
+    listPlans(),
+    listMembershipsForAdmin(),
     // (app) has no NextIntlClientProvider; the gallery components read the
     // "gallery" namespace, so provide just that, in English.
     getMessages({ locale: "en" }),
@@ -36,6 +42,22 @@ export default async function AdminPage() {
           </p>
         </header>
         <MemberRoleTable members={members} currentUserId={user.id} />
+      </section>
+
+      <section className="flex flex-col gap-4">
+        <header className="flex flex-col gap-1">
+          <h2 className="text-lg font-semibold tracking-tight">Memberships</h2>
+          <p className="text-sm text-muted-foreground">
+            Premium plans and the memberships granted to members. Payment is tracked manually.
+          </p>
+        </header>
+        <MembershipPlansPanel plans={plans} />
+        <div className="flex justify-end">
+          <GrantMembershipDialog members={members} plans={plans} />
+        </div>
+        <NextIntlClientProvider locale="en" messages={{ gallery: messages.gallery }}>
+          <MembershipsTable memberships={memberships} />
+        </NextIntlClientProvider>
       </section>
 
       <section>
