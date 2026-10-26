@@ -41,6 +41,7 @@ declare
   v_session public.sessions;
   v_new_max int;
   v_confirmed int;
+  v_old_coach_count int;
 begin
   if current_setting('transaction_isolation') <> 'read committed' then
     raise exception 'adjust_session_capacity requires read committed isolation, got %',
@@ -77,6 +78,7 @@ begin
     return v_session;
   end if;
 
+  v_old_coach_count := v_session.coach_count;
   v_new_max := p_coach_count * v_session.seats_per_coach;
 
   if p_coach_count < v_session.coach_count then
@@ -105,17 +107,20 @@ begin
    where id = p_session_id
   returning * into v_session;
 
-  -- Raise: fill in every missing number up to the new count.
-  insert into public.courts (session_id, court_number)
-  select p_session_id, n
-    from generate_series(1, p_coach_count) n
-   where not exists (
-     select 1 from public.courts c
-      where c.session_id = p_session_id and c.court_number = n);
-
-  -- Lower: remove the courts beyond the new count (all idle, checked above).
-  delete from public.courts
-   where session_id = p_session_id and court_number > p_coach_count;
+  if p_coach_count > v_old_coach_count then
+    -- Raise: fill in every missing number up to the new count. Nothing is
+    -- deleted, even a court numbered above the new count (gapped numbers).
+    insert into public.courts (session_id, court_number)
+    select p_session_id, n
+      from generate_series(1, p_coach_count) n
+     where not exists (
+       select 1 from public.courts c
+        where c.session_id = p_session_id and c.court_number = n);
+  else
+    -- Lower: remove the courts beyond the new count (all idle, checked above).
+    delete from public.courts
+     where session_id = p_session_id and court_number > p_coach_count;
+  end if;
 
   if v_session.status in ('scheduled', 'live') then
     select count(*) into v_confirmed

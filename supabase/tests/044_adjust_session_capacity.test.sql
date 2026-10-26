@@ -1,7 +1,7 @@
 -- Covers migration 20261028000005_adjust_session_capacity.sql.
 
 begin;
-select plan(41);
+select plan(46);
 
 -- Users: 01 host; 02 member (non-host); 11..16 fillers; 21..23 waitlisters
 -- (23 premium, registered last); 31..33 fillers for S7.
@@ -34,7 +34,10 @@ select s.id::uuid, 'S', now() + interval '3 days', now() + interval '3 days 2 ho
     ('a4400010-0000-0000-0000-000000000000', 'drilling',  2, 6, 'scheduled'), -- S10 busy court
     ('a4400011-0000-0000-0000-000000000000', 'open_play', null::int, null::int, 'scheduled'), -- S11 open play
     ('a4400012-0000-0000-0000-000000000000', 'drilling',  1, 6, 'completed'), -- S12
-    ('a4400013-0000-0000-0000-000000000000', 'drilling',  1, 6, 'cancelled')  -- S13
+    ('a4400013-0000-0000-0000-000000000000', 'drilling',  1, 6, 'cancelled'), -- S13
+    ('a4400014-0000-0000-0000-000000000000', 'drilling',  2, 2, 'scheduled'), -- S14 gapped courts
+    ('a4400015-0000-0000-0000-000000000000', 'drilling',  2, 2, 'scheduled'), -- S15 JB024 boundary
+    ('a4400016-0000-0000-0000-000000000000', 'drilling',  1, 2, 'draft')      -- S16 draft + waitlister
   ) as s(id, kind, coaches, seats, status);
 
 insert into public.courts (session_id, court_number, status) values
@@ -43,7 +46,14 @@ insert into public.courts (session_id, court_number, status) values
   ('a4400009-0000-0000-0000-000000000000', 2, 'idle'),
   ('a4400009-0000-0000-0000-000000000000', 3, 'unavailable'),
   ('a4400010-0000-0000-0000-000000000000', 1, 'in_use'),
-  ('a4400010-0000-0000-0000-000000000000', 2, 'in_use');
+  ('a4400010-0000-0000-0000-000000000000', 2, 'in_use'),
+  ('a4400014-0000-0000-0000-000000000000', 3, 'idle'),
+  ('a4400014-0000-0000-0000-000000000000', 4, 'in_use');
+
+insert into public.participants (session_id, user_id, status, registered_at) values
+  ('a4400015-0000-0000-0000-000000000000', '00000031-0044-0044-0044-000000000000', 'confirmed', now() - interval '3 hours'),
+  ('a4400015-0000-0000-0000-000000000000', '00000032-0044-0044-0044-000000000000', 'confirmed', now() - interval '2 hours'),
+  ('a4400016-0000-0000-0000-000000000000', '00000021-0044-0044-0044-000000000000', 'waiting_list', now() - interval '3 hours');
 
 -- S2: 6 confirmed + 3 waiting (premium registered last).
 insert into public.participants (session_id, user_id, status, registered_at)
@@ -196,6 +206,27 @@ select is(
   (select count(*)::int from public.courts where session_id = 'a4400007-0000-0000-0000-000000000000'),
   0, 'same_count_is_a_noop: no courts created');
 
+-- Raise with gapped court numbers {3,4}: court 4 is above the new count (3)
+-- but a raise must never delete anything.
+select is(
+  (select coach_count from public.adjust_session_capacity('a4400014-0000-0000-0000-000000000000', 3)),
+  3, 'raise_with_gapped_courts_keeps_busy_court_above_count: no error');
+select is(
+  (select status::text from public.courts
+    where session_id = 'a4400014-0000-0000-0000-000000000000' and court_number = 4),
+  'in_use', 'raise_with_gapped_courts_keeps_busy_court_above_count: court 4 survives');
+
+-- JB024 boundary: lowering to exactly the confirmed count succeeds.
+select is(
+  (select max_participants from public.adjust_session_capacity('a4400015-0000-0000-0000-000000000000', 1)),
+  2, 'lower_to_exactly_confirmed_count_succeeds');
+
+-- Draft raise: waitlisted row is not promoted.
+select public.adjust_session_capacity('a4400016-0000-0000-0000-000000000000', 2);
+select is(
+  (select status::text from public.participants where session_id = 'a4400016-0000-0000-0000-000000000000'),
+  'waiting_list', 'raise_on_draft_session_does_not_promote');
+
 -- S8 JB024.
 select throws_ok(
   $$ select public.adjust_session_capacity('a4400008-0000-0000-0000-000000000000', 1) $$,
@@ -268,12 +299,17 @@ select throws_ok(
   'JB007', null, 'non_host_on_open_play_gets_JB007_not_JB026');
 
 -- ======== anon ========
+-- No sub claim: auth.uid() is null.
+set local request.jwt.claims = '{"role":"authenticated"}';
+select throws_ok(
+  $$ select public.adjust_session_capacity('a4400001-0000-0000-0000-000000000000', 4) $$,
+  'JB004', null, 'anon_gets_JB004');
 reset role;
 set local role anon;
 set local request.jwt.claims = '{"role":"anon"}';
 select throws_ok(
   $$ select public.adjust_session_capacity('a4400001-0000-0000-0000-000000000000', 4) $$,
-  null, null, 'anon_cannot_execute_adjust_session_capacity');
+  '42501', null, 'anon_role_has_no_execute_privilege');
 reset role;
 
 -- Grant surface.
