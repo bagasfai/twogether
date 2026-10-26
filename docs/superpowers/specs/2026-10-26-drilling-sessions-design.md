@@ -1,7 +1,7 @@
 # Drilling sessions — design
 
 Date: 2026-10-26
-Status: design approved in brainstorming, spec awaiting review
+Status: implemented
 
 ## 1. Goal
 
@@ -126,15 +126,17 @@ Extend the grant-surface test (test `022` in the premium spec) to cover both col
 
 ## 9. Errors
 
-New `JB0xx` codes in `lib/errors/rpc.ts`:
+New `JB0xx` codes in `lib/errors/rpc.ts`, all mapped to `invalid_state`:
 
-- transfer target already on the session
-- transfer on a non-confirmed seat
-- transfer after start by a non-host
-- capacity lowered below confirmed count
-- capacity lowered with a non-idle court to remove
-- `kind` change with existing participants
-- wrong `kind` for `adjust_session_capacity`
+- `JB020`: `kind` change with existing participants
+- `JB021`: transfer target already on the session, or holds a live usage on a cancelled row
+- `JB022`: transfer on a non-confirmed seat
+- `JB023`: transfer after start by a non-host, or session not `scheduled`/`live` (hosts too)
+- `JB024`: capacity lowered below confirmed count
+- `JB025`: capacity lowered with a non-idle court to remove
+- `JB026`: wrong `kind` or status for `adjust_session_capacity`
+
+App-layer validation (not DB): `coach_count` must be 1..20 and `seats_per_coach` 1..10. Open play rejects a nonzero `premium_surcharge_idr`.
 
 ## 10. UI
 
@@ -169,11 +171,11 @@ Regenerate `types/supabase.ts` after the migrations.
 - Payment gateway (🟢): `paid_by_user_id` already separates who pays from who plays, so a payment record can attach to the payer.
 - More session kinds: `session_kind` is an enum, so adding one is a migration. Refund behavior would move into a column at that point.
 
-## 13. Open items
+## 13. Resolved items
 
-- Confirm whether the replacement must record consent (`consented_at`, from `20260914000001_participant_consent.sql`). They are assigned without approval, so decide whether to stamp consent on the transfer row or prompt them on first view.
-- Check `guard_court_delete` against the court removal path in the lowering case.
-- Decide whether a host can assign a guest as the replacement. This spec allows members only.
+- Replacement consent: `consented_at` is left null on the replacement row and confirmed through the existing `member_confirm_participation` flow, as for host-added rows.
+- `guard_court_delete` is unaffected: lowering requires the removed courts to be `idle`. An idle court with a scheduled match still raises `JB010` from that guard.
+- A guest cannot be the replacement; the replacement must be a member. A host can transfer a guest's seat (the guest seat is the source).
 
 ## 14. Out of scope
 

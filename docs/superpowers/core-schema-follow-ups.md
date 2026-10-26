@@ -236,6 +236,26 @@ found by review, triaged, and deliberately left. Verdicts are from the final who
   refunded waitlist rows, so a promoted row is honestly non-premium. Revisit if the owner prefers
   re-consuming a unit on promotion while live.
 
+## From the drilling sessions work
+
+- **Close and cancel RPCs that take the advisory lock first.** Premium Ruling 5 (see the
+  premium section above) now also applies to drilling session cancel: `cancelSession` and
+  `closeSession` still update `sessions` directly, so the row lock comes before the advisory
+  lock in the refund trigger. A `cancel_session` / `close_session` RPC would fix the order.
+- **Transfer audit view.** If hosts ask who handed seats to whom, add a view over
+  `participants.replaced_by` and `paid_by_user_id`. Nothing reads it today.
+- The replacement keeps `registered_at = clock_timestamp()`, so a non-premium replacement is
+  the first bump target. Product decision: it could copy the old row's `registered_at`.
+- Member-facing error messages for `JB020`-`JB026` are all the generic `invalid_state` text;
+  context is given only by the UI.
+- Seed users use non-RFC UUIDs, so `z.uuid()` actions (including `transferSeat`) fail on seed
+  data.
+- `scripts/test-concurrent-drilling.sh` scenario C asserts end state only. The advisory-lock line alone is
+  not detected by scenario A, because row locks also serialise it.
+- Raising capacity with gapped court numbers leaves the extra court rows above `court_count`
+  in place (locked by a test).
+- `JB023` is also raised when the session is not `scheduled`/`live`, even for hosts.
+
 ## Process note
 
 The "delete the code, the suite still passes" gap was found **five** separate times across this
