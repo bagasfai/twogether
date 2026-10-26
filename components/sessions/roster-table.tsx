@@ -31,6 +31,8 @@ type Entry = {
   fullName: string | null;
   isGuest: boolean;
   userId: string | null;
+  isPremium: boolean;
+  bumpedAt: string | null;
 };
 
 function StatusBadge({ status }: { status: ParticipantStatus }) {
@@ -53,6 +55,15 @@ function ConsentBadge({ addedBy, consentedAt }: { addedBy: string | null; consen
 function GuestBadge({ isGuest }: { isGuest: boolean }) {
   if (!isGuest) return null;
   return <Badge variant="outline">Guest</Badge>;
+}
+
+function PremiumBadges({ isPremium, bumpedAt }: { isPremium: boolean; bumpedAt: string | null }) {
+  return (
+    <>
+      {isPremium ? <Badge variant="success">Premium</Badge> : null}
+      {bumpedAt !== null ? <Badge variant="warning">Bumped</Badge> : null}
+    </>
+  );
 }
 
 export function RosterTable({
@@ -125,6 +136,7 @@ export function RosterTable({
             <div className="flex items-start justify-between gap-2">
               <span className="text-sm font-medium">{entry.fullName ?? "Unnamed player"}</span>
               <div className="flex items-center gap-1.5">
+                <PremiumBadges isPremium={entry.isPremium} bumpedAt={entry.bumpedAt} />
                 <GuestBadge isGuest={entry.isGuest} />
                 <ConsentBadge addedBy={entry.addedBy} consentedAt={entry.consentedAt} />
                 <StatusBadge status={entry.status} />
@@ -275,6 +287,7 @@ export function RosterTable({
               <TableCell className="whitespace-normal">
                 <div className="flex flex-wrap items-center gap-1.5">
                   <StatusBadge status={entry.status} />
+                  <PremiumBadges isPremium={entry.isPremium} bumpedAt={entry.bumpedAt} />
                   <GuestBadge isGuest={entry.isGuest} />
                   <ConsentBadge addedBy={entry.addedBy} consentedAt={entry.consentedAt} />
                 </div>

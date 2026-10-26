@@ -213,6 +213,29 @@ found by review, triaged, and deliberately left. Verdicts are from the final who
   it differs from CLAUDE.md §4 ("Admin: everything a Host can do"). Decide whether that is
   intended.
 
+## From the premium membership work
+
+- **Accepted risk: a session cancel racing `start_session` can deadlock (40P01).** `cancelSession`
+  (`lib/actions/sessions.ts`) cancels with a direct `update sessions set status = 'cancelled'`.
+  That takes the sessions row lock first, then the `sessions_refund_usages` trigger
+  (`20261023000005_premium_refunds.sql`) takes the session advisory lock. `start_session`
+  takes the advisory lock first, then the row lock (`for update`). If both run on the same session,
+  Postgres aborts one with 40P01. The abort is clean and the action can be retried. The trade was
+  deliberate: the old order let `start_session` (holding the row) deadlock against any concurrent
+  registration (holding the advisory lock and waiting for its FK `key share` on the row). Fix
+  later with a `cancel_session` RPC that takes the advisory lock first.
+  Since `20261023000007_premium_review_fixes.sql` the trigger also fires on `completed`, so
+  `closeSession` (a direct `update sessions set status = 'completed'`) joins the same edge: a close
+  racing a start of the same session can abort with 40P01. Same fix later (a `close_session` RPC).
+- **Resolved (Ruling 6, `20261023000007_premium_review_fixes.sql`): a waitlister refunded at session start can still be promoted and play uncharged.**
+  `refund_usages_on_session_change` refunds premium waitlisters when the session goes live.
+  But `promote_from_waitlist` still runs while the session is live (premium first), so a refunded
+  premium waitlister can be promoted to confirmed and play with no quota charged. Owner call:
+  re-consume a unit on promotion while live, or drop `is_premium` on the row after the start refund.
+  Chosen: the live (and completed) sweep sets `is_premium = false, membership_id = null` on the
+  refunded waitlist rows, so a promoted row is honestly non-premium. Revisit if the owner prefers
+  re-consuming a unit on promotion while live.
+
 ## Process note
 
 The "delete the code, the suite still passes" gap was found **five** separate times across this

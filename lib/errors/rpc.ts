@@ -20,6 +20,9 @@
 //   JB016 stale or invalid state: photo not pending, unknown review action,
 //         or session not scheduled (start_session)
 //   JB017 participant is already in a scheduled or in-progress match
+//   JB018 membership or plan not found or inactive (admin membership RPCs;
+//         also a grant to a missing user)
+//   JB019 membership already cancelled
 
 export const RPC_CODE_MAP = {
   JB001: "registration_closed",
@@ -39,6 +42,8 @@ export const RPC_CODE_MAP = {
   JB015: "invalid_upload",
   JB016: "invalid_state",
   JB017: "player_busy",
+  JB018: "not_found",
+  JB019: "invalid_state",
 } as const;
 
 export type RpcErrorCode = Exclude<(typeof RPC_CODE_MAP)[keyof typeof RPC_CODE_MAP], "validation">;

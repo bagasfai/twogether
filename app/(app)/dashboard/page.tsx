@@ -2,22 +2,27 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ConfirmParticipationBanner } from "@/components/sessions/confirm-participation-banner";
+import { MembershipCard } from "@/components/sessions/membership-card";
 import { SessionActionsMenu } from "@/components/sessions/session-actions-menu";
 import { requireUser } from "@/lib/dal/user";
 import { listMyUpcomingRegistrations } from "@/lib/dal/participants";
 import { listMyHostedSessions } from "@/lib/dal/sessions";
+import { getMyMemberships } from "@/lib/dal/memberships";
 import { listMyAnnouncementsFeed } from "@/lib/dal/announcements";
 
 export default async function DashboardPage() {
   const user = await requireUser("/dashboard");
-  const [registrations, announcements] = await Promise.all([
+  const [registrations, announcements, memberships] = await Promise.all([
     listMyUpcomingRegistrations(),
     listMyAnnouncementsFeed(),
+    getMyMemberships(),
   ]);
   const hosted = user.role === "member" ? [] : await listMyHostedSessions();
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-10">
+      <MembershipCard memberships={memberships} />
+
       <section className="flex flex-col gap-3">
         <h1 className="text-xl font-semibold tracking-tight">Your upcoming sessions</h1>
         {registrations.length === 0 ? (
