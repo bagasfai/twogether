@@ -255,6 +255,33 @@ found by review, triaged, and deliberately left. Verdicts are from the final who
 - Raising capacity with gapped court numbers leaves the extra court rows above `court_count`
   in place (locked by a test).
 - `JB023` is also raised when the session is not `scheduled`/`live`, even for hosts.
+- **Open: one quota unit can back two premium seats (register, transfer, register, cancel,
+  register).** After a hand-off, `register_for_session` skips `lock_current_membership` while the
+  old row still has `replaced_by` set, so the re-registration is non-premium. But the revive
+  clears `replaced_by` (a host un-cancel does too). If the member then cancels from confirmed
+  (no refund, because the row is not premium) and registers again, the guard no longer fires,
+  the row turns premium, and the re-point UPDATE takes over the live usage that funds the
+  replacement. A later refund-eligible exit (waitlist cancel, host cancel, the waitlist sweep)
+  refunds that unit while the replacement keeps a premium seat. Fix: stop keying the guard on
+  `replaced_by`; treat a live usage on a non-premium row as forfeited or funding and never
+  re-point it, or check for an active row with `paid_by_user_id = <member>`. Add a pgTAP case
+  for the full sequence.
+- **Open: the live/completed waitlist sweep refunds the unit that funds a replacement.** A
+  member who re-registers after a hand-off on a full session lands on the waitlist as
+  non-premium; when the session goes live or completes, the sweep in `20261023000007` refunds
+  every live usage on a waitlisted row regardless of `is_premium`. Restricting that sweep to
+  `is_premium` rows would close it, but would also turn forfeited usages into non-refunds, so
+  it needs a product ruling.
+- A host un-cancel of a handed-over row clears `replaced_by` and `paid_by_user_id` and can put
+  the session one over capacity (host override; nothing enforces confirmed <= max).
+- `transfer_participation` and `adjust_session_capacity` authorize after taking the advisory
+  lock, so any authenticated user can queue on a session's lock; checking `is_session_host`
+  first (as `host_add_participant` does) would avoid it. `adjust_session_capacity` also locks the
+  session row before the advisory-lock-first cancel/start paths (same class as the first item).
+- A host can transfer a checked-in player who is in a scheduled or in-progress match; there is
+  no `JB017`-style guard (host override).
+- `adjust_session_capacity` and `updateSession` do not revalidate the public `/sessions/[id]`
+  page that shows `maxParticipants`.
 
 ## Process note
 
