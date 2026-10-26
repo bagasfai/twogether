@@ -45,7 +45,7 @@ select s.id::uuid, 'S', now() + interval '3 days', now() + interval '3 days 2 ho
     ('a3300001-0000-0000-0000-000000000000', 2, 0, 'open'),   -- S1 free seat
     ('a3300002-0000-0000-0000-000000000000', 2, 1, 'open'),   -- S2 bump, waitlist already full
     ('a3300003-0000-0000-0000-000000000000', 4, 1, 'open'),   -- S3 no eligible target, waitlist room
-    ('a330003b-0000-0000-0000-000000000000', 4, 0, 'open'),   -- S3b no eligible target, waitlist full
+    ('a330003b-0000-0000-0000-000000000000', 2, 0, 'open'),   -- S3b no eligible target (checked in, premium), waitlist full
     ('a3300004-0000-0000-0000-000000000000', 1, 1, 'open'),   -- S4 only a premium confirmed
     ('a3300005-0000-0000-0000-000000000000', 1, 1, 'open'),   -- S5 no membership
     ('a3300006-0000-0000-0000-000000000000', 1, 5, 'open'),   -- S6 dead memberships
@@ -85,8 +85,9 @@ insert into public.participants (id, session_id, user_id, status, registered_at)
   ('b3320015-0000-0000-0000-000000000000', 'a3300002-0000-0000-0000-000000000000', '00000015-0033-0033-0033-000000000000', 'confirmed',    now() - interval '4 hours'),
   ('b3320016-0000-0000-0000-000000000000', 'a3300002-0000-0000-0000-000000000000', '00000016-0033-0033-0033-000000000000', 'waiting_list', now() - interval '3 hours');
 
--- S3 and S3b: every confirmed row is ineligible as a bump target:
--- checked in, host-added, a guest, premium.
+-- S3: host-added and guest rows are bump targets (drilling sessions
+-- migration 20261028000002); checked-in and premium rows are not.
+-- S3b: only the ineligible rows (checked in, premium), so nothing to bump.
 insert into public.participants
   (id, session_id, user_id, guest_name, registered_by, status, is_premium, checked_in_at, added_by, registered_at)
 select (p.prefix || s.suffix || '-0000-0000-0000-000000000000')::uuid,
@@ -98,7 +99,8 @@ select (p.prefix || s.suffix || '-0000-0000-0000-000000000000')::uuid,
          ('b333002', '00000018-0033-0033-0033-000000000000', null, null, false, null, '00000001-0033-0033-0033-000000000000', now() - interval '4 hours'),
          ('b333003', null, 'Guest Three', '00000014-0033-0033-0033-000000000000', false, null, null, now() - interval '3 hours'),
          ('b333004', '00000019-0033-0033-0033-000000000000', null, null, true, null, null, now() - interval '2 hours')
-       ) as p(prefix, uid, guest, reg_by, prem, chk, added, reg_at);
+       ) as p(prefix, uid, guest, reg_by, prem, chk, added, reg_at)
+ where s.suffix = '3' or p.prefix in ('b333001', 'b333004');
 
 -- S4: the only confirmed participant is premium.
 insert into public.participants (id, session_id, user_id, status, is_premium, registered_at) values
@@ -211,49 +213,51 @@ select is(
 select is(public.membership_quota_left('e3300003-0000-0000-0000-000000000000'), 4,
   'premium_on_full_session_bumps_last_registered_non_premium: quota consumed');
 
--- ======== bump_skips_checked_in_host_added_guest_and_premium ========
+-- ======== bump_skips_checked_in_and_premium_but_takes_guest ========
 
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"00000004-0033-0033-0033-000000000000","role":"authenticated"}';
 select is(
   (select (r.status::text, r.waitlist_position)::text
      from public.register_for_session('a3300003-0000-0000-0000-000000000000') r),
-  ('waiting_list', 1)::text,
-  'bump_skips_checked_in_host_added_guest_and_premium: caller waitlisted at position 1'
+  ('confirmed', null)::text,
+  'bump_skips_checked_in_and_premium_but_takes_guest: caller confirmed by bumping the guest'
 );
 select throws_ok(
   $$select public.register_for_session('a330003b-0000-0000-0000-000000000000')$$,
   'JB002',
   'session is full',
-  'bump_skips_checked_in_host_added_guest_and_premium: full waitlist raises JB002'
+  'bump_skips_checked_in_and_premium_but_takes_guest: only checked-in and premium rows, full waitlist raises JB002'
 );
 reset role;
 
 select is(
-  (select count(*)::int from public.participants
+  (select array_agg(id::text order by id) from public.participants
     where session_id in ('a3300003-0000-0000-0000-000000000000', 'a330003b-0000-0000-0000-000000000000')
       and id::text like 'b333%'
       and status = 'confirmed' and bumped_at is null),
-  8,
-  'bump_skips_checked_in_host_added_guest_and_premium: nobody moved in either session'
+  array['b3330013-0000-0000-0000-000000000000', 'b333001b-0000-0000-0000-000000000000',
+        'b3330023-0000-0000-0000-000000000000', 'b3330043-0000-0000-0000-000000000000',
+        'b333004b-0000-0000-0000-000000000000'],
+  'bump_skips_checked_in_and_premium_but_takes_guest: checked-in, premium and older host-added rows stay put'
 );
 select is(
   (select count(*)::int from public.bump_notifications),
   1,
-  'bump_skips_checked_in_host_added_guest_and_premium: no new bump_notifications'
+  'bump_skips_checked_in_and_premium_but_takes_guest: guest bump adds no bump_notifications'
 );
 select is(
   (select count(*)::int from public.participants
     where session_id = 'a330003b-0000-0000-0000-000000000000'
       and user_id = '00000004-0033-0033-0033-000000000000'),
   0,
-  'bump_skips_checked_in_host_added_guest_and_premium: JB002 leaves no row'
+  'bump_skips_checked_in_and_premium_but_takes_guest: JB002 leaves no row'
 );
 select is(
-  (select count(*)::int from public.participants
-    where session_id = 'a3300003-0000-0000-0000-000000000000' and status = 'confirmed'),
-  4,
-  'bump_skips_checked_in_host_added_guest_and_premium: confirmed count unchanged'
+  (select (status::text, bumped_at is not null)::text from public.participants
+    where id = 'b3330033-0000-0000-0000-000000000000'),
+  ('waiting_list', true)::text,
+  'bump_skips_checked_in_and_premium_but_takes_guest: guest row waitlisted with bumped_at'
 );
 
 -- ======== premium_does_not_bump_premium ========
