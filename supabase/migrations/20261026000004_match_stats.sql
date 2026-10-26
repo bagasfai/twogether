@@ -3,6 +3,10 @@
 -- they could already read the underlying matches. Only completed matches
 -- count; scheduled, in_progress and cancelled never do.
 --
+-- Host-only on top of RLS: matches of a public session are readable by any
+-- member, but the per-session board is a host surface (is_session_host also
+-- admits admins), so the view itself filters to sessions the caller hosts.
+--
 -- A cancelled participant stays listed only if they played a completed game
 -- before cancelling. No level or gender column is selected or joined here.
 create view public.session_games_played
@@ -14,6 +18,7 @@ select
 from public.participants p
 left join public.match_players mp on mp.participant_id = p.id
 left join public.matches m on m.id = mp.match_id and m.status = 'completed'
+where public.is_session_host(p.session_id)
 group by p.id
 having p.status <> 'cancelled' or count(m.id) > 0;
 

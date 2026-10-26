@@ -1,5 +1,5 @@
 begin;
-select plan(13);
+select plan(15);
 
 insert into auth.users (id, email) values
   ('22222222-2222-2222-2222-222222222222', 'host@test.local'),
@@ -156,6 +156,13 @@ select is(
 
 select is(
   (select count(*)::int from public.session_games_played
+    where session_id = 'aaaaaaaa-0000-0000-0000-000000000001'),
+  0,
+  'a non-host member sees no per-session counts even for a public session'
+);
+
+select is(
+  (select count(*)::int from public.session_games_played
     where session_id = 'aaaaaaaa-0000-0000-0000-000000000002' and games_played > 0),
   0,
   'a member cannot see game counts of a draft session'
@@ -171,6 +178,13 @@ select is(
 );
 
 set local role anon;
+select throws_ok(
+  $$ select * from public.session_games_played $$,
+  '42501',
+  null,
+  'anon cannot read the per-session view'
+);
+
 select throws_ok(
   $$ select * from public.all_time_leaderboard() $$,
   '42501',

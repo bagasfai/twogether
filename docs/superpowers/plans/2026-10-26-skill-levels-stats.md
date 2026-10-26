@@ -16,7 +16,7 @@ Work on a new branch `feat/skill-levels-stats` cut from `dev`.
 
 - A game counts only when `matches.status = 'completed'`. `scheduled`, `in_progress`, `cancelled` never count.
 - Neither leaderboard, the view, the RPC, nor match history may return or join `member_levels`, `guest_attributes`, `profiles_private.gender`, or any level/gender column.
-- Per-session board: hosts only (rendered on the `requireHost` manage route), ordered by games played, includes guests by `guest_name`.
+- Per-session board: hosts only (the view filters with `is_session_host`; also rendered on the `requireHost` manage route), ordered by games played, includes guests by `guest_name`.
 - All-time board: registered members only (`participants.user_id is not null`), aggregated by `user_id`, readable by any `authenticated` user, exposes display name and games played only. `anon` has no access.
 - Match history: completed matches in order, court, completed time, team 1 vs team 2 names. No scores.
 - Match history access: hosts of the session, and users with a non-cancelled participant row in it. Everyone else gets 404.
