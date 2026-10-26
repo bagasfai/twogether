@@ -114,6 +114,7 @@ export default async function ManageSessionPage({ params }: PageProps<"/sessions
           seatsPerCoach={session.seatsPerCoach}
           confirmedCount={confirmed}
           waitlistCount={waiting}
+          sessionStatus={session.status}
         />
       ) : null}
 

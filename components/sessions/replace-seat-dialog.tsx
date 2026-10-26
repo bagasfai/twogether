@@ -135,7 +135,7 @@ export function ReplaceSeatDialog({
           <DialogTitle>{isHost ? "Replace this player" : "Hand your seat to someone else"}</DialogTitle>
           <DialogDescription>
             The member you pick takes the seat right away.{" "}
-            {isHost ? "The original member stays the payer." : "You stay the payer."}
+            {isHost ? "Whoever paid for the seat stays the payer." : "You stay the payer."}
           </DialogDescription>
         </DialogHeader>
 

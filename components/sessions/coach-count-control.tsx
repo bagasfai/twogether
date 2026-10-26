@@ -26,12 +26,15 @@ export function CoachCountControl({
   seatsPerCoach,
   confirmedCount,
   waitlistCount,
+  sessionStatus,
 }: {
   sessionId: string;
   coachCount: number;
   seatsPerCoach: number;
   confirmedCount: number;
   waitlistCount: number;
+  /** promotion only runs once a session is scheduled or live */
+  sessionStatus: "draft" | "scheduled" | "live";
 }) {
   const [target, setTarget] = useState<number | null>(null);
   const [pending, startTransition] = useTransition();
@@ -42,7 +45,8 @@ export function CoachCountControl({
   const canIncrement = coachCount + 1 <= MAX_COACHES;
 
   const newCapacity = target === null ? 0 : target * seatsPerCoach;
-  const promoted = target === null ? 0 : Math.max(0, Math.min(waitlistCount, newCapacity - confirmedCount));
+  const promotes = sessionStatus !== "draft";
+  const promoted = target === null || !promotes ? 0 : Math.max(0, Math.min(waitlistCount, newCapacity - confirmedCount));
   const raising = target !== null && target > coachCount;
 
   const confirm = () => {
@@ -122,7 +126,9 @@ export function CoachCountControl({
           </DialogHeader>
           <p className="text-sm">
             {raising
-              ? promoted > 0
+              ? !promotes
+                ? "Nobody is promoted yet: the waitlist is only promoted once the session opens."
+                : promoted > 0
                 ? `${promoted} ${promoted === 1 ? "person" : "people"} from the waitlist will be promoted to confirmed, premium members first.`
                 : "Nobody is promoted: the waitlist is empty."
               : "The extra court is removed. It must be empty and not in use, or this will be refused."}

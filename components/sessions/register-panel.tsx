@@ -81,9 +81,11 @@ type State =
 export function RegisterPanel({
   sessionId,
   sessionKind,
+  startsAt,
   registrationOpen,
 }: {
   sessionId: string;
+  startsAt: string;
   sessionKind: SessionKind;
   registrationOpen: boolean;
 }) {
@@ -204,7 +206,7 @@ export function RegisterPanel({
               {t("waitlistPosition", { position: registration.waitlistPosition ?? 0 })}
             </Badge>
           )}
-          {registration.status === "confirmed" && registration.id !== "pending" ? (
+          {registration.status === "confirmed" && registration.id !== "pending" && new Date(startsAt).getTime() > new Date().getTime() ? (
             <ReplaceSeatDialog
               participantId={registration.id}
               sessionKind={sessionKind}

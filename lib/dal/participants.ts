@@ -3,6 +3,7 @@ import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/dal/user";
 import { getHostSession } from "@/lib/dal/sessions";
+import { excludedUserIds } from "@/lib/sessions/excluded-user-ids";
 import type { Database } from "@/types/supabase";
 
 export type ParticipantStatus =
@@ -370,13 +371,13 @@ export async function listPublicRoster(
   }));
 }
 
-// Host-only: candidates for host_add_participant. Scoped to sessions the
-// caller actually hosts (checked via getHostSession, same as the /manage
-// page itself) rather than relying on profiles' own `using (true)` SELECT
-// policy alone -- that policy is correct for the app at large (full_name and
-// avatar_url are non-sensitive), but this function's whole purpose is
-// picking someone to register, so it should not double as a general member
-// directory for a session a caller doesn't host.
+// Candidates for host_add_participant and for the Replace seat picker. A host
+// of the session may search anyone; a non-host may search only when they hold
+// a confirmed seat in it (to hand that seat over). Everyone else gets [] so
+// this does not double as a general member directory -- profiles' own
+// `using (true)` SELECT policy is right for the app at large (full_name and
+// avatar_url are non-sensitive), but this function's purpose is picking
+// someone to register.
 export async function searchAddableMembers(
   sessionId: string,
   query: string,
@@ -411,7 +412,8 @@ export async function searchAddableMembers(
     .eq("session_id", sessionId)
     .neq("status", "cancelled");
 
-  const excluded = (active ?? []).map((row) => row.user_id);
+  // guest rows have user_id NULL; a null in the not-in list breaks the filter
+  const excluded = excludedUserIds(active ?? []);
 
   let builder = supabase
     .from("profiles")

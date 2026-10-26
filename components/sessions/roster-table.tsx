@@ -57,7 +57,7 @@ function OwedLine({
   const differentPayer = payerId !== null && payerId !== entry.userId;
   return (
     <div className="flex flex-col gap-0.5 text-xs">
-      {entry.status !== "cancelled" ? (
+      {entry.status === "confirmed" ? (
         <span className="font-mono tabular-nums">{rupiah(amountOwed(pricing, entry))}</span>
       ) : null}
       {differentPayer ? (
@@ -284,7 +284,7 @@ export function RosterTable({
                   Waitlist
                 </Button>
               ) : null}
-              {entry.status === "confirmed" && !entry.isGuest ? (
+              {entry.status === "confirmed" ? (
                 <ReplaceSeatDialog
                   participantId={entry.id}
                   sessionKind={sessionKind}
@@ -393,7 +393,7 @@ export function RosterTable({
                     Waitlist
                   </Button>
                 ) : null}
-                {entry.status === "confirmed" && !entry.isGuest ? (
+                {entry.status === "confirmed" ? (
                   <ReplaceSeatDialog
                     participantId={entry.id}
                     sessionKind={sessionKind}

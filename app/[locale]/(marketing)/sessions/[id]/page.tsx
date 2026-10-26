@@ -109,6 +109,7 @@ export default async function SessionDetailPage({
       <RegisterPanel
         sessionId={session.id}
         sessionKind={session.kind}
+        startsAt={session.startsAt}
         registrationOpen={session.registrationState === "open"}
       />
 
