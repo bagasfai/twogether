@@ -13,6 +13,7 @@ import {
   setPaidSchema,
   setParticipantStatusSchema,
 } from "@/lib/validation/participants";
+import { checkInBlockedReason } from "@/lib/players/resolve";
 import type { Database } from "@/types/supabase";
 
 type ParticipantStatus = Database["public"]["Enums"]["participant_status"];
@@ -64,6 +65,35 @@ export async function setCheckedIn(
   if (!user) return fail("not_authenticated");
 
   const supabase = await createClient();
+
+  // Guests can't be checked in until a host has set their gender (the pairing
+  // logic needs it). Only applies when checking IN, and only to guests; members
+  // carry gender on their profile. Fails closed: any lookup error aborts the
+  // check-in, and a missing guest_attributes row means gender is unset.
+  if (parsed.data.checkedIn) {
+    const { data: row, error: lookupError } = await supabase
+      .from("participants")
+      .select("guest_name")
+      .eq("id", parsed.data.participantId)
+      .eq("session_id", parsed.data.sessionId)
+      .maybeSingle();
+
+    if (lookupError || !row) return fail("unknown", "Could not update check-in.");
+
+    if (row.guest_name !== null) {
+      const { data: attrs, error: attrsError } = await supabase
+        .from("guest_attributes")
+        .select("gender")
+        .eq("participant_id", parsed.data.participantId)
+        .maybeSingle();
+
+      if (attrsError) return fail("unknown", "Could not update check-in.");
+
+      const blocked = checkInBlockedReason({ isGuest: true, gender: attrs?.gender ?? null });
+      if (blocked) return fail("validation", blocked);
+    }
+  }
+
   const { error } = await supabase
     .from("participants")
     .update({ checked_in_at: parsed.data.checkedIn ? new Date().toISOString() : null })

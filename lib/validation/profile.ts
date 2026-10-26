@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { GENDERS } from "@/lib/players/levels";
 import { optionalPhone } from "@/lib/validation/phone";
 
 const optionalUrl = z
@@ -9,6 +10,8 @@ export const profileSchema = z.object({
   fullName: z.string().trim().min(2, "Enter your name").max(80, "Name is too long"),
   phone: optionalPhone,
   avatarUrl: optionalUrl,
+  // Omitted means "leave the stored value alone"; there is no clear-to-null.
+  gender: z.enum(GENDERS).optional(),
 });
 
 export type ProfileInput = z.infer<typeof profileSchema>;

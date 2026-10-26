@@ -16,7 +16,7 @@ export async function updateProfile(input: ProfileInput): Promise<ActionResult<n
   const supabase = await createClient();
 
   // Two tables, two policies: profiles_update_self_or_admin covers the name and
-  // avatar, profiles_private_update_self covers the phone. Neither write can
+  // avatar, profiles_private_update_self covers the phone and gender. Neither write can
   // touch anyone else's row even if user.id were wrong -- RLS decides, not this
   // eq() filter.
   const { error: profileError } = await supabase
@@ -29,10 +29,14 @@ export async function updateProfile(input: ProfileInput): Promise<ActionResult<n
   // The row is guaranteed to exist: handle_new_user creates it with the profile.
   const { error: phoneError } = await supabase
     .from("profiles_private")
-    .update({ phone: parsed.data.phone })
+    .update({
+      phone: parsed.data.phone,
+      // Only written when provided, so saving without a gender never clears one.
+      ...(parsed.data.gender ? { gender: parsed.data.gender } : {}),
+    })
     .eq("user_id", user.id);
 
-  if (phoneError) return fail("unknown", "Could not save your phone number.");
+  if (phoneError) return fail("unknown", "Could not save your phone number and gender.");
 
   revalidatePath("/profile");
   revalidatePath("/dashboard");
