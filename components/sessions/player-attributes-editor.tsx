@@ -39,6 +39,18 @@ const LABEL: Record<Gender | SkillLevel, string> = {
   advanced: "Advanced",
 };
 
+// A save failure should read as a roster message. The generic zod form
+// message ("Please check the highlighted fields.") means nothing here, so only
+// a failure with a specific code-derived message is shown as-is.
+function failureMessage(
+  result: { code: string; message: string },
+  what: "level" | "gender",
+) {
+  return result.code === "validation"
+    ? `Could not save ${what}. Try again.`
+    : result.message || `Could not save ${what}. Try again.`;
+}
+
 // Host-only. Rendered solely from the host manage page (RosterTable), which is
 // gated by requireHost; level and gender must never reach a member-facing prop.
 export function PlayerAttributesEditor({
@@ -46,7 +58,9 @@ export function PlayerAttributesEditor({
   userId,
   isGuest,
   attributes,
+  compact = false,
 }: {
+  compact?: boolean;
   participantId: string;
   userId: string | null;
   isGuest: boolean;
@@ -74,7 +88,7 @@ export function PlayerAttributesEditor({
         : await setMemberLevel({ userId, level: next });
     if (!result.ok) {
       setLevel(prev);
-      toast.error(result.message);
+      toast.error(failureMessage(result, "level"));
     }
   };
 
@@ -87,17 +101,23 @@ export function PlayerAttributesEditor({
         : await setMemberGender({ userId, gender: next });
     if (!result.ok) {
       setGender(prev);
-      toast.error(result.message);
+      toast.error(failureMessage(result, "gender"));
     }
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-1.5">
+    <div
+      className={
+        compact
+          ? "flex flex-col items-start gap-1 whitespace-normal"
+          : "flex flex-wrap items-center gap-1.5"
+      }
+    >
       <Select
         value={gender ?? ""}
         onValueChange={(v) => saveGender(v as Gender)}
       >
-        <SelectTrigger size="sm" aria-label="Gender" className="min-w-28">
+        <SelectTrigger size="sm" aria-label="Gender" className={compact ? "w-24 text-xs" : "min-w-28"}>
           {/* Null gender can also mean a member has not consented to share it
               with hosts, so the prompt is neutral rather than "unset". */}
           <SelectValue placeholder="Set gender" />
@@ -110,11 +130,12 @@ export function PlayerAttributesEditor({
           ))}
         </SelectContent>
       </Select>
+      <div className="flex items-center gap-1">
       <Select
         value={level ?? ""}
         onValueChange={(v) => saveLevel(v as SkillLevel)}
       >
-        <SelectTrigger size="sm" aria-label="Skill level" className="min-w-32">
+        <SelectTrigger size="sm" aria-label="Skill level" className={compact ? "w-24 text-xs" : "min-w-32"}>
           <SelectValue placeholder="Set level" />
         </SelectTrigger>
         <SelectContent>
@@ -141,6 +162,7 @@ export function PlayerAttributesEditor({
           </Tooltip>
         </TooltipProvider>
       ) : null}
+      </div>
     </div>
   );
 }

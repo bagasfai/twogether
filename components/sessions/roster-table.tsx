@@ -247,93 +247,75 @@ export function RosterTable({
         ))}
       </ul>
 
-      {/* Desktop: the original table, unchanged. */}
+      {/* Desktop: compact table sized for the ~564px half-width column on the
+          manage page. Gender/level sits under the name; check-in, paid,
+          no-show and override share one wrapping actions cell. */}
       <Table className={cn("hidden", entries.length > 0 && "md:table")}>
         <TableHeader>
           <TableRow>
             <TableHead>Player</TableHead>
             <TableHead>Status</TableHead>
-            <TableHead>Gender / level</TableHead>
             <TableHead>Registered</TableHead>
-            <TableHead>Check-in</TableHead>
-            <TableHead>Paid</TableHead>
-            {sessionStatus === "completed" ? <TableHead>No-show</TableHead> : null}
-            <TableHead className="text-right">Override</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {entries.map((entry) => (
             <TableRow key={entry.id} className={entry.checkedInAt ? "bg-accent/5" : undefined}>
-              <TableCell>{entry.fullName ?? "Unnamed player"}</TableCell>
-              <TableCell>
-                <div className="flex items-center gap-1.5">
+              <TableCell className="whitespace-normal">
+                <div className="mb-1 font-medium">{entry.fullName ?? "Unnamed player"}</div>
+                <PlayerAttributesEditor
+                  compact
+                  participantId={entry.id}
+                  userId={entry.userId}
+                  isGuest={entry.isGuest}
+                  attributes={attributes[entry.id]}
+                />
+              </TableCell>
+              <TableCell className="whitespace-normal">
+                <div className="flex flex-wrap items-center gap-1.5">
                   <StatusBadge status={entry.status} />
                   <GuestBadge isGuest={entry.isGuest} />
                   <ConsentBadge addedBy={entry.addedBy} consentedAt={entry.consentedAt} />
                 </div>
               </TableCell>
-              <TableCell>
-                <PlayerAttributesEditor
-                participantId={entry.id}
-                userId={entry.userId}
-                isGuest={entry.isGuest}
-                attributes={attributes[entry.id]}
-              />
-              </TableCell>
-              <TableCell>{new Date(entry.registeredAt).toLocaleString()}</TableCell>
-              <TableCell>
-                {entry.status !== "confirmed" ? (
-                  <span className="text-sm text-muted-foreground">—</span>
-                ) : entry.checkedInAt ? (
-                  <Button size="sm" variant="outline" disabled={pending} onClick={() => toggleCheckedIn(entry.id, false)}>
-                    Undo check-in
-                  </Button>
-                ) : (
-                  <Button size="sm" disabled={pending} onClick={() => toggleCheckedIn(entry.id, true)}>
-                    Check in
-                  </Button>
-                )}
-              </TableCell>
-              <TableCell>
-                {entry.status !== "confirmed" ? (
-                  <span className="text-sm text-muted-foreground">—</span>
-                ) : entry.paidAt ? (
-                  <Button size="sm" variant="outline" disabled={pending} onClick={() => togglePaid(entry.id, false)}>
-                    Undo paid
-                  </Button>
-                ) : (
-                  <Button size="sm" disabled={pending} onClick={() => togglePaid(entry.id, true)}>
-                    Mark paid
-                  </Button>
-                )}
-              </TableCell>
-              {sessionStatus === "completed" ? (
-                <TableCell>
-                  {entry.status !== "confirmed" ? (
-                    <span className="text-sm text-muted-foreground">—</span>
-                  ) : entry.noShowAt ? (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={pending}
-                      onClick={() => toggleNoShow(entry.id, false)}
-                    >
-                      Undo no-show
-                    </Button>
-                  ) : (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={pending}
-                      onClick={() => toggleNoShow(entry.id, true)}
-                    >
-                      Mark no-show
-                    </Button>
-                  )}
-                </TableCell>
-              ) : null}
-              <TableCell className="flex justify-end gap-2">
-                {entry.status !== "confirmed" ? (
+              <TableCell className="whitespace-normal text-xs text-muted-foreground">{new Date(entry.registeredAt).toLocaleString()}</TableCell>
+              <TableCell className="whitespace-normal">
+                <div className="flex flex-wrap justify-end gap-1.5">
+                  {entry.status === "confirmed" ? (
+                    entry.checkedInAt ? (
+                      <Button size="sm" variant="outline" disabled={pending} onClick={() => toggleCheckedIn(entry.id, false)}>
+                        Undo check-in
+                      </Button>
+                    ) : (
+                      <Button size="sm" disabled={pending} onClick={() => toggleCheckedIn(entry.id, true)}>
+                        Check in
+                      </Button>
+                    )
+                  ) : null}
+                  {entry.status === "confirmed" ? (
+                    entry.paidAt ? (
+                      <Button size="sm" variant="outline" disabled={pending} onClick={() => togglePaid(entry.id, false)}>
+                        Undo paid
+                      </Button>
+                    ) : (
+                      <Button size="sm" disabled={pending} onClick={() => togglePaid(entry.id, true)}>
+                        Mark paid
+                      </Button>
+                    )
+                  ) : null}
+                  {sessionStatus === "completed" && entry.status === "confirmed" ? (
+                    entry.noShowAt ? (
+                      <Button size="sm" variant="outline" disabled={pending} onClick={() => toggleNoShow(entry.id, false)}>
+                        Undo no-show
+                      </Button>
+                    ) : (
+                      <Button size="sm" variant="outline" disabled={pending} onClick={() => toggleNoShow(entry.id, true)}>
+                        Mark no-show
+                      </Button>
+                    )
+                  ) : null}
+                              {entry.status !== "confirmed" ? (
                   <Button size="sm" variant="outline" disabled={pending} onClick={() => change(entry.id, "confirmed")}>
                     Confirm
                   </Button>
@@ -348,6 +330,7 @@ export function RosterTable({
                     Cancel
                   </Button>
                 ) : null}
+                </div>
               </TableCell>
             </TableRow>
           ))}
