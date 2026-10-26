@@ -35,6 +35,7 @@ declare
   v_session public.sessions;
   v_is_host boolean;
   v_target_status public.participant_status;
+  v_target_id uuid;
   v_new public.participants;
 begin
   if current_setting('transaction_isolation') <> 'read committed' then
@@ -84,11 +85,22 @@ begin
     raise exception 'cannot transfer a seat to its own holder' using errcode = 'JB021';
   end if;
 
-  select status into v_target_status
+  select id, status into v_target_id, v_target_status
     from public.participants
    where session_id = v_session_id and user_id = p_to_user_id;
   if v_target_status in ('confirmed', 'waiting_list') then
     raise exception 'target already has a seat on this session' using errcode = 'JB021';
+  end if;
+
+  -- A cancelled row can still own a live usage (a cancel that kept its quota
+  -- consumed). Reviving it as a premium replacement would put a second claim
+  -- on that unit, and a later refund-eligible cancel would hand it back.
+  -- Refuse; the usage is left untouched.
+  if v_target_id is not null and exists (
+       select 1 from public.membership_usages
+        where participant_id = v_target_id and refunded_at is null) then
+    raise exception 'target has a live quota usage on this session'
+      using errcode = 'JB021';
   end if;
 
   -- Insert, or revive the target's cancelled row (UNIQUE (session_id,
@@ -97,11 +109,11 @@ begin
   insert into public.participants
     (session_id, user_id, status, registered_at, consented_at, is_premium,
      membership_id, paid_at, paid_by_user_id, added_by, bumped_at,
-     checked_in_at, replaced_by, cancelled_at)
+     checked_in_at, replaced_by, cancelled_at, no_show_at)
   values
     (v_session_id, p_to_user_id, 'confirmed', clock_timestamp(), null,
      v_old.is_premium, v_old.membership_id, v_old.paid_at, v_old.user_id, null,
-     null, null, null, null)
+     null, null, null, null, null)
   on conflict (session_id, user_id) do update
     set status = excluded.status,
         registered_at = excluded.registered_at,
@@ -114,7 +126,8 @@ begin
         bumped_at = excluded.bumped_at,
         checked_in_at = excluded.checked_in_at,
         replaced_by = excluded.replaced_by,
-        cancelled_at = excluded.cancelled_at
+        cancelled_at = excluded.cancelled_at,
+        no_show_at = excluded.no_show_at
   returning * into v_new;
 
   update public.participants

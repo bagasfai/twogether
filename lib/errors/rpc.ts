@@ -24,7 +24,8 @@
 //         also a grant to a missing user)
 //   JB019 membership already cancelled
 //   JB020 session kind cannot change once participant rows exist
-//   JB021 replacement already has a seat on the session (transfer_participation)
+//   JB021 replacement already has a seat on the session, or a cancelled row
+//         with a live quota usage (transfer_participation)
 //   JB022 seat is not confirmed (transfer_participation)
 //   JB023 transfer not allowed now: member after starts_at, or session not
 //         scheduled or live (transfer_participation)

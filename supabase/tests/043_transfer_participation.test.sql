@@ -1,7 +1,7 @@
 -- Covers migration 20261028000004_transfer_participation.sql.
 
 begin;
-select plan(33);
+select plan(38);
 
 create function pg_temp.usage_state(p_participant uuid)
 returns text
@@ -25,7 +25,7 @@ $$;
 insert into auth.users (id, email)
 select ('000000' || lpad(n::text, 2, '0') || '-0043-0043-0043-000000000000')::uuid,
        'u' || n || '-043@test.local'
-  from generate_series(1, 25) n;
+  from generate_series(1, 30) n;
 
 update public.profiles set role = 'host'
  where id = '00000001-0043-0043-0043-000000000000';
@@ -44,7 +44,9 @@ select s.id::uuid, 'S', now() + s.starts, now() + s.starts + interval '2 hours',
     ('a4300004-0000-0000-0000-000000000000', 'drilling',  1, 2, interval '3 days', 'scheduled'), -- S4 errors
     ('a4300005-0000-0000-0000-000000000000', 'drilling',  1, 2, interval '-1 hour', 'live'),     -- S5 after start
     ('a4300006-0000-0000-0000-000000000000', 'drilling',  1, 2, interval '3 days', 'scheduled'), -- S6 bump
-    ('a4300007-0000-0000-0000-000000000000', 'open_play', null::int, null::int, interval '3 days', 'scheduled') -- S7 later cancel
+    ('a4300007-0000-0000-0000-000000000000', 'open_play', null::int, null::int, interval '3 days', 'scheduled'), -- S7 later cancel
+    ('a4300008-0000-0000-0000-000000000000', 'drilling',  1, 2, interval '3 days', 'scheduled'), -- S8 live usage on target row
+    ('a4300009-0000-0000-0000-000000000000', 'drilling',  1, 2, interval '-1 day', 'completed')  -- S9 completed session
   ) as s(id, kind, coaches, seats, starts, status);
 
 insert into public.memberships
@@ -52,7 +54,7 @@ insert into public.memberships
 select ('e43000' || lpad(n::text, 2, '0') || '-0000-0000-0000-000000000000')::uuid,
        ('000000' || lpad(n::text, 2, '0') || '-0043-0043-0043-000000000000')::uuid,
        0, 5, 30, now() - interval '1 day', now() + interval '29 days'
-  from unnest(array[2, 14, 16, 18]) n;
+  from unnest(array[2, 14, 16, 18, 26]) n;
 
 -- S1: O1 premium, checked in, paid, consented; F filler; W waiting.
 insert into public.participants
@@ -72,7 +74,8 @@ insert into public.participants
   (id, session_id, user_id, status, registered_at, cancelled_at, consented_at, added_by, bumped_at, paid_at) values
   ('b4300007-0000-0000-0000-000000000000', 'a4300002-0000-0000-0000-000000000000', '00000007-0043-0043-0043-000000000000', 'cancelled', now() - interval '6 hours', now() - interval '1 hour', now() - interval '6 hours', '00000001-0043-0043-0043-000000000000', now() - interval '2 hours', '2026-02-02 00:00:00+00');
 update public.participants
-   set replaced_by = 'b4300006-0000-0000-0000-000000000000',
+   set no_show_at = now() - interval '1 hour',
+       replaced_by = 'b4300006-0000-0000-0000-000000000000',
        paid_by_user_id = '00000006-0043-0043-0043-000000000000'
  where id = 'b4300007-0000-0000-0000-000000000000';
 
@@ -162,6 +165,18 @@ select is(
   null::timestamptz,
   'replacement_consent_is_null');
 
+-- S8: owner 27 seat; target 26 has a cancelled premium row with a live usage.
+insert into public.participants (id, session_id, user_id, status, registered_at) values
+  ('b4300027-0000-0000-0000-000000000000', 'a4300008-0000-0000-0000-000000000000', '00000027-0043-0043-0043-000000000000', 'confirmed', now() - interval '5 hours');
+insert into public.participants (id, session_id, user_id, status, is_premium, membership_id, registered_at, cancelled_at) values
+  ('b4300026-0000-0000-0000-000000000000', 'a4300008-0000-0000-0000-000000000000', '00000026-0043-0043-0043-000000000000', 'cancelled', true, 'e4300026-0000-0000-0000-000000000000', now() - interval '6 hours', now() - interval '1 hour');
+insert into public.membership_usages (membership_id, participant_id) values
+  ('e4300026-0000-0000-0000-000000000000', 'b4300026-0000-0000-0000-000000000000');
+
+-- S9: completed session with a confirmed seat.
+insert into public.participants (id, session_id, user_id, status, registered_at) values
+  ('b4300028-0000-0000-0000-000000000000', 'a4300009-0000-0000-0000-000000000000', '00000028-0043-0043-0043-000000000000', 'confirmed', now() - interval '5 hours');
+
 -- ======== replacement_with_prior_cancelled_row_is_revived (S2: O2 -> T2) ========
 
 set local role authenticated;
@@ -185,6 +200,10 @@ select is(
   (select paid_by_user_id from public.participants where id = 'b4300007-0000-0000-0000-000000000000'),
   '00000006-0043-0043-0043-000000000000'::uuid,
   'replacement_with_prior_cancelled_row_is_revived: paid_by_user_id is the original user');
+select is(
+  (select no_show_at from public.participants where id = 'b4300007-0000-0000-0000-000000000000'),
+  null::timestamptz,
+  'replacement_with_prior_cancelled_row_is_revived: no_show_at reset');
 select is(
   (select replaced_by from public.participants where id = 'b4300006-0000-0000-0000-000000000000'),
   'b4300007-0000-0000-0000-000000000000'::uuid,
@@ -251,11 +270,37 @@ select throws_ok(
   'JB022', null, 'transfer_waitlisted_or_cancelled_seat_gets_JB022: cancelled');
 reset role;
 
--- A cancelled target row is not a conflict: JB021 covers confirmed/waitlisted only.
+-- Failed transfers change nothing.
 select is(
   (select count(*)::int from public.participants
     where session_id = 'a4300004-0000-0000-0000-000000000000' and status = 'confirmed'),
   2, 'failed transfers left the confirmed count unchanged');
+
+-- A cancelled target row (no live usage) is not a conflict: it is revived.
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"00000020-0043-0043-0043-000000000000","role":"authenticated"}';
+select lives_ok(
+  $$ select public.transfer_participation('b4300020-0000-0000-0000-000000000000', '00000023-0043-0043-0043-000000000000') $$,
+  'transfer_to_member_with_plain_cancelled_row_is_not_a_conflict');
+reset role;
+
+-- ======== live usage on the target's cancelled row (S8) ========
+
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"00000027-0043-0043-0043-000000000000","role":"authenticated"}';
+select throws_ok(
+  $$ select public.transfer_participation('b4300027-0000-0000-0000-000000000000', '00000026-0043-0043-0043-000000000000') $$,
+  'JB021', null, 'transfer_to_member_with_live_usage_on_cancelled_row_gets_JB021');
+-- missing target profile
+select throws_ok(
+  $$ select public.transfer_participation('b4300027-0000-0000-0000-000000000000', 'ffffffff-0043-0043-0043-000000000000') $$,
+  'JB008', null, 'transfer_to_missing_profile_gets_JB008');
+-- completed session, even for a host
+set local request.jwt.claims = '{"sub":"00000001-0043-0043-0043-000000000000","role":"authenticated"}';
+select throws_ok(
+  $$ select public.transfer_participation('b4300028-0000-0000-0000-000000000000', '00000029-0043-0043-0043-000000000000') $$,
+  'JB023', null, 'transfer_on_non_scheduled_or_live_session_gets_JB023_even_for_host');
+reset role;
 
 -- ======== member_after_starts_at_gets_JB023_host_succeeds (S5) ========
 
