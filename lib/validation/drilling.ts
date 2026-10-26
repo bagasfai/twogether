@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const adjustCapacitySchema = z.object({
   sessionId: z.uuid(),
-  coachCount: z.coerce.number().int().min(1, "At least one coach"),
+  coachCount: z.coerce.number().int().min(1, "At least one coach").max(20, "That is a lot of coaches"),
 });
 
 export type AdjustCapacityInput = z.infer<typeof adjustCapacitySchema>;

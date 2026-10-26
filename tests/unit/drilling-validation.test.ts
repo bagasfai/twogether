@@ -10,7 +10,7 @@ const base = {
   location: "GOR Jakarta Barat",
   locationUrl: "",
   price: "80000",
-  premiumSurchargeIdr: "25000",
+  premiumSurchargeIdr: "0",
   courtCount: "2",
   maxParticipants: "8",
   waitlistCapacity: "4",
@@ -18,7 +18,7 @@ const base = {
   status: "scheduled",
 };
 
-const drilling = { ...base, kind: "drilling", coachCount: "2", seatsPerCoach: "4" };
+const drilling = { ...base, kind: "drilling", coachCount: "2", seatsPerCoach: "4", premiumSurchargeIdr: "25000" };
 
 describe("sessionSchema kind", () => {
   it("accepts a consistent drilling session", () => {
@@ -72,6 +72,28 @@ describe("sessionSchema kind", () => {
     }
   });
 
+  it("rejects a nonzero surcharge on open play", () => {
+    const result = sessionSchema.safeParse({ ...base, kind: "open_play", premiumSurchargeIdr: "25000" });
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.error.issues.some((i) => i.path[0] === "premiumSurchargeIdr")).toBe(true);
+  });
+
+  it("accepts the maximum coherent drilling size (20 coaches x 10 seats)", () => {
+    expect(
+      sessionSchema.safeParse({ ...drilling, coachCount: "20", seatsPerCoach: "10", courtCount: "20", maxParticipants: "200" }).success,
+    ).toBe(true);
+  });
+
+  it("rejects 21 coaches", () => {
+    expect(
+      sessionSchema.safeParse({ ...drilling, coachCount: "21", seatsPerCoach: "1", courtCount: "21", maxParticipants: "21" }).success,
+    ).toBe(false);
+  });
+
+  it("rejects 11 seats per coach", () => {
+    expect(sessionSchema.safeParse({ ...drilling, coachCount: "1", seatsPerCoach: "11", courtCount: "1", maxParticipants: "11" }).success).toBe(false);
+  });
+
   it("rejects a negative surcharge", () => {
     expect(sessionSchema.safeParse({ ...base, kind: "open_play", premiumSurchargeIdr: "-1" }).success).toBe(false);
   });
@@ -82,6 +104,11 @@ describe("adjustCapacitySchema", () => {
 
   it("accepts coachCount >= 1", () => {
     expect(adjustCapacitySchema.safeParse({ sessionId, coachCount: 3 }).success).toBe(true);
+  });
+
+  it("accepts coachCount 20 and rejects 21", () => {
+    expect(adjustCapacitySchema.safeParse({ sessionId, coachCount: 20 }).success).toBe(true);
+    expect(adjustCapacitySchema.safeParse({ sessionId, coachCount: 21 }).success).toBe(false);
   });
 
   it("rejects coachCount 0", () => {

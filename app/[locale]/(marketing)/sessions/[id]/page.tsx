@@ -106,7 +106,11 @@ export default async function SessionDetailPage({
 
       {/* Spots remaining is deliberately absent: a live count here would force a
           revalidatePath on every registration and defeat the ISR cache. */}
-      <RegisterPanel sessionId={session.id} registrationOpen={session.registrationState === "open"} />
+      <RegisterPanel
+        sessionId={session.id}
+        sessionKind={session.kind}
+        registrationOpen={session.registrationState === "open"}
+      />
 
       <RegisteredParticipants sessionId={session.id} />
 

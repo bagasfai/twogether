@@ -14,10 +14,11 @@ export type PublicSession = {
   maxParticipants: number;
   waitlistCapacity: number;
   registrationState: "closed" | "open";
+  kind: "open_play" | "drilling";
 };
 
 const COLUMNS =
-  "id, title, description, starts_at, ends_at, location, location_url, court_count, max_participants, waitlist_capacity, registration_state";
+  "id, title, description, starts_at, ends_at, location, location_url, court_count, max_participants, waitlist_capacity, registration_state, kind";
 
 type Row = {
   id: string;
@@ -31,6 +32,7 @@ type Row = {
   max_participants: number;
   waitlist_capacity: number;
   registration_state: "closed" | "open";
+  kind: "open_play" | "drilling";
 };
 
 function toPublicSession(row: Row): PublicSession {
@@ -46,6 +48,7 @@ function toPublicSession(row: Row): PublicSession {
     maxParticipants: row.max_participants,
     waitlistCapacity: row.waitlist_capacity,
     registrationState: row.registration_state,
+    kind: row.kind,
   };
 }
 

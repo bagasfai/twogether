@@ -7,6 +7,7 @@ import { listCourts } from "@/lib/dal/courts";
 import { listMatches } from "@/lib/dal/matches";
 import { getRotationQueue } from "@/lib/dal/rotation";
 import { getSessionLeaderboard } from "@/lib/dal/stats";
+import { CoachCountControl } from "@/components/sessions/coach-count-control";
 import { RosterTable } from "@/components/sessions/roster-table";
 import { CourtPanel } from "@/components/sessions/court-panel";
 import { MatchPanel } from "@/components/sessions/match-panel";
@@ -102,6 +103,20 @@ export default async function ManageSessionPage({ params }: PageProps<"/sessions
         </Badge>
       </div>
 
+      {session.kind === "drilling" &&
+      session.coachCount !== null &&
+      session.seatsPerCoach !== null &&
+      session.status !== "completed" &&
+      session.status !== "cancelled" ? (
+        <CoachCountControl
+          sessionId={session.id}
+          coachCount={session.coachCount}
+          seatsPerCoach={session.seatsPerCoach}
+          confirmedCount={confirmed}
+          waitlistCount={waiting}
+        />
+      ) : null}
+
       <AnnouncementList sessionId={id} announcements={announcements} />
 
       <ManageTabs
@@ -121,6 +136,9 @@ export default async function ManageSessionPage({ params }: PageProps<"/sessions
             sessionId={session.id}
             entries={roster}
             sessionStatus={session.status}
+            sessionKind={session.kind}
+            price={session.price}
+            premiumSurchargeIdr={session.premiumSurchargeIdr}
             attributes={attributes}
           />}
         photos={

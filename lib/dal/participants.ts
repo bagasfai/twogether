@@ -58,6 +58,8 @@ export type RosterEntry = {
   replacedBy: string | null;
   /** the member who pays when it is not the seat holder (seat hand-off) */
   paidByUserId: string | null;
+  /** display name of paidByUserId, resolved from profiles */
+  paidByName: string | null;
 };
 
 export type AddableMember = {
@@ -307,6 +309,19 @@ export async function listRoster(sessionId: string): Promise<RosterEntry[]> {
 
   if (error) throw error;
 
+  // paid_by_user_id has no FK to profiles worth embedding, so resolve the payer
+  // names in one extra query, and only when some seat was handed over.
+  const payerIds = [...new Set((data ?? []).flatMap((row) => (row.paid_by_user_id ? [row.paid_by_user_id] : [])))];
+  const payerNames = new Map<string, string | null>();
+  if (payerIds.length > 0) {
+    const { data: payers, error: payerError } = await supabase
+      .from("profiles")
+      .select("id, full_name")
+      .in("id", payerIds);
+    if (payerError) throw payerError;
+    for (const payer of payers ?? []) payerNames.set(payer.id, payer.full_name);
+  }
+
   return (data ?? []).map((row) => ({
     id: row.id,
     userId: row.user_id,
@@ -325,6 +340,7 @@ export async function listRoster(sessionId: string): Promise<RosterEntry[]> {
     bumpedAt: row.bumped_at,
     replacedBy: row.replaced_by,
     paidByUserId: row.paid_by_user_id,
+    paidByName: row.paid_by_user_id ? (payerNames.get(row.paid_by_user_id) ?? null) : null,
   }));
 }
 
@@ -368,10 +384,23 @@ export async function searchAddableMembers(
   const user = await getCurrentUser();
   if (!user) return [];
 
-  const session = await getHostSession(sessionId);
-  if (!session) return [];
-
   const supabase = await createClient();
+
+  // A host may pick anyone; a member may pick only to hand off their own
+  // confirmed seat (the Replace me flow). transfer_participation re-checks
+  // ownership, so this gate only keeps the picker from being a general
+  // directory for sessions the caller has no seat in.
+  const session = await getHostSession(sessionId);
+  if (!session) {
+    const { data: ownSeat } = await supabase
+      .from("participants")
+      .select("id")
+      .eq("session_id", sessionId)
+      .eq("user_id", user.id)
+      .eq("status", "confirmed")
+      .maybeSingle();
+    if (!ownSeat) return [];
+  }
 
   // Exclude anyone already an active (non-cancelled) participant -- adding
   // them again is what host_add_participant's own upsert is for, not a fresh

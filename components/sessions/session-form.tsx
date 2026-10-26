@@ -1,8 +1,8 @@
 "use client";
 
-import { useTransition } from "react";
+import { useEffect, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { z } from "zod";
 import { Button } from "@/components/ui/button";
@@ -53,6 +53,43 @@ export function SessionForm({
       status: "draft",
     },
   });
+
+  const kind = useWatch({ control: form.control, name: "kind" });
+  const coachCount = useWatch({ control: form.control, name: "coachCount" });
+  const seatsPerCoach = useWatch({ control: form.control, name: "seatsPerCoach" });
+  const isDrilling = kind === "drilling";
+  // Editing never writes court_count (courts are managed on the manage page), so
+  // open play hides it when editing; drilling shows the derived value read-only.
+  const showCourts = !isEditing || isDrilling;
+
+  // Drilling capacity and courts are derived (max_participants = coaches x seats,
+  // court_count = coaches; the DB CHECK enforces it). Set them from the editable
+  // fields so the schema's consistency refine passes. Editing a session keeps
+  // the stored values: its coach count only changes through CoachCountControl.
+  useEffect(() => {
+    if (!isDrilling || isEditing) return;
+    const coaches = Number(coachCount);
+    const seats = Number(seatsPerCoach);
+    const valid = Number.isInteger(coaches) && Number.isInteger(seats) && coaches >= 1 && seats >= 1;
+    form.setValue("courtCount", valid ? String(coaches) : "", { shouldValidate: form.formState.isSubmitted });
+    form.setValue("maxParticipants", valid ? String(coaches * seats) : "", {
+      shouldValidate: form.formState.isSubmitted,
+    });
+  }, [isDrilling, isEditing, coachCount, seatsPerCoach, form]);
+
+  const onKindChange = (next: "open_play" | "drilling") => {
+    form.setValue("kind", next);
+    if (next === "drilling") {
+      form.setValue("coachCount", "1");
+      form.setValue("seatsPerCoach", "6");
+    } else {
+      form.setValue("coachCount", null);
+      form.setValue("seatsPerCoach", null);
+      form.setValue("premiumSurchargeIdr", "0");
+      form.setValue("courtCount", "4");
+      form.setValue("maxParticipants", "16");
+    }
+  };
 
   const onSubmit = form.handleSubmit((values) =>
     startTransition(async () => {
@@ -132,6 +169,34 @@ export function SessionForm({
               )}
             />
 
+            <FormField
+              control={form.control}
+              name="kind"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Session type</FormLabel>
+                  <FormControl>
+                    <select
+                      className={CONTROL_CLASS}
+                      name={field.name}
+                      ref={field.ref}
+                      onBlur={field.onBlur}
+                      value={field.value}
+                      disabled={isEditing}
+                      onChange={(event) => onKindChange(event.target.value as "open_play" | "drilling")}
+                    >
+                      <option value="open_play">Open play</option>
+                      <option value="drilling">Drilling (coached)</option>
+                    </select>
+                  </FormControl>
+                  {isEditing ? (
+                    <FormDescription>The type is fixed once a session is created.</FormDescription>
+                  ) : null}
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <FormField
                 control={form.control}
@@ -189,25 +254,81 @@ export function SessionForm({
               )}
             />
 
-            <div className={isEditing ? "grid grid-cols-2 gap-4" : "grid grid-cols-3 gap-4"}>
-              {!isEditing ? (
+            {isDrilling ? (
+              <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
-                  name="courtCount"
+                  name="coachCount"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Courts</FormLabel>
+                      <FormLabel>Coaches</FormLabel>
                       <FormControl>
-                        {/* z.coerce.number()'s input side types as unknown in zod 4. String()
-                            converts at runtime instead of asserting, and degrades to "" rather
-                            than undefined if that invariant is ever broken by a refactor --
-                            same pattern as description/locationUrl's `?? ""` above. */}
-                        <Input type="number" min={1} {...field} value={String(field.value ?? "")} />
+                        <Input
+                          type="number"
+                          min={1}
+                          max={20}
+                          {...field}
+                          value={String(field.value ?? "")}
+                          readOnly={isEditing}
+                        />
+                      </FormControl>
+                      {isEditing ? (
+                        <FormDescription>Change this from the manage page.</FormDescription>
+                      ) : null}
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="seatsPerCoach"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Seats per coach</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min={1}
+                          max={10}
+                          {...field}
+                          value={String(field.value ?? "")}
+                          readOnly={isEditing}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
+              </div>
+            ) : null}
+
+            <div className={showCourts ? "grid grid-cols-3 gap-4" : "grid grid-cols-2 gap-4"}>
+              {showCourts ? (
+              <FormField
+                control={form.control}
+                name="courtCount"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Courts</FormLabel>
+                    <FormControl>
+                      {/* z.coerce.number()'s input side types as unknown in zod 4. String()
+                          converts at runtime instead of asserting, and degrades to "" rather
+                          than undefined if that invariant is ever broken by a refactor --
+                          same pattern as description/locationUrl's `?? ""` above. */}
+                      <Input
+                        type="number"
+                        min={1}
+                        {...field}
+                        value={String(field.value ?? "")}
+                        readOnly={isDrilling}
+                        tabIndex={isDrilling ? -1 : undefined}
+                      />
+                    </FormControl>
+                    {isDrilling ? <FormDescription>One per coach.</FormDescription> : null}
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               ) : null}
               <FormField
                 control={form.control}
@@ -216,8 +337,16 @@ export function SessionForm({
                   <FormItem>
                     <FormLabel>Capacity</FormLabel>
                     <FormControl>
-                      <Input type="number" min={1} {...field} value={String(field.value ?? "")} />
+                      <Input
+                        type="number"
+                        min={1}
+                        {...field}
+                        value={String(field.value ?? "")}
+                        readOnly={isDrilling}
+                        tabIndex={isDrilling ? -1 : undefined}
+                      />
                     </FormControl>
+                    {isDrilling ? <FormDescription>Coaches x seats.</FormDescription> : null}
                     <FormMessage />
                   </FormItem>
                 )}
@@ -250,6 +379,25 @@ export function SessionForm({
                 </FormItem>
               )}
             />
+
+            {isDrilling ? (
+              <FormField
+                control={form.control}
+                name="premiumSurchargeIdr"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Premium surcharge (Rp)</FormLabel>
+                    <FormControl>
+                      <Input type="number" min={0} placeholder="25000" {...field} value={String(field.value ?? "")} />
+                    </FormControl>
+                    <FormDescription>
+                      What premium members pay instead of the price. Premium seats are not charged the full price.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            ) : null}
 
             <div className="grid grid-cols-2 gap-4">
               <FormField

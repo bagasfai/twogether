@@ -34,10 +34,14 @@ const optionalPrice = z.preprocess(
 
 // Same blank/null -> null preprocessing as optionalPrice, for the drilling-only
 // coach fields: an open play form leaves them blank.
-const optionalCount = z.preprocess(
-  (value) => (value === "" || value === null || value === undefined ? null : value),
-  z.coerce.number().int().min(1, "Must be at least 1").max(50, "That can't be right").nullable(),
-);
+// Caps are coherent with the other limits: drilling forces courtCount ==
+// coachCount (courts max 20) and maxParticipants == coachCount * seatsPerCoach
+// (max 200), so coaches max 20 and seats per coach max 10 (20 * 10 = 200).
+const optionalCount = (max: number) =>
+  z.preprocess(
+    (value) => (value === "" || value === null || value === undefined ? null : value),
+    z.coerce.number().int().min(1, "Must be at least 1").max(max, "That can't be right").nullable(),
+  );
 
 export const sessionSchema = z
   .object({
@@ -58,8 +62,8 @@ export const sessionSchema = z
       .min(0, "Cannot be negative")
       .max(10_000_000, "That can't be right")
       .default(0),
-    coachCount: optionalCount.default(null),
-    seatsPerCoach: optionalCount.default(null),
+    coachCount: optionalCount(20).default(null),
+    seatsPerCoach: optionalCount(10).default(null),
     // mirrors the court_count > 0 CHECK
     courtCount: z.coerce.number().int().min(1, "At least one court").max(20, "That is a lot of courts"),
     // mirrors the max_participants > 0 CHECK
@@ -86,6 +90,15 @@ export const sessionSchema = z
           code: "custom",
           path: ["kind"],
           message: "Coach fields only apply to drilling sessions",
+        });
+      }
+      // amountOwed would charge a premium entry the surcharge, and open play
+      // premium members are covered by their membership.
+      if (value.premiumSurchargeIdr !== 0) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["premiumSurchargeIdr"],
+          message: "Surcharge only applies to drilling sessions",
         });
       }
       return;

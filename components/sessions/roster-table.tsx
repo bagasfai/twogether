@@ -6,9 +6,12 @@ import { AddParticipantDialog } from "@/components/sessions/add-participant-dial
 import { PlayerAttributesEditor } from "@/components/sessions/player-attributes-editor";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ReplaceSeatDialog } from "@/components/sessions/replace-seat-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { setCheckedIn, setNoShow, setPaid, setParticipantStatus } from "@/lib/actions/participants";
 import type { PlayerAttributes } from "@/lib/players/resolve";
+import { amountOwed, payerUserId } from "@/lib/sessions/amount-owed";
+import type { SessionKind } from "@/lib/dal/sessions";
 import { cn } from "@/lib/utils";
 // types/supabase.ts is a plain generated types module (no server-only guard),
 // safe to import for real (not type-only) in a client component. Deriving
@@ -33,7 +36,36 @@ type Entry = {
   userId: string | null;
   isPremium: boolean;
   bumpedAt: string | null;
+  replacedBy: string | null;
+  paidByUserId: string | null;
+  paidByName: string | null;
 };
+
+const rupiah = (amount: number) => `Rp ${amount.toLocaleString("id-ID")}`;
+
+// "paid by X" shows only when a seat hand-off left someone other than the seat
+// holder paying (paid_by_user_id set). Owed is the surcharge for a premium
+// entry, the session price otherwise.
+function OwedLine({
+  entry,
+  pricing,
+}: {
+  entry: Entry;
+  pricing: { price: number; premiumSurchargeIdr: number };
+}) {
+  const payerId = payerUserId(entry);
+  const differentPayer = payerId !== null && payerId !== entry.userId;
+  return (
+    <div className="flex flex-col gap-0.5 text-xs">
+      {entry.status !== "cancelled" ? (
+        <span className="font-mono tabular-nums">{rupiah(amountOwed(pricing, entry))}</span>
+      ) : null}
+      {differentPayer ? (
+        <span className="text-muted-foreground">paid by {entry.paidByName ?? "another member"}</span>
+      ) : null}
+    </div>
+  );
+}
 
 function StatusBadge({ status }: { status: ParticipantStatus }) {
   if (status === "confirmed") return <Badge variant="success">Confirmed</Badge>;
@@ -71,15 +103,23 @@ export function RosterTable({
   entries,
   sessionStatus,
   attributes,
+  sessionKind,
+  price,
+  premiumSurchargeIdr,
 }: {
   sessionId: string;
   entries: Entry[];
+  sessionKind: SessionKind;
+  /** null (free session) is treated as 0 */
+  price: number | null;
+  premiumSurchargeIdr: number;
   // Host-only data keyed by participant id (a Map cannot cross the
   // server/client boundary). Supplied only by the host manage page.
   attributes: Record<string, PlayerAttributes>;
   sessionStatus: Database["public"]["Enums"]["session_status"];
 }) {
   const [pending, startTransition] = useTransition();
+  const pricing = { price: price ?? 0, premiumSurchargeIdr };
 
   const change = (participantId: string, status: Entry["status"]) =>
     startTransition(async () => {
@@ -145,6 +185,7 @@ export function RosterTable({
             <p className="text-xs text-muted-foreground">
               Registered {new Date(entry.registeredAt).toLocaleString()}
             </p>
+            <OwedLine entry={entry} pricing={pricing} />
 
             <PlayerAttributesEditor
                 participantId={entry.id}
@@ -243,6 +284,16 @@ export function RosterTable({
                   Waitlist
                 </Button>
               ) : null}
+              {entry.status === "confirmed" && !entry.isGuest ? (
+                <ReplaceSeatDialog
+                  participantId={entry.id}
+                  sessionKind={sessionKind}
+                  sessionId={sessionId}
+                  triggerLabel="Replace"
+                  triggerClassName="h-11 flex-1 basis-32"
+                  isHost
+                />
+              ) : null}
               {entry.status !== "cancelled" ? (
                 <Button
                   size="sm"
@@ -268,6 +319,7 @@ export function RosterTable({
             <TableHead>Player</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Registered</TableHead>
+            <TableHead>Owed</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -293,6 +345,9 @@ export function RosterTable({
                 </div>
               </TableCell>
               <TableCell className="whitespace-normal text-xs text-muted-foreground">{new Date(entry.registeredAt).toLocaleString()}</TableCell>
+              <TableCell className="whitespace-normal">
+                <OwedLine entry={entry} pricing={pricing} />
+              </TableCell>
               <TableCell className="whitespace-normal">
                 <div className="flex flex-wrap justify-end gap-1.5">
                   {entry.status === "confirmed" ? (
@@ -337,6 +392,15 @@ export function RosterTable({
                   <Button size="sm" variant="outline" disabled={pending} onClick={() => change(entry.id, "waiting_list")}>
                     Waitlist
                   </Button>
+                ) : null}
+                {entry.status === "confirmed" && !entry.isGuest ? (
+                  <ReplaceSeatDialog
+                    participantId={entry.id}
+                    sessionKind={sessionKind}
+                    sessionId={sessionId}
+                    triggerLabel="Replace"
+                    isHost
+                  />
                 ) : null}
                 {entry.status !== "cancelled" ? (
                   <Button size="sm" variant="ghost" disabled={pending} onClick={() => change(entry.id, "cancelled")}>

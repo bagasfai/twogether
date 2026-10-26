@@ -7,12 +7,14 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AddGuestDialog } from "@/components/sessions/add-guest-dialog";
+import { ReplaceSeatDialog } from "@/components/sessions/replace-seat-dialog";
 import { cancelGuestRegistration, cancelRegistration, registerForSession } from "@/lib/actions/registration";
 // Type-only: erased at compile time, so this never pulls the `server-only`
 // guard from lib/dal/participants.ts into the client bundle.
 import type { MyGuestRegistration, MyRegistration } from "@/lib/dal/participants";
 // types/supabase.ts is a plain generated types module (no server-only guard),
 // safe to import for real (not type-only) in a client component.
+import type { SessionKind } from "@/lib/dal/sessions";
 import type { Database } from "@/types/supabase";
 
 type ParticipantStatus = Database["public"]["Enums"]["participant_status"];
@@ -78,9 +80,11 @@ type State =
 
 export function RegisterPanel({
   sessionId,
+  sessionKind,
   registrationOpen,
 }: {
   sessionId: string;
+  sessionKind: SessionKind;
   registrationOpen: boolean;
 }) {
   const t = useTranslations("register");
@@ -162,6 +166,17 @@ export function RegisterPanel({
       </ul>
     ) : null;
 
+  const refetchRegistration = () => {
+    fetch(`/api/sessions/${sessionId}/my-registration`)
+      .then((response) => response.json())
+      .then((body: unknown) => {
+        if (isMyRegistrationResponse(body)) {
+          setState({ kind: "ready", registration: body.registration, guests: body.guests });
+        }
+      })
+      .catch(() => {});
+  };
+
   const bringGuest = registrationOpen ? (
     <AddGuestDialog
       sessionId={sessionId}
@@ -189,6 +204,16 @@ export function RegisterPanel({
               {t("waitlistPosition", { position: registration.waitlistPosition ?? 0 })}
             </Badge>
           )}
+          {registration.status === "confirmed" && registration.id !== "pending" ? (
+            <ReplaceSeatDialog
+              participantId={registration.id}
+              sessionKind={sessionKind}
+              sessionId={sessionId}
+              triggerVariant="outline"
+              triggerClassName="h-11 md:h-9"
+              onTransferred={refetchRegistration}
+            />
+          ) : null}
           <Button
             variant="outline"
             disabled={pending}
@@ -208,6 +233,11 @@ export function RegisterPanel({
           </Button>
           {bringGuest}
         </div>
+        {sessionKind === "drilling" && registration.status === "confirmed" ? (
+          <p className="text-xs text-muted-foreground">
+            Cancelling a drilling seat does not refund your quota. Use Replace me to hand it to someone instead.
+          </p>
+        ) : null}
         {guestList}
       </div>
     );
@@ -245,6 +275,8 @@ export function RegisterPanel({
                     needsConfirmation: false,
                   },
                 });
+                // the placeholder id above is not a real participant id; Replace me needs one
+                refetchRegistration();
                 toast.success(
                   result.data.status === "confirmed"
                     ? t("toastRegistered")
