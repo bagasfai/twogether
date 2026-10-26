@@ -3,6 +3,8 @@
 Date: 2026-10-23
 Status: design approved, spec awaiting review
 
+Drilling sessions extend this spec: see `2026-10-26-drilling-sessions-design.md`. It supersedes the bump-target rule (decision 2) and the host-added exception (section 5), and it adds a drilling refund rule to section 4.
+
 ## 1. Goal
 
 Let an admin sell a paid membership (for example Rp270.000 for 7 open plays within 1 month). A member with an active membership gets registration priority: when a session is full, they take a confirmed spot and the last-registered eligible non-premium participant moves to the waitlist. Price, quota, and duration are adjustable. Payment is manual; the admin records it and activates the membership.
@@ -16,7 +18,7 @@ Core problem it traces to: manual, race-prone registration and waitlist handling
 | # | Decision |
 |---|---|
 | 1 | Quota is consumed at registration. It is refunded on cancel only if the cancel is at least `refund_cutoff_hours` before `sessions.starts_at`. No-show keeps the quota consumed. |
-| 2 | Bump target is the confirmed participant who is non-premium, not checked in, not host-added (`added_by is null`), and registered last. If none exists, the premium member joins the waitlist normally. Premium members never bump each other. |
+| 2 | Bump target is the confirmed participant who is non-premium, not checked in, and registered last. Host-added guests can be bumped (changed by the drilling spec). If none exists, the premium member joins the waitlist normally. Premium members never bump each other. |
 | 3 | The membership only needs to be active at the moment of registration. Premium status is snapshotted on the participant row, so a later expiry does not change an existing registration. |
 | 4 | Memberships stack. Only one is "current" at a time. Quota is spent from the earliest eligible membership. |
 | 5 | A plan catalog exists. Each membership copies the plan's values at activation, and the admin may override price, quota, and duration for that one membership. Editing a plan later does not change existing memberships. |
@@ -60,6 +62,8 @@ The current membership for a user is the earliest non-cancelled membership that 
 
 ### Refunds
 
+The rules below are for open play. Drilling sessions never refund a member cancel from `confirmed`; see the drilling spec.
+
 A trigger on the participants status change to `cancelled` refunds the usage row, so a member cancel and a host override behave the same:
 
 - Cancel from `waiting_list`: always refund.
@@ -81,7 +85,7 @@ All writes to the new tables go through `security definer` RPCs. Clients get no 
 
 `admin_grant_membership(user, plan, payment_received_at, optional price/quota/duration overrides)` checks `is_admin()`, copies the plan values onto a new row, and applies the clock rule from section 3.
 
-Hosts keep manual override. `host_add_participant` is unchanged; its rows are non-premium and host-added, so they cannot be bumped. Hosts can still move anyone between confirmed and waitlist by hand.
+Hosts keep manual override. `host_add_participant` is unchanged; its rows are non-premium, and they can be bumped like any other non-premium participant. Hosts can still move anyone between confirmed and waitlist by hand.
 
 ## 6. Email
 
@@ -106,7 +110,7 @@ New `JB0xx` codes, mapped in `lib/errors/rpc.ts`: grant to a missing user or ina
 
 pgTAP tests in `supabase/tests/`:
 
-- Bump target selection skips premium, checked-in, and host-added participants.
+- Bump target selection skips premium and checked-in participants, and includes host-added guests.
 - Premium members never bump each other.
 - Waitlist order: premium, then the bumped person, then the rest.
 - Quota consume and refund, including the cutoff boundary, host cancel, cancelled session, and a session started while the member is waitlisted.
