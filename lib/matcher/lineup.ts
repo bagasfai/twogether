@@ -36,7 +36,7 @@ export function swapPlayers(
   return { matches: nextMatches, unused: nextUnused };
 }
 
-export function lineupWarnings(match: SuggestedMatch, format: MatchFormat, byId: Map<string, PoolPlayer>): string[] {
+export function lineupWarnings(match: SuggestedMatch, format: MatchFormat, byId: Map<string, Pick<PoolPlayer, "gender">>): string[] {
   const warnings: string[] = [];
   const gender = (id: string) => byId.get(id)?.gender ?? null;
   const all = [...match.team1, ...match.team2];
