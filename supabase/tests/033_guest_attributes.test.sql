@@ -82,7 +82,8 @@ select is((select count(*)::int from public.guest_attributes), 0, 'plain member 
 
 -- (a) host
 set local request.jwt.claims = '{"sub":"dddddddd-0000-0000-0000-000000000002","role":"authenticated"}';
-select is((select count(*)::int from public.guest_attributes), 2, 'host sees both attributes in own sessions');
+select is((select count(*)::int from public.guest_attributes
+            where participant_id in ('dddddddd-2000-0000-0000-000000000001','dddddddd-2000-0000-0000-000000000002')), 2, 'host sees both attributes in own sessions');
 select throws_ok(
   $$insert into public.guest_attributes (participant_id, gender) values ('dddddddd-2000-0000-0000-000000000003','male')$$,
   '42501', null, 'host cannot insert for another session''s guest');
@@ -112,7 +113,8 @@ select throws_ok(
 
 -- admin
 set local request.jwt.claims = '{"sub":"dddddddd-0000-0000-0000-000000000003","role":"authenticated"}';
-select is((select count(*)::int from public.guest_attributes), 2, 'admin selects all rows');
+select is((select count(*)::int from public.guest_attributes
+            where participant_id in ('dddddddd-2000-0000-0000-000000000001','dddddddd-2000-0000-0000-000000000002')), 2, 'admin selects all seeded rows');
 
 -- (d) cascade
 reset role;
