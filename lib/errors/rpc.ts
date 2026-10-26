@@ -23,6 +23,7 @@
 //   JB018 membership or plan not found or inactive (admin membership RPCs;
 //         also a grant to a missing user)
 //   JB019 membership already cancelled
+//   JB020 session kind cannot change once participant rows exist
 
 export const RPC_CODE_MAP = {
   JB001: "registration_closed",
@@ -44,6 +45,7 @@ export const RPC_CODE_MAP = {
   JB017: "player_busy",
   JB018: "not_found",
   JB019: "invalid_state",
+  JB020: "invalid_state",
 } as const;
 
 export type RpcErrorCode = Exclude<(typeof RPC_CODE_MAP)[keyof typeof RPC_CODE_MAP], "validation">;

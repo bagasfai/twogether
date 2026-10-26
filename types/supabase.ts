@@ -5,6 +5,7 @@ export type Json =
   | null
   | { [key: string]: Json | undefined }
   | Json[]
+
 export type Database = {
   graphql_public: {
     Tables: {
@@ -662,8 +663,10 @@ export type Database = {
           membership_id: string | null
           no_show_at: string | null
           paid_at: string | null
+          paid_by_user_id: string | null
           registered_at: string
           registered_by: string | null
+          replaced_by: string | null
           session_id: string
           status: Database["public"]["Enums"]["participant_status"]
           updated_at: string
@@ -683,8 +686,10 @@ export type Database = {
           membership_id?: string | null
           no_show_at?: string | null
           paid_at?: string | null
+          paid_by_user_id?: string | null
           registered_at?: string
           registered_by?: string | null
+          replaced_by?: string | null
           session_id: string
           status: Database["public"]["Enums"]["participant_status"]
           updated_at?: string
@@ -704,8 +709,10 @@ export type Database = {
           membership_id?: string | null
           no_show_at?: string | null
           paid_at?: string | null
+          paid_by_user_id?: string | null
           registered_at?: string
           registered_by?: string | null
+          replaced_by?: string | null
           session_id?: string
           status?: Database["public"]["Enums"]["participant_status"]
           updated_at?: string
@@ -727,11 +734,32 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "participants_paid_by_user_id_fkey"
+            columns: ["paid_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "participants_registered_by_fkey"
             columns: ["registered_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "participants_replaced_by_fkey"
+            columns: ["replaced_by"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "participants_replaced_by_fkey"
+            columns: ["replaced_by"]
+            isOneToOne: false
+            referencedRelation: "session_games_played"
+            referencedColumns: ["participant_id"]
           },
           {
             foreignKeyName: "participants_session_id_fkey"
@@ -846,17 +874,21 @@ export type Database = {
       }
       sessions: {
         Row: {
+          coach_count: number | null
           court_count: number
           created_at: string
           created_by: string | null
           description: string | null
           ends_at: string
           id: string
+          kind: Database["public"]["Enums"]["session_kind"]
           location: string
           location_url: string | null
           max_participants: number
+          premium_surcharge_idr: number
           price: number | null
           registration_state: Database["public"]["Enums"]["registration_state"]
+          seats_per_coach: number | null
           starts_at: string
           status: Database["public"]["Enums"]["session_status"]
           title: string
@@ -864,17 +896,21 @@ export type Database = {
           waitlist_capacity: number
         }
         Insert: {
+          coach_count?: number | null
           court_count?: number
           created_at?: string
           created_by?: string | null
           description?: string | null
           ends_at: string
           id?: string
+          kind?: Database["public"]["Enums"]["session_kind"]
           location: string
           location_url?: string | null
           max_participants: number
+          premium_surcharge_idr?: number
           price?: number | null
           registration_state?: Database["public"]["Enums"]["registration_state"]
+          seats_per_coach?: number | null
           starts_at: string
           status?: Database["public"]["Enums"]["session_status"]
           title: string
@@ -882,17 +918,21 @@ export type Database = {
           waitlist_capacity?: number
         }
         Update: {
+          coach_count?: number | null
           court_count?: number
           created_at?: string
           created_by?: string | null
           description?: string | null
           ends_at?: string
           id?: string
+          kind?: Database["public"]["Enums"]["session_kind"]
           location?: string
           location_url?: string | null
           max_participants?: number
+          premium_surcharge_idr?: number
           price?: number | null
           registration_state?: Database["public"]["Enums"]["registration_state"]
+          seats_per_coach?: number | null
           starts_at?: string
           status?: Database["public"]["Enums"]["session_status"]
           title?: string
@@ -1110,8 +1150,10 @@ export type Database = {
           membership_id: string | null
           no_show_at: string | null
           paid_at: string | null
+          paid_by_user_id: string | null
           registered_at: string
           registered_by: string | null
+          replaced_by: string | null
           session_id: string
           status: Database["public"]["Enums"]["participant_status"]
           updated_at: string
@@ -1150,8 +1192,10 @@ export type Database = {
           membership_id: string | null
           no_show_at: string | null
           paid_at: string | null
+          paid_by_user_id: string | null
           registered_at: string
           registered_by: string | null
+          replaced_by: string | null
           session_id: string
           status: Database["public"]["Enums"]["participant_status"]
           updated_at: string
@@ -1207,8 +1251,10 @@ export type Database = {
           membership_id: string | null
           no_show_at: string | null
           paid_at: string | null
+          paid_by_user_id: string | null
           registered_at: string
           registered_by: string | null
+          replaced_by: string | null
           session_id: string
           status: Database["public"]["Enums"]["participant_status"]
           updated_at: string
@@ -1298,6 +1344,7 @@ export type Database = {
       participant_status: "confirmed" | "waiting_list" | "cancelled"
       registration_state: "closed" | "open"
       session_host_role: "owner" | "cohost"
+      session_kind: "open_play" | "drilling"
       session_status: "draft" | "scheduled" | "live" | "completed" | "cancelled"
       skill_level:
         | "newbie"
@@ -1315,8 +1362,11 @@ export type Database = {
     }
   }
 }
+
 type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
 type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
@@ -1345,6 +1395,7 @@ export type Tables<
       ? R
       : never
     : never
+
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
@@ -1369,6 +1420,7 @@ export type TablesInsert<
       ? I
       : never
     : never
+
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
@@ -1393,6 +1445,7 @@ export type TablesUpdate<
       ? U
       : never
     : never
+
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
@@ -1409,6 +1462,7 @@ export type Enums<
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
     ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
     : never
+
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
@@ -1425,6 +1479,7 @@ export type CompositeTypes<
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
     ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
+
 export const Constants = {
   graphql_public: {
     Enums: {},
@@ -1438,14 +1493,11 @@ export const Constants = {
       participant_status: ["confirmed", "waiting_list", "cancelled"],
       registration_state: ["closed", "open"],
       session_host_role: ["owner", "cohost"],
+      session_kind: ["open_play", "drilling"],
       session_status: ["draft", "scheduled", "live", "completed", "cancelled"],
       skill_level: ["newbie", "beginner", "novice", "intermediate", "advanced"],
       user_role: ["member", "host", "admin"],
     },
   },
 } as const
-Connecting to db 5432
-(node:1) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [BoundPool]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
-(Use `node --trace-warnings ...` to show where the warning was created)
-A new version of Supabase CLI is available: v2.122.0 (currently installed v2.117.0)
-We recommend updating regularly for new features and bug fixes: https://supabase.com/docs/guides/cli/getting-started#updating-the-supabase-cli
+

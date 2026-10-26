@@ -23,6 +23,7 @@ describe("mapRpcError", () => {
     ["JB017", "player_busy"],
     ["JB018", "not_found"],
     ["JB019", "invalid_state"],
+    ["JB020", "invalid_state"],
   ] as const;
 
   it.each(cases)("maps %s to %s", (pgCode, appCode) => {
