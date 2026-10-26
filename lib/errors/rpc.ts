@@ -19,6 +19,7 @@
 //   JB015 invalid upload path or missing/foreign uploaded object
 //   JB016 stale or invalid state: photo not pending, unknown review action,
 //         or session not scheduled (start_session)
+//   JB017 participant is already in a scheduled or in-progress match
 
 export const RPC_CODE_MAP = {
   JB001: "registration_closed",
@@ -37,6 +38,7 @@ export const RPC_CODE_MAP = {
   JB014: "upload_cap_reached",
   JB015: "invalid_upload",
   JB016: "invalid_state",
+  JB017: "player_busy",
 } as const;
 
 export type RpcErrorCode = Exclude<(typeof RPC_CODE_MAP)[keyof typeof RPC_CODE_MAP], "validation">;
@@ -64,6 +66,7 @@ const MESSAGES: Record<AppErrorCode, string> = {
   upload_cap_reached: "You have 20 photos waiting for approval. Wait for a host to review them.",
   invalid_upload: "That photo could not be added. Please try again.",
   invalid_state: "This has already changed. Reload and try again.",
+  player_busy: "A player in this match is already in another active match.",
   validation: "Please check the highlighted fields.",
   unknown: "Something went wrong. Please try again.",
 };
