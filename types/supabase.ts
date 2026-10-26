@@ -294,6 +294,35 @@ export type Database = {
           },
         ]
       }
+      guest_attributes: {
+        Row: {
+          gender: Database["public"]["Enums"]["gender"] | null
+          level: Database["public"]["Enums"]["skill_level"] | null
+          participant_id: string
+          updated_at: string
+        }
+        Insert: {
+          gender?: Database["public"]["Enums"]["gender"] | null
+          level?: Database["public"]["Enums"]["skill_level"] | null
+          participant_id: string
+          updated_at?: string
+        }
+        Update: {
+          gender?: Database["public"]["Enums"]["gender"] | null
+          level?: Database["public"]["Enums"]["skill_level"] | null
+          participant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guest_attributes_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: true
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       match_players: {
         Row: {
           match_id: string
@@ -374,6 +403,42 @@ export type Database = {
             columns: ["session_id"]
             isOneToOne: false
             referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      member_levels: {
+        Row: {
+          level: Database["public"]["Enums"]["skill_level"]
+          set_by: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          level: Database["public"]["Enums"]["skill_level"]
+          set_by?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          level?: Database["public"]["Enums"]["skill_level"]
+          set_by?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "member_levels_set_by_fkey"
+            columns: ["set_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "member_levels_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -494,18 +559,21 @@ export type Database = {
       profiles_private: {
         Row: {
           created_at: string
+          gender: Database["public"]["Enums"]["gender"] | null
           phone: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
           created_at?: string
+          gender?: Database["public"]["Enums"]["gender"] | null
           phone?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
           created_at?: string
+          gender?: Database["public"]["Enums"]["gender"] | null
           phone?: string | null
           updated_at?: string
           user_id?: string
@@ -755,6 +823,13 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      host_set_member_gender: {
+        Args: {
+          p_gender: Database["public"]["Enums"]["gender"]
+          p_user_id: string
+        }
+        Returns: undefined
+      }
       host_set_participant_status: {
         Args: {
           p_participant_id: string
@@ -883,11 +958,18 @@ export type Database = {
     Enums: {
       court_status: "idle" | "in_use" | "unavailable"
       gallery_photo_status: "pending" | "approved"
+      gender: "male" | "female"
       match_status: "scheduled" | "in_progress" | "completed" | "cancelled"
       participant_status: "confirmed" | "waiting_list" | "cancelled"
       registration_state: "closed" | "open"
       session_host_role: "owner" | "cohost"
       session_status: "draft" | "scheduled" | "live" | "completed" | "cancelled"
+      skill_level:
+        | "newbie"
+        | "beginner"
+        | "novice"
+        | "intermediate"
+        | "advanced"
       user_role: "member" | "host" | "admin"
     }
     CompositeTypes: {
@@ -1024,11 +1106,13 @@ export const Constants = {
     Enums: {
       court_status: ["idle", "in_use", "unavailable"],
       gallery_photo_status: ["pending", "approved"],
+      gender: ["male", "female"],
       match_status: ["scheduled", "in_progress", "completed", "cancelled"],
       participant_status: ["confirmed", "waiting_list", "cancelled"],
       registration_state: ["closed", "open"],
       session_host_role: ["owner", "cohost"],
       session_status: ["draft", "scheduled", "live", "completed", "cancelled"],
+      skill_level: ["newbie", "beginner", "novice", "intermediate", "advanced"],
       user_role: ["member", "host", "admin"],
     },
   },
