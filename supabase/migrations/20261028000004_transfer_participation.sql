@@ -13,7 +13,14 @@
 --
 -- checked_in_at is reset to null (the replacement has not arrived) and
 -- consented_at is left null (the replacement confirms through
--- member_confirm_participation, as host-added rows do).
+-- member_confirm_participation, as host-added rows do). added_by is set to
+-- the caller (the host, or the member handing the seat over): the app keys
+-- "awaiting confirmation" on added_by not null and consented_at null, so a
+-- null added_by would never prompt the replacement.
+--
+-- Locks: the session advisory lock plus FOR UPDATE on the participant row.
+-- The sessions row is read without FOR UPDATE: every status change that
+-- matters here (cancel / live / completed sweeps) takes the advisory lock.
 --
 -- Errors: JB004 anon, JB006 isolation, JB007 not owner or host, JB008 seat or
 -- target not found, JB021 target already on the session, JB022 seat not
@@ -58,14 +65,16 @@ begin
   select * into v_old from public.participants
    where id = p_participant_id for update;
   select * into v_session from public.sessions
-   where id = v_session_id for update;
+   where id = v_session_id;
 
   v_is_host := public.is_session_host(v_session_id);
-  if not (v_is_host or v_old.user_id = v_user) then
+  -- A guest seat has user_id null: a bare comparison is NULL and would let
+  -- any caller through, so coalesce it to false.
+  if not (v_is_host or coalesce(v_old.user_id = v_user, false)) then
     raise exception 'not authorized' using errcode = 'JB007';
   end if;
 
-  if v_old.status <> 'confirmed' then
+  if v_old.status is distinct from 'confirmed' then
     raise exception 'only a confirmed seat can be handed over' using errcode = 'JB022';
   end if;
 
@@ -112,7 +121,7 @@ begin
      checked_in_at, replaced_by, cancelled_at, no_show_at)
   values
     (v_session_id, p_to_user_id, 'confirmed', clock_timestamp(), null,
-     v_old.is_premium, v_old.membership_id, v_old.paid_at, v_old.user_id, null,
+     v_old.is_premium, v_old.membership_id, v_old.paid_at, v_old.user_id, v_user,
      null, null, null, null, null)
   on conflict (session_id, user_id) do update
     set status = excluded.status,

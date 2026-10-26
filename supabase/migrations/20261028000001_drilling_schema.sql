@@ -28,14 +28,34 @@ alter table public.sessions
     )
   );
 
+-- The surcharge is a drilling price: open play must keep it at 0.
+-- premium_surcharge_idr and kind are both NOT NULL, so neither side of the OR
+-- can be NULL and silently pass the CHECK.
+alter table public.sessions
+  add constraint sessions_open_play_no_surcharge check (
+    kind = 'drilling' or premium_surcharge_idr = 0
+  );
+
 -- replaced_by: set on the old row when the seat was handed over.
 -- paid_by_user_id: set on the replacement row to the original member.
 -- Both are written only by SECURITY DEFINER RPCs. The column grant from
 -- 20260917000004_participants_update_column_grant.sql leaves authenticated
 -- with UPDATE on checked_in_at alone, so new columns get no update grant.
+-- Both are links to other rows, not ownership, so they follow the actor-column
+-- convention (sessions.created_by, galleries.reviewed_by): on delete set null.
+-- Without it, hard-deleting a replacement row or a payer's profile fails.
 alter table public.participants
-  add column replaced_by uuid references public.participants (id),
-  add column paid_by_user_id uuid references public.profiles (id);
+  add column replaced_by uuid references public.participants (id) on delete set null,
+  add column paid_by_user_id uuid references public.profiles (id) on delete set null;
+
+-- transfer_participation records its caller (the host, or the member handing
+-- the seat over) in added_by, so a member's id now lands there too. The
+-- original FK (20260911000004) has no ON DELETE, which would block
+-- hard-deleting that member. Align it with the same convention.
+alter table public.participants
+  drop constraint participants_added_by_fkey,
+  add constraint participants_added_by_fkey
+    foreign key (added_by) references public.profiles (id) on delete set null;
 
 -- Without this, a session registered as open play could switch to drilling
 -- after members were promised a refund. Any participant row counts, including

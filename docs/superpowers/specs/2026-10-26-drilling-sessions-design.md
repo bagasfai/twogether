@@ -46,8 +46,11 @@ Refund behavior is derived from `kind`, not stored. There is no `quota_refundabl
 
 New columns on `participants`:
 
-- `replaced_by uuid references participants (id)`, set on the old row when the seat was handed over.
-- `paid_by_user_id uuid references profiles (id)`, set on the replacement row to the original member. Null when the original was a guest.
+- `replaced_by uuid references participants (id) on delete set null`, set on the old row when the seat was handed over.
+- `paid_by_user_id uuid references profiles (id) on delete set null`, set on the replacement row to the original member. Null when the original was a guest.
+- `added_by` (existing) is re-pointed to `on delete set null`, because a transfer records the member who handed the seat over there.
+
+An open-play session must have `premium_surcharge_idr = 0` (CHECK `sessions_open_play_no_surcharge`).
 
 A trigger blocks changing `sessions.kind` when any participant row exists. Without that, a session registered as open play could switch to drilling after members were promised a refund.
 
@@ -95,11 +98,15 @@ Rules:
 
 Steps, in one transaction, under the same per-session advisory lock and `read committed` guard as `register_for_session`:
 
-1. Insert the replacement as `confirmed`. Copy `is_premium`, `membership_id`, and `paid_at` from the old row, and set `paid_by_user_id` to the old row's user. `checked_in_at` is reset to null, because the replacement has not arrived. `consented_at` is left null; the replacement confirms through the existing `member_confirm_participation` flow, as host-added rows do. If the replacement already has a cancelled row on the session, that row is revived and every per-row field is reset. The seat keeps its bump protection because the original member paid for it. The replacement gets no `membership_usages` row.
+1. Insert the replacement as `confirmed`. Copy `is_premium`, `membership_id`, and `paid_at` from the old row, and set `paid_by_user_id` to the old row's user. `checked_in_at` is reset to null, because the replacement has not arrived. `consented_at` is left null and `added_by` is set to the caller (the host, or the member handing the seat over); the replacement confirms through the existing `member_confirm_participation` flow, as host-added rows do. The app shows "awaiting confirmation" only when `added_by` is set. If the replacement already has a cancelled row on the session, that row is revived and every per-row field is reset. The seat keeps its bump protection because the original member paid for it. The replacement gets no `membership_usages` row.
 2. Update the old row to `status = 'cancelled'` with `replaced_by` set to the new row, in the same statement. Check how `participants` invariants and capacity are enforced (`20260911000012_invariant_fixes.sql`); if a capacity check fires on the insert, cancel first and insert second.
 3. The promotion trigger and the refund trigger both return early when `new.replaced_by is not null`. Nobody on the waitlist takes the seat, and the original usage row stays consumed.
 
 If the replacement later cancels their seat, the drilling rule applies: no refund, and there is no usage row on their row anyway.
+
+If the original member registers again on the same session, the new registration is non-premium while the handed-over row still owns its live usage: that unit pays for the replacement's seat, it stays consumed on the original row, and one row holds at most one live usage. If the session is cancelled, the session-cancel sweep refunds that unit as for any other usage on the session.
+
+A host may set a handed-over row back to `confirmed` or `waiting_list` (manual override). It is an un-cancel: `replaced_by` and `paid_by_user_id` are cleared and the premium snapshot is reset. `host_set_participant_status` reads the row's status under the session lock, so a transfer committing concurrently is always seen.
 
 ## 7. Capacity and coaches
 
@@ -173,7 +180,7 @@ Regenerate `types/supabase.ts` after the migrations.
 
 ## 13. Resolved items
 
-- Replacement consent: `consented_at` is left null on the replacement row and confirmed through the existing `member_confirm_participation` flow, as for host-added rows.
+- Replacement consent: `consented_at` is left null on the replacement row and `added_by` is set to the transfer's caller, so the replacement is prompted and confirms through the existing `member_confirm_participation` flow, as for host-added rows.
 - `guard_court_delete` is unaffected: lowering requires the removed courts to be `idle`. An idle court with a scheduled match still raises `JB010` from that guard.
 - A guest cannot be the replacement; the replacement must be a member. A host can transfer a guest's seat (the guest seat is the source).
 

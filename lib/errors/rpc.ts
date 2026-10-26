@@ -55,12 +55,12 @@ export const RPC_CODE_MAP = {
   JB018: "not_found",
   JB019: "invalid_state",
   JB020: "invalid_state",
-JB021: "invalid_state",
-JB022: "invalid_state",
-JB023: "invalid_state",
-JB024: "invalid_state",
-JB025: "invalid_state",
-JB026: "invalid_state",
+  JB021: "invalid_state",
+  JB022: "invalid_state",
+  JB023: "invalid_state",
+  JB024: "invalid_state",
+  JB025: "invalid_state",
+  JB026: "invalid_state",
 } as const;
 
 export type RpcErrorCode = Exclude<(typeof RPC_CODE_MAP)[keyof typeof RPC_CODE_MAP], "validation">;

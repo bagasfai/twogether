@@ -40,3 +40,14 @@ export function sessionUpdatePayload(values: SessionInput, kind: SessionKind) {
     status: values.status,
   };
 }
+
+// kind is fixed at creation (guard_session_kind_change blocks a change once
+// participant rows exist, and sessionUpdatePayload never writes it). The
+// form still submits kind, and sessionSchema validates premiumSurchargeIdr
+// against that submitted kind, so a client that sends a different kind could
+// otherwise get a surcharge accepted that the stored kind forbids. Returns the
+// failure message, or null when the submitted kind matches the stored one.
+export function sessionKindChangeError(values: SessionInput, currentKind: SessionKind): string | null {
+  if (values.kind === currentKind) return null;
+  return "The session type cannot be changed after it is created. Reload and try again.";
+}

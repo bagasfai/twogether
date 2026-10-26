@@ -1,7 +1,7 @@
 -- Covers migration 20261028000004_transfer_participation.sql.
 
 begin;
-select plan(38);
+select plan(57);
 
 create function pg_temp.usage_state(p_participant uuid)
 returns text
@@ -21,11 +21,12 @@ $$;
 -- 13 target T5; 14 owner O6; 15 target T6; 16 premium registrant P;
 -- 17 filler F6; 18 owner O7; 19 target T7; 20 owner O8 (errors);
 -- 21 target already confirmed C; 22 filler; 23 cancelled-seat owner;
--- 24 waiting-seat owner; 25 target T8.
+-- 24 waiting-seat owner; 25 target T8; 30 premium re-registrant R;
+-- 31 target of R's seat.
 insert into auth.users (id, email)
 select ('000000' || lpad(n::text, 2, '0') || '-0043-0043-0043-000000000000')::uuid,
        'u' || n || '-043@test.local'
-  from generate_series(1, 30) n;
+  from generate_series(1, 31) n;
 
 update public.profiles set role = 'host'
  where id = '00000001-0043-0043-0043-000000000000';
@@ -46,7 +47,8 @@ select s.id::uuid, 'S', now() + s.starts, now() + s.starts + interval '2 hours',
     ('a4300006-0000-0000-0000-000000000000', 'drilling',  1, 2, interval '3 days', 'scheduled'), -- S6 bump
     ('a4300007-0000-0000-0000-000000000000', 'open_play', null::int, null::int, interval '3 days', 'scheduled'), -- S7 later cancel
     ('a4300008-0000-0000-0000-000000000000', 'drilling',  1, 2, interval '3 days', 'scheduled'), -- S8 live usage on target row
-    ('a4300009-0000-0000-0000-000000000000', 'drilling',  1, 2, interval '-1 day', 'completed')  -- S9 completed session
+    ('a4300009-0000-0000-0000-000000000000', 'drilling',  1, 2, interval '-1 day', 'completed'), -- S9 completed session
+    ('a4300010-0000-0000-0000-000000000000', 'drilling',  1, 2, interval '3 days', 'scheduled')  -- S10 hand off then re-register
   ) as s(id, kind, coaches, seats, starts, status);
 
 insert into public.memberships
@@ -54,7 +56,7 @@ insert into public.memberships
 select ('e43000' || lpad(n::text, 2, '0') || '-0000-0000-0000-000000000000')::uuid,
        ('000000' || lpad(n::text, 2, '0') || '-0043-0043-0043-000000000000')::uuid,
        0, 5, 30, now() - interval '1 day', now() + interval '29 days'
-  from unnest(array[2, 14, 16, 18, 26]) n;
+  from unnest(array[2, 14, 16, 18, 26, 30]) n;
 
 -- S1: O1 premium, checked in, paid, consented; F filler; W waiting.
 insert into public.participants
@@ -164,6 +166,10 @@ select is(
   (select consented_at from public.participants where id = (select id from t1)),
   null::timestamptz,
   'replacement_consent_is_null');
+select is(
+  (select added_by from public.participants where id = (select id from t1)),
+  '00000002-0043-0043-0043-000000000000'::uuid,
+  'replacement_added_by_is_caller: member caller is recorded, so the replacement is asked to confirm');
 
 -- S8: owner 27 seat; target 26 has a cancelled premium row with a live usage.
 insert into public.participants (id, session_id, user_id, status, registered_at) values
@@ -191,7 +197,8 @@ select is(
       and user_id = '00000007-0043-0043-0043-000000000000'),
   1, 'replacement_with_prior_cancelled_row_is_revived: one row for the user');
 select is(
-  (select (status::text, consented_at is null, cancelled_at is null, added_by is null,
+  (select (status::text, consented_at is null, cancelled_at is null,
+           added_by = '00000006-0043-0043-0043-000000000000'::uuid,
            bumped_at is null, replaced_by is null, checked_in_at is null, paid_at is null)::text
      from public.participants where id = 'b4300007-0000-0000-0000-000000000000'),
   ('confirmed', true, true, true, true, true, true, true)::text,
@@ -209,6 +216,21 @@ select is(
   'b4300007-0000-0000-0000-000000000000'::uuid,
   'replacement_with_prior_cancelled_row_is_revived: old row points at the revived row');
 
+-- ======== non_host_cannot_take_guest_seat (S3) ========
+-- A guest row has user_id null; the owner check must not treat NULL as pass.
+
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"00000011-0043-0043-0043-000000000000","role":"authenticated"}';
+select throws_ok(
+  $$ select public.transfer_participation('b4300010-0000-0000-0000-000000000000', '00000011-0043-0043-0043-000000000000') $$,
+  'JB007', null, 'non_host_non_registrant_on_guest_seat_gets_JB007');
+reset role;
+select is(
+  (select (status::text, replaced_by is null)::text
+     from public.participants where id = 'b4300010-0000-0000-0000-000000000000'),
+  ('confirmed', true)::text,
+  'non_host_non_registrant_on_guest_seat_gets_JB007: guest seat untouched');
+
 -- ======== host_can_transfer_any_seat_including_guest (S3) ========
 
 set local role authenticated;
@@ -225,6 +247,10 @@ select is(
   (select (status::text, paid_by_user_id is null)::text from t3),
   ('confirmed', true)::text,
   'host_can_transfer_any_seat_including_guest: guest seat replaced, paid_by_user_id null');
+select is(
+  (select added_by from t3),
+  '00000001-0043-0043-0043-000000000000'::uuid,
+  'host_can_transfer_any_seat_including_guest: added_by is the host caller');
 select is(
   (select (status::text, replaced_by = (select id from t3))::text
      from public.participants where id = 'b4300010-0000-0000-0000-000000000000'),
@@ -291,6 +317,20 @@ set local request.jwt.claims = '{"sub":"00000027-0043-0043-0043-000000000000","r
 select throws_ok(
   $$ select public.transfer_participation('b4300027-0000-0000-0000-000000000000', '00000026-0043-0043-0043-000000000000') $$,
   'JB021', null, 'transfer_to_member_with_live_usage_on_cancelled_row_gets_JB021');
+reset role;
+select is(
+  (select (participant_id, refunded_at is null, membership_id)::text
+     from public.membership_usages
+    where membership_id = 'e4300026-0000-0000-0000-000000000000'),
+  ('b4300026-0000-0000-0000-000000000000'::uuid, true,
+   'e4300026-0000-0000-0000-000000000000'::uuid)::text,
+  'transfer_to_member_with_live_usage_on_cancelled_row_gets_JB021: target usage left untouched');
+select is(
+  (select status::text from public.participants where id = 'b4300026-0000-0000-0000-000000000000'),
+  'cancelled',
+  'transfer_to_member_with_live_usage_on_cancelled_row_gets_JB021: target row still cancelled');
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"00000027-0043-0043-0043-000000000000","role":"authenticated"}';
 -- missing target profile
 select throws_ok(
   $$ select public.transfer_participation('b4300027-0000-0000-0000-000000000000', 'ffffffff-0043-0043-0043-000000000000') $$,
@@ -351,6 +391,98 @@ select is(
      join public.participants p on p.id = u.participant_id
     where p.session_id = 'a4300007-0000-0000-0000-000000000000'),
   1, 'replacement_cancel_later_does_not_refund_original: still exactly one usage row');
+
+-- ======== host_status_override_on_handed_over_row (S4) ========
+-- b4300020 was handed to user 23 above. A host bringing it back is a manual
+-- override: it is treated as an un-cancel and its transfer links are cleared.
+
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"00000001-0043-0043-0043-000000000000","role":"authenticated"}';
+select public.host_set_participant_status('b4300020-0000-0000-0000-000000000000', 'waiting_list');
+reset role;
+select is(
+  (select (status::text, replaced_by is null, paid_by_user_id is null, cancelled_at is null)::text
+     from public.participants where id = 'b4300020-0000-0000-0000-000000000000'),
+  ('waiting_list', true, true, true)::text,
+  'host_set_status_on_handed_over_row: un-cancel clears replaced_by and paid_by_user_id');
+select is(
+  (select count(*)::int from public.participants
+    where status <> 'cancelled' and replaced_by is not null),
+  0, 'no_active_row_keeps_replaced_by');
+
+-- ======== premium_handoff_then_reregister (S10) ========
+-- R registers premium (one unit), hands the seat to 31, then registers again.
+-- The handed-over unit stays on R's row and funds 31's seat; the new
+-- registration must not reuse it.
+
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"00000030-0043-0043-0043-000000000000","role":"authenticated"}';
+select public.register_for_session('a4300010-0000-0000-0000-000000000000');
+create temp table r_row on commit drop as
+  select id from public.participants
+   where session_id = 'a4300010-0000-0000-0000-000000000000'
+     and user_id = '00000030-0043-0043-0043-000000000000';
+grant all on r_row to public;
+select public.transfer_participation((select id from r_row), '00000031-0043-0043-0043-000000000000');
+select is(
+  (public.register_for_session('a4300010-0000-0000-0000-000000000000')).status::text,
+  'confirmed', 'premium_handoff_then_reregister: re-registration confirmed');
+reset role;
+select is(
+  (select (is_premium, membership_id is null, replaced_by is null)::text
+     from public.participants where id = (select id from r_row)),
+  (false, true, true)::text,
+  'premium_handoff_then_reregister: re-registration is not premium on the handed-over unit');
+select is(pg_temp.usage_state((select id from r_row)), 'live',
+  'premium_handoff_then_reregister: handed-over usage still live on the original row');
+select is(
+  (select count(*)::int from public.membership_usages
+    where membership_id = 'e4300030-0000-0000-0000-000000000000'),
+  1, 'premium_handoff_then_reregister: one unit consumed, no second claim');
+select is(
+  (select (is_premium, status::text)::text from public.participants
+    where session_id = 'a4300010-0000-0000-0000-000000000000'
+      and user_id = '00000031-0043-0043-0043-000000000000'),
+  (true, 'confirmed')::text,
+  'premium_handoff_then_reregister: replacement keeps its premium seat');
+
+-- ======== session_cancel_after_handoff_refunds_original (S1) ========
+
+update public.sessions set status = 'cancelled'
+ where id = 'a4300001-0000-0000-0000-000000000000';
+select is(pg_temp.usage_state('b4300001-0000-0000-0000-000000000000'), 'session_cancelled',
+  'session_cancel_after_handoff_refunds_original: the sweep refunds the handed-over unit');
+
+-- ======== delete behaviour of the transfer links ========
+
+select is(
+  (select string_agg(conname || '=' || confdeltype::text, ',' order by conname)
+     from pg_constraint
+    where conrelid = 'public.participants'::regclass
+      and conname in ('participants_replaced_by_fkey', 'participants_paid_by_user_id_fkey',
+                      'participants_added_by_fkey')),
+  'participants_added_by_fkey=n,participants_paid_by_user_id_fkey=n,participants_replaced_by_fkey=n',
+  'transfer link FKs are on delete set null');
+-- Deleting S7's replacement row nulls the old row's replaced_by.
+select lives_ok(
+  $$ delete from public.participants
+      where session_id = 'a4300007-0000-0000-0000-000000000000'
+        and user_id = '00000019-0043-0043-0043-000000000000' $$,
+  'deleting_replacement_row_succeeds');
+select is(
+  (select replaced_by from public.participants where id = 'b4300018-0000-0000-0000-000000000000'),
+  null::uuid, 'deleting_replacement_row_nulls_replaced_by');
+-- Deleting the payer's profile (O1, who also made the transfer) nulls the
+-- replacement's paid_by_user_id and added_by.
+select lives_ok(
+  $$ delete from public.profiles where id = '00000002-0043-0043-0043-000000000000' $$,
+  'deleting_payer_profile_succeeds');
+select is(
+  (select (paid_by_user_id is null, added_by is null)::text
+     from public.participants
+    where session_id = 'a4300001-0000-0000-0000-000000000000'
+      and user_id = '00000003-0043-0043-0043-000000000000'),
+  (true, true)::text, 'deleting_payer_profile_nulls_paid_by_and_added_by');
 
 select * from finish();
 rollback;

@@ -8,7 +8,7 @@ import { getHostSession } from "@/lib/dal/sessions";
 import { listRoster } from "@/lib/dal/participants";
 import { buildWhatsAppShareText } from "@/lib/format/whatsapp-share";
 import { fail, failFromRpc, failFromZod, ok, type ActionResult } from "@/lib/actions/result";
-import { sessionUpdatePayload } from "@/lib/actions/session-payload";
+import { sessionKindChangeError, sessionUpdatePayload } from "@/lib/actions/session-payload";
 
 export async function createSession(input: SessionInput): Promise<ActionResult<{ id: string }>> {
   const parsed = sessionSchema.safeParse(input);
@@ -136,6 +136,9 @@ export async function updateSession(id: string, input: SessionInput): Promise<Ac
       "This session can no longer be edited -- its status changed. Reload and try again.",
     );
   }
+
+  const kindError = sessionKindChangeError(values, current.kind);
+  if (kindError) return fail("validation", kindError, { kind: [kindError] });
 
   const supabase = await createClient();
 

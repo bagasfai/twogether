@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { sessionUpdatePayload } from "@/lib/actions/session-payload";
+import { sessionKindChangeError, sessionUpdatePayload } from "@/lib/actions/session-payload";
 import type { SessionInput } from "@/lib/validation/session";
 
 const validSessionInput: SessionInput = {
@@ -79,5 +79,19 @@ describe("sessionUpdatePayload", () => {
   it("always writes premium_surcharge_idr", () => {
     expect(sessionUpdatePayload(drillingInput, "drilling").premium_surcharge_idr).toBe(25000);
     expect(sessionUpdatePayload(validSessionInput, "open_play").premium_surcharge_idr).toBe(0);
+  });
+});
+
+describe("sessionKindChangeError", () => {
+  const drillingKindInput: SessionInput = { ...validSessionInput, kind: "drilling", premiumSurchargeIdr: 25000 };
+
+  it("accepts the stored kind", () => {
+    expect(sessionKindChangeError(validSessionInput, "open_play")).toBeNull();
+    expect(sessionKindChangeError(drillingKindInput, "drilling")).toBeNull();
+  });
+
+  it("rejects a submitted kind that differs from the stored one", () => {
+    expect(sessionKindChangeError(drillingKindInput, "open_play")).toEqual(expect.any(String));
+    expect(sessionKindChangeError(validSessionInput, "drilling")).toEqual(expect.any(String));
   });
 });

@@ -9,6 +9,15 @@
 --    a cancelled row and host_set_participant_status's un-cancel clear
 --    replaced_by and paid_by_user_id. A stale replaced_by would make the
 --    promotion and refund triggers skip the row forever.
+-- 4. register_for_session over a handed-over row (replaced_by set) that still
+--    owns its live usage registers non-premium. That usage funds the
+--    replacement's seat (transfer_participation) and stays on the original
+--    row, consumed. Re-pointing it would let one unit buy two seats, and
+--    membership_usages_one_live_per_participant allows no second live usage
+--    on the same row, so a fresh unit cannot be charged either.
+-- 5. host_set_participant_status reads the row's status under the session
+--    lock, so a transfer that commits while it waits is seen; a row with
+--    replaced_by set is always treated as an un-cancel when brought back.
 --
 -- Bodies are copied from the latest definitions
 -- (register_for_session: 20261023000004; host_add_participant and
@@ -25,6 +34,7 @@ declare
   v_user uuid := auth.uid();
   v_session public.sessions;
   v_existing public.participant_status;
+  v_existing_replaced_by uuid;
   v_confirmed int;
   v_waiting int;
   v_status public.participant_status;
@@ -57,7 +67,7 @@ begin
     raise exception 'registration is not open' using errcode = 'JB001';
   end if;
 
-  select status into v_existing
+  select status, replaced_by into v_existing, v_existing_replaced_by
     from public.participants
    where session_id = p_session_id and user_id = v_user;
 
@@ -68,7 +78,20 @@ begin
   -- Session lock is held; now lock the member's memberships. A null id means
   -- no current membership (none, expired, cancelled or out of quota): the
   -- caller registers exactly as a non-premium member.
-  v_membership := public.lock_current_membership(v_user);
+  -- A handed-over row whose usage is still live: that unit already pays for
+  -- the replacement's seat, so this registration is non-premium (header
+  -- item 4). The usage is left exactly as it is.
+  if v_existing_replaced_by is not null and exists (
+       select 1
+         from public.membership_usages u
+         join public.participants p on p.id = u.participant_id
+        where p.session_id = p_session_id
+          and p.user_id = v_user
+          and u.refunded_at is null) then
+    v_membership := null;
+  else
+    v_membership := public.lock_current_membership(v_user);
+  end if;
   v_is_premium := v_membership.id is not null;
 
   select
@@ -86,7 +109,7 @@ begin
       -- checked in. Host-added rows and guest rows are bumpable (drilling
       -- spec decision 8). Premium never bumps premium. FOR UPDATE re-checks
       -- the predicate against a row a host may have just checked in (see
-      -- header).
+      -- the 20261023000004 header).
       select id, user_id into v_bump_target, v_bump_target_user
         from public.participants
        where session_id = p_session_id
@@ -131,7 +154,8 @@ begin
 
   if v_bump_target is not null then
     -- After the caller's upsert, so the confirmed count is at capacity when
-    -- participants_promote_waitlist fires for this demotion (see header).
+    -- participants_promote_waitlist fires for this demotion (see the
+    -- 20261023000004 header).
     -- The bumped member leads the non-premium queue: 1us before the
     -- earliest non-premium waiter, or now if nobody non-premium waits.
     select min(registered_at) into v_earliest_waiting
@@ -260,8 +284,15 @@ end;
 $$;
 
 
--- Same as 20260917000003_demotion_queue_fairness.sql except an un-cancel
--- (cancelled -> confirmed / waiting_list) resets the premium snapshot.
+-- Same as 20260917000003_demotion_queue_fairness.sql except:
+-- - an un-cancel (cancelled -> confirmed / waiting_list) resets the premium
+--   snapshot and clears replaced_by and paid_by_user_id;
+-- - the status is read after the session lock is taken, not before. Read
+--   before the lock, a transfer_participation committing in between left a
+--   stale 'confirmed', so a handed-over row could come back active with
+--   replaced_by still set (a double seat the triggers then ignore).
+-- A host may bring a handed-over row back (hosts keep manual override); it
+-- is an un-cancel like any other, so its transfer links are cleared.
 
 create or replace function public.host_set_participant_status(
   p_participant_id uuid,
@@ -274,11 +305,12 @@ set search_path = public, pg_temp
 as $$
 declare
   v_session_id uuid;
+  v_old public.participants;
   v_old_status public.participant_status;
   v_row public.participants;
   v_uncancel boolean;
 begin
-  select session_id, status into v_session_id, v_old_status
+  select session_id into v_session_id
     from public.participants where id = p_participant_id;
 
   if v_session_id is null then
@@ -291,9 +323,20 @@ begin
 
   perform pg_advisory_xact_lock(public.session_lock_key(v_session_id));
 
+  -- Re-read under the lock: every writer of this row's status holds it.
+  select * into v_old from public.participants
+   where id = p_participant_id for update;
+  if not found then
+    raise exception 'participant not found' using errcode = 'JB008';
+  end if;
+  v_old_status := v_old.status;
+
   -- A host bringing a cancelled row back is a host action, not a premium
-  -- registration: the row comes back non-premium (spec s5).
-  v_uncancel := v_old_status = 'cancelled' and p_status <> 'cancelled';
+  -- registration: the row comes back non-premium (spec s5). replaced_by is
+  -- only ever set on a cancelled row; the second test keeps a row with it
+  -- set from ever ending active with the link still in place.
+  v_uncancel := p_status <> 'cancelled'
+                and (v_old_status = 'cancelled' or v_old.replaced_by is not null);
 
   update public.participants
      set status = p_status,

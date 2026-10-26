@@ -1,5 +1,5 @@
 begin;
-select plan(11);
+select plan(13);
 
 insert into auth.users (id, email) values
   ('22222222-2222-2222-2222-222222222222', 'host@test.local'),
@@ -51,6 +51,15 @@ select lives_ok(
 select throws_ok(
   $$ update public.sessions set premium_surcharge_idr = -1 where id = 'aaaaaaaa-0000-0000-0000-000000000002' $$,
   '23514', null, 'surcharge_not_negative');
+
+select throws_ok(
+  $$ update public.sessions set premium_surcharge_idr = 25000 where id = 'aaaaaaaa-0000-0000-0000-000000000002' $$,
+  '23514', null, 'open_play_rejects_surcharge');
+
+select lives_ok(
+  $$ insert into public.sessions (title, starts_at, ends_at, location, max_participants, court_count, coach_count, seats_per_coach, kind, premium_surcharge_idr, created_by)
+     values ('d', now(), now() + interval '1 hour', 'GOR', 12, 2, 2, 6, 'drilling', 25000, '22222222-2222-2222-2222-222222222222') $$,
+  'drilling_accepts_surcharge');
 
 select throws_ok(
   $$ update public.sessions set kind = 'drilling', coach_count = 1, seats_per_coach = 8, court_count = 1
