@@ -117,7 +117,7 @@ export function PlayerAttributesEditor({
         value={gender ?? ""}
         onValueChange={(v) => saveGender(v as Gender)}
       >
-        <SelectTrigger size="sm" aria-label="Gender" className={compact ? "w-24 text-xs" : "min-w-28"}>
+        <SelectTrigger size="sm" aria-label="Gender" className={compact ? "w-32 px-2 text-xs" : "min-w-28"}>
           {/* Null gender can also mean a member has not consented to share it
               with hosts, so the prompt is neutral rather than "unset". */}
           <SelectValue placeholder="Set gender" />
@@ -135,7 +135,7 @@ export function PlayerAttributesEditor({
         value={level ?? ""}
         onValueChange={(v) => saveLevel(v as SkillLevel)}
       >
-        <SelectTrigger size="sm" aria-label="Skill level" className={compact ? "w-24 text-xs" : "min-w-32"}>
+        <SelectTrigger size="sm" aria-label="Skill level" className={compact ? "w-32 px-2 text-xs" : "min-w-32"}>
           <SelectValue placeholder="Set level" />
         </SelectTrigger>
         <SelectContent>
