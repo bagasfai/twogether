@@ -15,3 +15,12 @@ export function displayName(name: string | null): string {
   const trimmed = name?.trim();
   return trimmed ? trimmed : "Member";
 }
+
+// Match history shows finished games only, in the order they finished.
+export function completedInOrder<T extends { status: string; completedAt: string | null }>(
+  matches: T[],
+): T[] {
+  return matches
+    .filter((m) => m.status === "completed")
+    .sort((a, b) => (a.completedAt ?? "").localeCompare(b.completedAt ?? ""));
+}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { assignRanks, displayName } from "@/lib/stats";
+import { assignRanks, completedInOrder, displayName } from "@/lib/stats";
 
 describe("assignRanks", () => {
   it("shares a rank between ties and skips the next one", () => {
@@ -31,5 +31,24 @@ describe("displayName", () => {
 
   it("returns a real name trimmed", () => {
     expect(displayName(" Ani ")).toBe("Ani");
+  });
+});
+
+describe("completedInOrder", () => {
+  const m = (id: string, status: string, completedAt: string | null) =>
+    ({ id, status, completedAt }) as never;
+
+  it("keeps only completed matches, oldest completion first", () => {
+    const out = completedInOrder([
+      m("c", "completed", "2026-10-26T10:30:00Z"),
+      m("x", "cancelled", null),
+      m("a", "completed", "2026-10-26T10:00:00Z"),
+      m("p", "in_progress", null),
+    ]);
+    expect(out.map((r: { id: string }) => r.id)).toEqual(["a", "c"]);
+  });
+
+  it("returns an empty array when nothing completed", () => {
+    expect(completedInOrder([m("s", "scheduled", null)])).toEqual([]);
   });
 });
