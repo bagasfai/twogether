@@ -10,6 +10,7 @@ import { getSessionLeaderboard } from "@/lib/dal/stats";
 import { RosterTable } from "@/components/sessions/roster-table";
 import { CourtPanel } from "@/components/sessions/court-panel";
 import { MatchPanel } from "@/components/sessions/match-panel";
+import { AutoMatchPanel } from "@/components/sessions/auto-match-panel";
 import { SessionLeaderboard } from "@/components/sessions/session-leaderboard";
 import { ManageTabs } from "@/components/sessions/manage-tabs";
 import { SessionRealtimeWatcher } from "@/components/sessions/session-realtime-watcher";
@@ -111,6 +112,7 @@ export default async function ManageSessionPage({ params }: PageProps<"/sessions
         courts={<CourtPanel sessionId={session.id} courts={courts} courtCount={session.courtCount} />}
         matches={
           <div className="flex flex-col gap-4 sm:gap-6">
+            <AutoMatchPanel sessionId={session.id} />
             <MatchPanel sessionId={session.id} matches={matches} courts={courts} rotationQueue={rotationQueue} />
             <SessionLeaderboard rows={leaderboard} />
           </div>

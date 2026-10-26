@@ -65,14 +65,15 @@ insert into public.match_players (match_id, participant_id, team) values
   ('ffffffff-0000-0000-0000-000000000002', 'dddddddd-0000-0000-0000-000000000003', 1),
   ('ffffffff-0000-0000-0000-000000000002', 'dddddddd-0000-0000-0000-000000000002', 2),
   ('ffffffff-0000-0000-0000-000000000002', 'eeeeeeee-0000-0000-0000-000000000001', 2),
+  -- 5 (before 4: p5 may not be added to a finished match while in an active one)
+  -- cancelled participant p7 vs p5, completed
+  ('ffffffff-0000-0000-0000-000000000005', 'dddddddd-0000-0000-0000-000000000007', 1),
+  ('ffffffff-0000-0000-0000-000000000005', 'dddddddd-0000-0000-0000-000000000005', 2),
   -- 3 cancelled and 4 in_progress: p4 vs p5, must not count
   ('ffffffff-0000-0000-0000-000000000003', 'dddddddd-0000-0000-0000-000000000004', 1),
   ('ffffffff-0000-0000-0000-000000000003', 'dddddddd-0000-0000-0000-000000000005', 2),
   ('ffffffff-0000-0000-0000-000000000004', 'dddddddd-0000-0000-0000-000000000004', 1),
   ('ffffffff-0000-0000-0000-000000000004', 'dddddddd-0000-0000-0000-000000000005', 2),
-  -- 5: cancelled participant p7 vs p5, completed
-  ('ffffffff-0000-0000-0000-000000000005', 'dddddddd-0000-0000-0000-000000000007', 1),
-  ('ffffffff-0000-0000-0000-000000000005', 'dddddddd-0000-0000-0000-000000000005', 2),
   -- 6: draft session, m4 vs m5
   ('ffffffff-0000-0000-0000-000000000006', 'dddddddd-0000-0000-0000-0000000000d4', 1),
   ('ffffffff-0000-0000-0000-000000000006', 'dddddddd-0000-0000-0000-0000000000d5', 2);
