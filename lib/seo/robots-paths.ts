@@ -7,10 +7,12 @@ export const DISALLOWED_PATHS = [
   "/profile",
   "/admin",
   "/history",
+  "/leaderboard",
   "/login",
   "/signup",
   "/auth",
   "/api",
   "/sessions/new",
   "/sessions/*/manage",
+  "/sessions/*/matches",
 ];

@@ -6,9 +6,11 @@ import { listRoster } from "@/lib/dal/participants";
 import { listCourts } from "@/lib/dal/courts";
 import { listMatches } from "@/lib/dal/matches";
 import { getRotationQueue } from "@/lib/dal/rotation";
+import { getSessionLeaderboard } from "@/lib/dal/stats";
 import { RosterTable } from "@/components/sessions/roster-table";
 import { CourtPanel } from "@/components/sessions/court-panel";
 import { MatchPanel } from "@/components/sessions/match-panel";
+import { SessionLeaderboard } from "@/components/sessions/session-leaderboard";
 import { ManageTabs } from "@/components/sessions/manage-tabs";
 import { SessionRealtimeWatcher } from "@/components/sessions/session-realtime-watcher";
 import { SessionActionsMenu } from "@/components/sessions/session-actions-menu";
@@ -38,6 +40,7 @@ export default async function ManageSessionPage({ params }: PageProps<"/sessions
   const courts = await listCourts(id);
   const matches = await listMatches(id);
   const rotationQueue = await getRotationQueue(id);
+  const leaderboard = await getSessionLeaderboard(id);
   const announcements = await listHostAnnouncements(id);
   // The album exists from the moment the session starts (start_session
   // trigger); before that the Photos tab only says so.
@@ -107,7 +110,10 @@ export default async function ManageSessionPage({ params }: PageProps<"/sessions
         photosCount={pendingPhotos.length}
         courts={<CourtPanel sessionId={session.id} courts={courts} courtCount={session.courtCount} />}
         matches={
-          <MatchPanel sessionId={session.id} matches={matches} courts={courts} rotationQueue={rotationQueue} />
+          <div className="flex flex-col gap-4 sm:gap-6">
+            <MatchPanel sessionId={session.id} matches={matches} courts={courts} rotationQueue={rotationQueue} />
+            <SessionLeaderboard rows={leaderboard} />
+          </div>
         }
         roster={<RosterTable
             sessionId={session.id}

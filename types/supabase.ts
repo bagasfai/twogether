@@ -5,7 +5,6 @@ export type Json =
   | null
   | { [key: string]: Json | undefined }
   | Json[]
-
 export type Database = {
   graphql_public: {
     Tables: {
@@ -321,6 +320,13 @@ export type Database = {
             referencedRelation: "participants"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "guest_attributes_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: true
+            referencedRelation: "session_games_played"
+            referencedColumns: ["participant_id"]
+          },
         ]
       }
       match_players: {
@@ -353,6 +359,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "participants"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "match_players_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "session_games_played"
+            referencedColumns: ["participant_id"]
           },
         ]
       }
@@ -691,7 +704,22 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      session_games_played: {
+        Row: {
+          games_played: number | null
+          participant_id: string | null
+          session_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "participants_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       add_gallery_photo: {
@@ -714,6 +742,14 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      all_time_leaderboard: {
+        Args: { p_limit?: number }
+        Returns: {
+          full_name: string
+          games_played: number
+          is_me: boolean
+        }[]
       }
       can_review_gallery: { Args: { p_gallery_id: string }; Returns: boolean }
       can_upload_to_gallery: {
@@ -980,11 +1016,8 @@ export type Database = {
     }
   }
 }
-
 type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
-
 type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
-
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
@@ -1013,7 +1046,6 @@ export type Tables<
       ? R
       : never
     : never
-
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
@@ -1038,7 +1070,6 @@ export type TablesInsert<
       ? I
       : never
     : never
-
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
@@ -1063,7 +1094,6 @@ export type TablesUpdate<
       ? U
       : never
     : never
-
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
@@ -1080,7 +1110,6 @@ export type Enums<
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
     ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
     : never
-
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
@@ -1097,7 +1126,6 @@ export type CompositeTypes<
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
     ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
-
 export const Constants = {
   graphql_public: {
     Enums: {},
@@ -1117,4 +1145,3 @@ export const Constants = {
     },
   },
 } as const
-

@@ -52,6 +52,12 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
           >
             History
           </Link>
+          <Link
+            href="/leaderboard"
+            className="whitespace-nowrap rounded-full px-3 py-1.5 transition-colors hover:bg-accent/10 hover:text-foreground"
+          >
+            Leaderboard
+          </Link>
           {canHost ? (
             <Link
               href="/sessions/new"
