@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { updateProfile } from "@/lib/actions/profile";
 import { profileSchema, type ProfileInput } from "@/lib/validation/profile";
 import { applyFieldErrors } from "@/lib/forms/apply-field-errors";
@@ -73,6 +74,28 @@ export function ProfileForm({ defaultValues }: { defaultValues: ProfileFormValue
                     Visible to you, admins, and hosts of sessions you&apos;re added to as a
                     participant — including if a host adds you without you registering yourself.
                   </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="gender"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Gender</FormLabel>
+                  <Select value={field.value ?? ""} onValueChange={field.onChange}>
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select gender" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="male">Male</SelectItem>
+                      <SelectItem value="female">Female</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormDescription>Used by hosts to balance matches.</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}

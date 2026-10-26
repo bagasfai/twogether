@@ -3,12 +3,14 @@ import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/dal/user";
 import type { Role } from "@/lib/dal/user";
+import type { Gender } from "@/lib/players/levels";
 
 export type MyProfile = {
   id: string;
   fullName: string | null;
   avatarUrl: string | null;
   phone: string | null;
+  gender: Gender | null;
   role: Role;
 };
 
@@ -22,7 +24,7 @@ export async function getMyProfile(): Promise<MyProfile | null> {
   // of a session this user is a non-cancelled participant in.
   const { data } = await supabase
     .from("profiles_private")
-    .select("phone")
+    .select("phone, gender")
     .eq("user_id", user.id)
     .maybeSingle();
 
@@ -31,6 +33,7 @@ export async function getMyProfile(): Promise<MyProfile | null> {
     fullName: user.fullName,
     avatarUrl: user.avatarUrl,
     phone: data?.phone ?? null,
+    gender: data?.gender ?? null,
     role: user.role,
   };
 }

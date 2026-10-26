@@ -15,6 +15,7 @@ export default async function ProfilePage() {
           fullName: profile.fullName ?? "",
           phone: profile.phone ?? "",
           avatarUrl: profile.avatarUrl ?? "",
+          gender: profile.gender ?? undefined,
         }}
       />
     </div>
