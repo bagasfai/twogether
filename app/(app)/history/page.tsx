@@ -41,6 +41,10 @@ export default async function HistoryPage() {
                   </CardTitle>
                   <CardDescription>
                     {new Date(row.startsAt).toLocaleString()} · {row.location}
+                    {" · "}
+                    <Link href={`/sessions/${row.sessionId}/matches`} className="font-medium text-accent hover:underline">
+                      Matches
+                    </Link>
                   </CardDescription>
                 </CardHeader>
               </Card>
@@ -66,6 +70,10 @@ export default async function HistoryPage() {
                   </CardTitle>
                   <CardDescription>
                     {row.guestName} · {new Date(row.startsAt).toLocaleString()}
+                    {" · "}
+                    <Link href={`/sessions/${row.sessionId}/matches`} className="font-medium text-accent hover:underline">
+                      Matches
+                    </Link>
                   </CardDescription>
                 </CardHeader>
               </Card>
