@@ -26,6 +26,9 @@ export function AutoMatchPanel({ sessionId }: { sessionId: string }) {
   const [pending, startTransition] = useTransition();
   const [format, setFormat] = useState<MatchFormat>("mixed");
   const [generated, setGenerated] = useState(false);
+  // The Select can change after generating; warnings must judge the lineups
+  // against the format they were generated for.
+  const [generatedFormat, setGeneratedFormat] = useState<MatchFormat>("mixed");
   const [courts, setCourts] = useState<CourtRef[]>([]);
   const [matches, setMatches] = useState<SuggestedMatch[]>([]);
   const [unused, setUnused] = useState<string[]>([]);
@@ -47,6 +50,7 @@ export function AutoMatchPanel({ sessionId }: { sessionId: string }) {
       setUnused(result.data.unused);
       setPlayers(new Map(result.data.players.map((p) => [p.participantId, p])));
       setReason(result.data.reason);
+      setGeneratedFormat(format);
       setSelection(null);
       setGenerated(true);
     });
@@ -80,6 +84,7 @@ export function AutoMatchPanel({ sessionId }: { sessionId: string }) {
     setUnused([...unused, ...removed.team1, ...removed.team2]);
     setMatches(matches.filter((_, i) => i !== index));
     setCourts(courts.filter((_, i) => i !== index));
+    if (matches.length === 1) setReason(null);
     setSelection(null);
   };
 
@@ -106,12 +111,14 @@ export function AutoMatchPanel({ sessionId }: { sessionId: string }) {
       const keep = courts.map((c, i) => (failed.has(c.courtId) ? i : -1)).filter((i) => i >= 0);
       setCourts(keep.map((i) => courts[i]));
       setMatches(keep.map((i) => matches[i]));
+      // "Need N more..." described the generation, not what is left.
+      if (keep.length === 0) setReason(null);
       setSelection(null);
     });
 
   const warningsByIndex = useMemo(
-    () => matches.map((m) => lineupWarnings(m, format, players)),
-    [matches, format, players],
+    () => matches.map((m) => lineupWarnings(m, generatedFormat, players)),
+    [matches, generatedFormat, players],
   );
 
   const isSelected = (slot: Slot) => selection?.kind === "slot" && sameSlot(selection.slot, slot);
@@ -188,7 +195,7 @@ export function AutoMatchPanel({ sessionId }: { sessionId: string }) {
                 </div>
               </div>
               {warningsByIndex[i].map((w) => (
-                <p key={w} className="text-sm text-warning">
+                <p key={w} className="text-sm text-warning-foreground dark:text-warning">
                   {w}
                 </p>
               ))}

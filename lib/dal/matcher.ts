@@ -7,6 +7,7 @@ import { getRosterAttributes } from "@/lib/dal/player-attributes";
 import { listCourts } from "@/lib/dal/courts";
 import { listMatches } from "@/lib/dal/matches";
 import { levelWeight } from "@/lib/players/levels";
+import { buildPool } from "@/lib/matcher/pool";
 import type { PastMatch, PoolPlayer } from "@/lib/matcher/types";
 
 export type MatcherInput = {
@@ -53,19 +54,7 @@ export async function getMatcherInput(sessionId: string): Promise<MatcherInput |
   const busyIds = new Set((busy.data ?? []).map((row) => row.participant_id));
   const gamesById = new Map((games.data ?? []).flatMap((g) => (g.participant_id ? [[g.participant_id, g.games_played ?? 0] as const] : [])));
 
-  const pool: PoolPlayer[] = (roster.data ?? [])
-    .filter((row) => !busyIds.has(row.id))
-    .map((row) => {
-      const attrs = attributes.get(row.id);
-      return {
-        participantId: row.id,
-        name: row.profiles?.full_name ?? row.guest_name ?? "Unnamed player",
-        gender: attrs?.gender ?? null,
-        weight: attrs?.weight ?? levelWeight(null),
-        unrated: attrs?.unrated ?? true,
-        gamesPlayed: gamesById.get(row.id) ?? 0,
-      };
-    });
+  const pool = buildPool(roster.data ?? [], busyIds, gamesById, attributes, levelWeight(null));
 
   const reservedCourtIds = new Set(
     matches.filter((m) => m.status === "scheduled" || m.status === "in_progress").map((m) => m.courtId),

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/dal/user";
 import { getMatcherInput } from "@/lib/dal/matcher";
+import { busyPlayerMessage, displayName } from "@/lib/matcher/pool";
 import { suggestMatches } from "@/lib/matcher/suggest";
 import type { PoolPlayer, SuggestedMatch } from "@/lib/matcher/types";
 import { fail, failFromRpc, failFromZod, ok, type ActionResult } from "@/lib/actions/result";
@@ -97,8 +98,7 @@ export async function confirmSuggestions(input: ConfirmSuggestionsInput): Promis
     const failure = failFromRpc(error);
     let message = failure.message;
     if (failure.code === "player_busy") {
-      const name = await findBusyPlayerName(supabase, ids);
-      if (name) message = `${name} is already in another match.`;
+      message = busyPlayerMessage(await findBusyPlayerName(supabase, ids), message);
     }
     results.push({ courtId: match.courtId, ok: false, message });
   }
@@ -115,5 +115,5 @@ async function findBusyPlayerName(supabase: Awaited<ReturnType<typeof createClie
     .in("matches.status", ["scheduled", "in_progress"])
     .limit(1);
   const row = data?.[0];
-  return row ? (row.participants.profiles?.full_name ?? row.participants.guest_name ?? null) : null;
+  return row ? displayName(row.participants.profiles?.full_name, row.participants.guest_name) : null;
 }
