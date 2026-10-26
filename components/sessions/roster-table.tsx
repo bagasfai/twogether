@@ -3,10 +3,12 @@
 import { useTransition } from "react";
 import { toast } from "sonner";
 import { AddParticipantDialog } from "@/components/sessions/add-participant-dialog";
+import { PlayerAttributesEditor } from "@/components/sessions/player-attributes-editor";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { setCheckedIn, setNoShow, setPaid, setParticipantStatus } from "@/lib/actions/participants";
+import type { PlayerAttributes } from "@/lib/players/resolve";
 import { cn } from "@/lib/utils";
 // types/supabase.ts is a plain generated types module (no server-only guard),
 // safe to import for real (not type-only) in a client component. Deriving
@@ -28,6 +30,7 @@ type Entry = {
   consentedAt: string | null;
   fullName: string | null;
   isGuest: boolean;
+  userId: string | null;
 };
 
 function StatusBadge({ status }: { status: ParticipantStatus }) {
@@ -56,9 +59,13 @@ export function RosterTable({
   sessionId,
   entries,
   sessionStatus,
+  attributes,
 }: {
   sessionId: string;
   entries: Entry[];
+  // Host-only data keyed by participant id (a Map cannot cross the
+  // server/client boundary). Supplied only by the host manage page.
+  attributes: Record<string, PlayerAttributes>;
   sessionStatus: Database["public"]["Enums"]["session_status"];
 }) {
   const [pending, startTransition] = useTransition();
@@ -126,6 +133,13 @@ export function RosterTable({
             <p className="text-xs text-muted-foreground">
               Registered {new Date(entry.registeredAt).toLocaleString()}
             </p>
+
+            <PlayerAttributesEditor
+                participantId={entry.id}
+                userId={entry.userId}
+                isGuest={entry.isGuest}
+                attributes={attributes[entry.id]}
+              />
 
             <div className="flex flex-wrap gap-2">
               {entry.status === "confirmed" ? (
@@ -239,6 +253,7 @@ export function RosterTable({
           <TableRow>
             <TableHead>Player</TableHead>
             <TableHead>Status</TableHead>
+            <TableHead>Gender / level</TableHead>
             <TableHead>Registered</TableHead>
             <TableHead>Check-in</TableHead>
             <TableHead>Paid</TableHead>
@@ -256,6 +271,14 @@ export function RosterTable({
                   <GuestBadge isGuest={entry.isGuest} />
                   <ConsentBadge addedBy={entry.addedBy} consentedAt={entry.consentedAt} />
                 </div>
+              </TableCell>
+              <TableCell>
+                <PlayerAttributesEditor
+                participantId={entry.id}
+                userId={entry.userId}
+                isGuest={entry.isGuest}
+                attributes={attributes[entry.id]}
+              />
               </TableCell>
               <TableCell>{new Date(entry.registeredAt).toLocaleString()}</TableCell>
               <TableCell>

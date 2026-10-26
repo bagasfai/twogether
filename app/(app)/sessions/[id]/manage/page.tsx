@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { requireHost } from "@/lib/dal/user";
 import { getHostSession } from "@/lib/dal/sessions";
+import { getRosterAttributes } from "@/lib/dal/player-attributes";
 import { listRoster } from "@/lib/dal/participants";
 import { listCourts } from "@/lib/dal/courts";
 import { listMatches } from "@/lib/dal/matches";
@@ -31,6 +32,9 @@ export default async function ManageSessionPage({ params }: PageProps<"/sessions
   if (!session) notFound();
 
   const roster = await listRoster(id);
+  // Host-only (this page is gated by requireHost + getHostSession; the DAL
+  // is RLS-bound too). A Map cannot cross to the client, so pass a record.
+  const attributes = Object.fromEntries(await getRosterAttributes(id));
   const courts = await listCourts(id);
   const matches = await listMatches(id);
   const rotationQueue = await getRotationQueue(id);
@@ -105,7 +109,12 @@ export default async function ManageSessionPage({ params }: PageProps<"/sessions
         matches={
           <MatchPanel sessionId={session.id} matches={matches} courts={courts} rotationQueue={rotationQueue} />
         }
-        roster={<RosterTable sessionId={session.id} entries={roster} sessionStatus={session.status} />}
+        roster={<RosterTable
+            sessionId={session.id}
+            entries={roster}
+            sessionStatus={session.status}
+            attributes={attributes}
+          />}
         photos={
           <NextIntlClientProvider locale="en" messages={{ gallery: messages.gallery }}>
             <PhotosPanel
