@@ -12,7 +12,7 @@ import {
   type SetMemberGenderInput,
   type SetMemberLevelInput,
 } from "@/lib/validation/player-attributes";
-import type { TablesInsert } from "@/types/supabase";
+import type { TablesUpdate } from "@/types/supabase";
 
 // These inputs carry no session id (a member's level/gender is not scoped to
 // one session), so refresh every manage page via the route pattern.
@@ -35,7 +35,6 @@ export async function setMemberLevel(input: SetMemberLevelInput): Promise<Action
       user_id: parsed.data.userId,
       level: parsed.data.level,
       set_by: user.id,
-      updated_at: new Date().toISOString(),
     },
     { onConflict: "user_id" },
   );
@@ -76,19 +75,40 @@ export async function setGuestAttributes(
   const user = await getCurrentUser();
   if (!user) return fail("not_authenticated");
 
-  // Only keys the caller provided go into the payload, so an upsert that sets
+  // Only keys the caller provided go into the payload, so a write that sets
   // one field never wipes the other. level: null is provided and clears it.
-  const payload: TablesInsert<"guest_attributes"> = {
-    participant_id: parsed.data.participantId,
-    updated_at: new Date().toISOString(),
-  };
-  if (parsed.data.gender !== undefined) payload.gender = parsed.data.gender;
-  if (parsed.data.level !== undefined) payload.level = parsed.data.level;
+  const changes: TablesUpdate<"guest_attributes"> = {};
+  if (parsed.data.gender !== undefined) changes.gender = parsed.data.gender;
+  if (parsed.data.level !== undefined) changes.level = parsed.data.level;
 
+  // Nothing provided: an empty UPDATE body is invalid, and there is nothing to write.
+  if (Object.keys(changes).length === 0) return ok(null);
+
+  const participantId = parsed.data.participantId;
   const supabase = await createClient();
-  const { error } = await supabase
-    .from("guest_attributes")
-    .upsert(payload, { onConflict: "participant_id" });
+
+  // Not an upsert: PostgREST puts every payload column (participant_id too)
+  // in ON CONFLICT DO UPDATE SET, and participant_id is deliberately outside
+  // the column UPDATE grant, so an upsert is denied with 42501. Update first
+  // (RLS limits it to hosts), insert only if no row matched.
+  const update = () =>
+    supabase
+      .from("guest_attributes")
+      .update(changes)
+      .eq("participant_id", participantId)
+      .select("participant_id");
+
+  let { data, error } = await update();
+  if (!error && (data ?? []).length === 0) {
+    const insert = await supabase
+      .from("guest_attributes")
+      .insert({ participant_id: participantId, ...changes });
+    error = insert.error;
+    // Lost a race with another insert: the row exists now, so update it.
+    if (error?.code === "23505") {
+      ({ error } = await update());
+    }
+  }
 
   if (error) return fail("unknown", "Could not update guest details.");
 

@@ -50,6 +50,9 @@ export async function getRosterAttributes(
       : null,
   ]);
 
+  // A failed lookup must not read as "unrated"; fail closed like the roster query.
+  if (genders?.error || levels?.error || guests?.error) return result;
+
   const genderByUser = new Map(
     (genders?.data ?? []).map((g) => [g.user_id, g.gender] as const),
   );
