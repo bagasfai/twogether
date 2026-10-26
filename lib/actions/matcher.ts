@@ -64,9 +64,10 @@ export async function generateSuggestions(input: GenerateSuggestionsInput): Prom
 }
 
 // One create_match RPC per suggested match so a stale one (court taken, player
-// now busy) is rejected on its own and the rest still go through. The busy
-// pre-check below only exists to name the player; the JB017 guard in
-// guard_match_player and matches_reserved_court_idx are the atomic backstops.
+// now busy) is rejected on its own and the rest still go through. The RPC is
+// the only gate: it checks the host first (JB007), locks the players in id
+// order, and guard_match_player raises JB017 for a busy one. The lookup below
+// runs only after JB017, purely to name the player in the message.
 export async function confirmSuggestions(input: ConfirmSuggestionsInput): Promise<ActionResult<{ results: ConfirmOutcome[] }>> {
   const parsed = confirmSuggestionsSchema.safeParse(input);
   if (!parsed.success) return failFromZod(parsed.error);
@@ -81,24 +82,6 @@ export async function confirmSuggestions(input: ConfirmSuggestionsInput): Promis
   for (const match of matches) {
     const ids = [...match.team1, ...match.team2];
 
-    const { data: busyRows, error: busyError } = await supabase
-      .from("match_players")
-      .select("participant_id, matches!inner(status), participants!inner(guest_name, profiles!participants_user_id_fkey(full_name))")
-      .in("participant_id", ids)
-      .in("matches.status", ["scheduled", "in_progress"]);
-
-    if (busyError) {
-      results.push({ courtId: match.courtId, ok: false, message: "Could not check the players. Try again." });
-      continue;
-    }
-
-    const busy = busyRows?.[0];
-    if (busy) {
-      const name = busy.participants.profiles?.full_name ?? busy.participants.guest_name ?? "A player";
-      results.push({ courtId: match.courtId, ok: false, message: `${name} is already in another match.` });
-      continue;
-    }
-
     const { data, error } = await supabase.rpc("create_match", {
       p_session_id: sessionId,
       p_court_id: match.courtId,
@@ -106,13 +89,31 @@ export async function confirmSuggestions(input: ConfirmSuggestionsInput): Promis
       p_team2: match.team2,
     });
 
-    if (error) {
-      results.push({ courtId: match.courtId, ok: false, message: failFromRpc(error).message });
-    } else {
+    if (!error) {
       results.push({ courtId: match.courtId, ok: true, matchId: data.id });
+      continue;
     }
+
+    const failure = failFromRpc(error);
+    let message = failure.message;
+    if (failure.code === "player_busy") {
+      const name = await findBusyPlayerName(supabase, ids);
+      if (name) message = `${name} is already in another match.`;
+    }
+    results.push({ courtId: match.courtId, ok: false, message });
   }
 
   revalidatePath(`/sessions/${sessionId}/manage`);
   return ok({ results });
+}
+
+async function findBusyPlayerName(supabase: Awaited<ReturnType<typeof createClient>>, participantIds: string[]): Promise<string | null> {
+  const { data } = await supabase
+    .from("match_players")
+    .select("matches!inner(status), participants!inner(guest_name, profiles!participants_user_id_fkey(full_name))")
+    .in("participant_id", participantIds)
+    .in("matches.status", ["scheduled", "in_progress"])
+    .limit(1);
+  const row = data?.[0];
+  return row ? (row.participants.profiles?.full_name ?? row.participants.guest_name ?? null) : null;
 }

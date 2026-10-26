@@ -1,5 +1,5 @@
 begin;
-select plan(6);
+select plan(7);
 
 insert into auth.users (id, email) values
   ('22222222-2222-2222-2222-222222222222', 'host@test.local'),
@@ -79,6 +79,15 @@ select lives_ok(
   $$ update public.match_players set team = team
       where match_id = (select id from public.matches where status = 'scheduled' limit 1) $$,
   'updating a match_players row does not conflict with its own match'
+);
+
+-- Concurrent create_match calls with crossing player order deadlock unless every
+-- caller locks the participants in the same order. Two sessions cannot be
+-- interleaved inside one statement here, so pin the ordered lock in the source.
+select ok(
+  (select prosrc ~* 'order by id\s+for update' from pg_proc
+    where proname = 'create_match' and pronamespace = 'public'::regnamespace),
+  'create_match locks its participants in id order before inserting'
 );
 
 select * from finish();
