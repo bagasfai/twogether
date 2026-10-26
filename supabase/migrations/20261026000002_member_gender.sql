@@ -12,7 +12,8 @@ security definer
 set search_path = ''
 as $$
 begin
-  if public.current_user_role() not in ('host', 'admin') then
+  -- coalesce: a caller with no profiles row yields NULL; fail closed
+  if coalesce(public.current_user_role()::text, '') not in ('host', 'admin') then
     raise exception 'insufficient_privilege' using errcode = '42501';
   end if;
 

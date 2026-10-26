@@ -1,5 +1,5 @@
 begin;
-select plan(9);
+select plan(10);
 
 select has_column('public', 'profiles_private', 'gender', 'profiles_private.gender exists');
 
@@ -53,6 +53,12 @@ select lives_ok(
 select lives_ok(
   $$select public.host_set_member_gender('dddddddd-0000-0000-0000-000000000004', 'male')$$,
   'host can set gender for user without row');
+
+-- caller with a valid JWT but no profiles row: current_user_role() is NULL, must fail closed
+set local request.jwt.claims = '{"sub":"dddddddd-0000-0000-0000-0000000000ff","role":"authenticated"}';
+select throws_ok(
+  $$select public.host_set_member_gender('dddddddd-0000-0000-0000-000000000003', 'male')$$,
+  '42501', null, 'caller with no profiles row is denied');
 
 reset role;
 select is(
