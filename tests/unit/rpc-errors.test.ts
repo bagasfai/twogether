@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { mapRpcError } from "@/lib/errors/rpc";
+import { mapRpcError, messageForCode } from "@/lib/errors/rpc";
 import { failFromRpc, failFromZod, ok } from "@/lib/actions/result";
 
 describe("mapRpcError", () => {
@@ -27,9 +27,9 @@ describe("mapRpcError", () => {
     ["JB021", "invalid_state"],
     ["JB022", "invalid_state"],
     ["JB023", "invalid_state"],
-["JB024", "invalid_state"],
-["JB025", "invalid_state"],
-["JB026", "invalid_state"],
+    ["JB024", "invalid_state"],
+    ["JB025", "invalid_state"],
+    ["JB026", "invalid_state"],
   ] as const;
 
   it.each(cases)("maps %s to %s", (pgCode, appCode) => {
@@ -39,6 +39,15 @@ describe("mapRpcError", () => {
   it("gives every mapped code a non-empty user-facing message", () => {
     for (const [pgCode] of cases) {
       expect(mapRpcError({ code: pgCode }).message.length).toBeGreaterThan(0);
+    }
+  });
+
+  it("maps JB020-JB026 to invalid_state with a non-empty message", () => {
+    for (let n = 20; n <= 26; n++) {
+      const mapped = mapRpcError({ code: `JB0${n}`, message: "internal wording" });
+      expect(mapped.code).toBe("invalid_state");
+      expect(messageForCode(mapped.code).length).toBeGreaterThan(0);
+      expect(mapped.message).toBe(messageForCode("invalid_state"));
     }
   });
 
