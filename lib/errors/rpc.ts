@@ -29,6 +29,10 @@
 //   JB022 seat is not confirmed (transfer_participation)
 //   JB023 transfer not allowed now: member after starts_at, or session not
 //         scheduled or live (transfer_participation)
+//   JB024 new capacity is below the confirmed count (adjust_session_capacity)
+//   JB025 a court that would be removed is not idle (adjust_session_capacity)
+//   JB026 session is not drilling, or not draft, scheduled or live
+//         (adjust_session_capacity)
 
 export const RPC_CODE_MAP = {
   JB001: "registration_closed",
@@ -54,6 +58,9 @@ export const RPC_CODE_MAP = {
 JB021: "invalid_state",
 JB022: "invalid_state",
 JB023: "invalid_state",
+JB024: "invalid_state",
+JB025: "invalid_state",
+JB026: "invalid_state",
 } as const;
 
 export type RpcErrorCode = Exclude<(typeof RPC_CODE_MAP)[keyof typeof RPC_CODE_MAP], "validation">;

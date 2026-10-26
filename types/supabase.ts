@@ -990,6 +990,37 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      adjust_session_capacity: {
+        Args: { p_coach_count: number; p_session_id: string }
+        Returns: {
+          coach_count: number | null
+          court_count: number
+          created_at: string
+          created_by: string | null
+          description: string | null
+          ends_at: string
+          id: string
+          kind: Database["public"]["Enums"]["session_kind"]
+          location: string
+          location_url: string | null
+          max_participants: number
+          premium_surcharge_idr: number
+          price: number | null
+          registration_state: Database["public"]["Enums"]["registration_state"]
+          seats_per_coach: number | null
+          starts_at: string
+          status: Database["public"]["Enums"]["session_status"]
+          title: string
+          updated_at: string
+          waitlist_capacity: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "sessions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       admin_cancel_membership: {
         Args: { p_membership_id: string }
         Returns: {

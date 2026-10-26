@@ -106,7 +106,7 @@ If the replacement later cancels their seat, the drilling rule applies: no refun
 RPC `adjust_session_capacity(session_id, coach_count)`, `security definer`, host or admin only (checked against `session_hosts` and `is_admin()`).
 
 - Takes the per-session advisory lock and the `read committed` guard.
-- Valid for drilling sessions in `scheduled` or `live` status. Open play capacity is still edited through `updateSession`.
+- Valid for drilling sessions in `draft`, `scheduled`, or `live` status. Promotion on a raise only runs in `scheduled` or `live`, as in `promote_from_waitlist`. Open play capacity is still edited through `updateSession`.
 - Sets `coach_count`, `max_participants = coach_count * seats_per_coach`, and `court_count = coach_count` together.
 - Raising: inserts the missing `courts` rows (next `court_number` values) so `court_count` and the courts table stay in step. Then promotes waitlisters oldest first, premium first, until the session is full or the waitlist is empty. It reuses the one-seat promotion step from `promote_from_waitlist` in a loop.
 - Lowering: rejected if the new capacity is below the number of `confirmed` rows. The host removes people first. Rejected too if a court that would be removed is not `idle`. Nobody is dropped by automation.
