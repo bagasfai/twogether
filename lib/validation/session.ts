@@ -32,6 +32,13 @@ const optionalPrice = z.preprocess(
     .nullable(),
 );
 
+// Same blank/null -> null preprocessing as optionalPrice, for the drilling-only
+// coach fields: an open play form leaves them blank.
+const optionalCount = z.preprocess(
+  (value) => (value === "" || value === null || value === undefined ? null : value),
+  z.coerce.number().int().min(1, "Must be at least 1").max(50, "That can't be right").nullable(),
+);
+
 export const sessionSchema = z
   .object({
     title: z.string().trim().min(3, "Give the session a title").max(120, "Title is too long"),
@@ -42,6 +49,17 @@ export const sessionSchema = z
     location: z.string().trim().min(3, "Where is it?").max(200, "Location is too long"),
     locationUrl: optionalUrl,
     price: optionalPrice,
+    // defaults keep open-play callers (and idempotent re-parses) working
+    kind: z.enum(["open_play", "drilling"]).default("open_play"),
+    // mirrors the premium_surcharge_idr >= 0 CHECK
+    premiumSurchargeIdr: z.coerce
+      .number()
+      .int()
+      .min(0, "Cannot be negative")
+      .max(10_000_000, "That can't be right")
+      .default(0),
+    coachCount: optionalCount.default(null),
+    seatsPerCoach: optionalCount.default(null),
     // mirrors the court_count > 0 CHECK
     courtCount: z.coerce.number().int().min(1, "At least one court").max(20, "That is a lot of courts"),
     // mirrors the max_participants > 0 CHECK
@@ -57,6 +75,38 @@ export const sessionSchema = z
   .refine((value) => new Date(value.endsAt) > new Date(value.startsAt), {
     message: "End time must be after the start time",
     path: ["endsAt"],
+  })
+  // mirrors the drilling CHECK: max_participants = coach_count * seats_per_coach
+  // and court_count = coach_count. The form fills both derived fields; this
+  // rejects a submission where they disagree instead of deriving them here.
+  .superRefine((value, ctx) => {
+    if (value.kind === "open_play") {
+      if (value.coachCount !== null || value.seatsPerCoach !== null) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["kind"],
+          message: "Coach fields only apply to drilling sessions",
+        });
+      }
+      return;
+    }
+    if (value.coachCount === null) {
+      ctx.addIssue({ code: "custom", path: ["coachCount"], message: "How many coaches?" });
+    }
+    if (value.seatsPerCoach === null) {
+      ctx.addIssue({ code: "custom", path: ["seatsPerCoach"], message: "How many seats per coach?" });
+    }
+    if (value.coachCount === null || value.seatsPerCoach === null) return;
+    if (value.maxParticipants !== value.coachCount * value.seatsPerCoach) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["maxParticipants"],
+        message: "Must equal coaches x seats per coach",
+      });
+    }
+    if (value.courtCount !== value.coachCount) {
+      ctx.addIssue({ code: "custom", path: ["courtCount"], message: "Drilling uses one court per coach" });
+    }
   });
 
 export type SessionInput = z.infer<typeof sessionSchema>;

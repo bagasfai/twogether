@@ -1,4 +1,7 @@
 import type { SessionInput } from "@/lib/validation/session";
+import type { Database } from "@/types/supabase";
+
+export type SessionKind = Database["public"]["Enums"]["session_kind"];
 
 // Pure object construction, deliberately kept in its own module (rather than
 // inline in updateSession, or in sessions.ts itself) with no "use server"
@@ -13,7 +16,15 @@ import type { SessionInput } from "@/lib/validation/session";
 // controls (guard_court_delete trigger), and writing court_count here
 // without touching the courts table would desync the two. Do not "align"
 // this with createSession's insert payload by adding court_count back in.
-export function sessionUpdatePayload(values: SessionInput) {
+//
+// Drilling sessions add three more columns that are never written here:
+// kind is fixed at creation, and coach_count / seats_per_coach (with the
+// max_participants and court_count they derive) change only through the
+// capacity-adjust RPC, which promotes the waitlist and reconciles courts under
+// the session lock. For drilling, max_participants is therefore omitted too; a
+// plain UPDATE of it would break the coach_count * seats_per_coach CHECK.
+// Open play keeps writing max_participants as before.
+export function sessionUpdatePayload(values: SessionInput, kind: SessionKind) {
   return {
     title: values.title,
     description: values.description,
@@ -22,7 +33,8 @@ export function sessionUpdatePayload(values: SessionInput) {
     location: values.location,
     location_url: values.locationUrl,
     price: values.price,
-    max_participants: values.maxParticipants,
+    premium_surcharge_idr: values.premiumSurchargeIdr,
+    ...(kind === "drilling" ? {} : { max_participants: values.maxParticipants }),
     waitlist_capacity: values.waitlistCapacity,
     registration_state: values.registrationState,
     status: values.status,

@@ -5,6 +5,7 @@ import { getCurrentUser } from "@/lib/dal/user";
 import type { Database } from "@/types/supabase";
 
 export type SessionStatus = Database["public"]["Enums"]["session_status"];
+export type SessionKind = Database["public"]["Enums"]["session_kind"];
 
 export type HostedSession = {
   id: string;
@@ -20,10 +21,14 @@ export type HostedSession = {
   price: number | null;
   status: SessionStatus;
   registrationState: "closed" | "open";
+  kind: SessionKind;
+  premiumSurchargeIdr: number;
+  coachCount: number | null;
+  seatsPerCoach: number | null;
 };
 
 const COLUMNS =
-  "id, title, description, starts_at, ends_at, location, location_url, max_participants, waitlist_capacity, court_count, price, status, registration_state";
+  "id, title, description, starts_at, ends_at, location, location_url, max_participants, waitlist_capacity, court_count, price, status, registration_state, kind, premium_surcharge_idr, coach_count, seats_per_coach";
 
 type Row = {
   id: string;
@@ -39,6 +44,10 @@ type Row = {
   price: number | null;
   status: SessionStatus;
   registration_state: "closed" | "open";
+  kind: SessionKind;
+  premium_surcharge_idr: number;
+  coach_count: number | null;
+  seats_per_coach: number | null;
 };
 
 function toHostedSession(row: Row): HostedSession {
@@ -56,6 +65,10 @@ function toHostedSession(row: Row): HostedSession {
     price: row.price,
     status: row.status,
     registrationState: row.registration_state,
+    kind: row.kind,
+    premiumSurchargeIdr: row.premium_surcharge_idr,
+    coachCount: row.coach_count,
+    seatsPerCoach: row.seats_per_coach,
   };
 }
 

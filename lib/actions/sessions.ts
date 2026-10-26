@@ -33,6 +33,12 @@ export async function createSession(input: SessionInput): Promise<ActionResult<{
     );
   }
 
+  const isDrilling = values.kind === "drilling";
+  const courtCount = isDrilling ? (values.coachCount ?? values.courtCount) : values.courtCount;
+  const maxParticipants = isDrilling
+    ? (values.coachCount ?? 0) * (values.seatsPerCoach ?? 0)
+    : values.maxParticipants;
+
   const supabase = await createClient();
 
   // sessions_insert_host requires current_user_role() in ('host','admin') AND
@@ -51,8 +57,14 @@ export async function createSession(input: SessionInput): Promise<ActionResult<{
       location: values.location,
       location_url: values.locationUrl,
       price: values.price,
-      court_count: values.courtCount,
-      max_participants: values.maxParticipants,
+      kind: values.kind,
+      premium_surcharge_idr: values.premiumSurchargeIdr,
+      // null for open play; the drilling CHECK ties max_participants and
+      // court_count to these, so derive them here rather than trust the form
+      coach_count: isDrilling ? values.coachCount : null,
+      seats_per_coach: isDrilling ? values.seatsPerCoach : null,
+      court_count: courtCount,
+      max_participants: maxParticipants,
       waitlist_capacity: values.waitlistCapacity,
       registration_state: values.registrationState,
       status: values.status,
@@ -72,7 +84,7 @@ export async function createSession(input: SessionInput): Promise<ActionResult<{
   // A failure here isn't fatal -- the host still has the manual "Add court"
   // control on the manage page (see lib/actions/courts.ts) as the override.
   await supabase.from("courts").insert(
-    Array.from({ length: values.courtCount }, (_, i) => ({
+    Array.from({ length: courtCount }, (_, i) => ({
       session_id: data.id,
       court_number: i + 1,
     })),
@@ -129,7 +141,7 @@ export async function updateSession(id: string, input: SessionInput): Promise<Ac
 
   const { error } = await supabase
     .from("sessions")
-    .update(sessionUpdatePayload(values))
+    .update(sessionUpdatePayload(values, current.kind))
     .eq("id", idParsed.data.id);
 
   if (error) {
