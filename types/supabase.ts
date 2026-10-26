@@ -5,7 +5,6 @@ export type Json =
   | null
   | { [key: string]: Json | undefined }
   | Json[]
-
 export type Database = {
   graphql_public: {
     Tables: {
@@ -1331,6 +1330,38 @@ export type Database = {
         }
       }
       start_session: { Args: { p_session_id: string }; Returns: undefined }
+      transfer_participation: {
+        Args: { p_participant_id: string; p_to_user_id: string }
+        Returns: {
+          added_by: string | null
+          bumped_at: string | null
+          cancelled_at: string | null
+          checked_in_at: string | null
+          consented_at: string | null
+          created_at: string
+          guest_name: string | null
+          guest_phone: string | null
+          id: string
+          is_premium: boolean
+          membership_id: string | null
+          no_show_at: string | null
+          paid_at: string | null
+          paid_by_user_id: string | null
+          registered_at: string
+          registered_by: string | null
+          replaced_by: string | null
+          session_id: string
+          status: Database["public"]["Enums"]["participant_status"]
+          updated_at: string
+          user_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "participants"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       waitlist_position_of: {
         Args: { p_id: string; p_registered_at: string; p_session_id: string }
         Returns: number
@@ -1362,11 +1393,8 @@ export type Database = {
     }
   }
 }
-
 type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
-
 type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
-
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
@@ -1395,7 +1423,6 @@ export type Tables<
       ? R
       : never
     : never
-
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
@@ -1420,7 +1447,6 @@ export type TablesInsert<
       ? I
       : never
     : never
-
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
@@ -1445,7 +1471,6 @@ export type TablesUpdate<
       ? U
       : never
     : never
-
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
@@ -1462,7 +1487,6 @@ export type Enums<
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
     ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
     : never
-
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
@@ -1479,7 +1503,6 @@ export type CompositeTypes<
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
     ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
-
 export const Constants = {
   graphql_public: {
     Enums: {},
@@ -1500,4 +1523,8 @@ export const Constants = {
     },
   },
 } as const
-
+Connecting to db 5432
+(node:1) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [BoundPool]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(Use `node --trace-warnings ...` to show where the warning was created)
+A new version of Supabase CLI is available: v2.122.0 (currently installed v2.117.0)
+We recommend updating regularly for new features and bug fixes: https://supabase.com/docs/guides/cli/getting-started#updating-the-supabase-cli

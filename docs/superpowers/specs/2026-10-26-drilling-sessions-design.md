@@ -95,7 +95,7 @@ Rules:
 
 Steps, in one transaction, under the same per-session advisory lock and `read committed` guard as `register_for_session`:
 
-1. Insert the replacement as `confirmed`. Copy `is_premium`, `membership_id`, `checked_in_at`, and `paid_at` from the old row, and set `paid_by_user_id` to the old row's user. The seat keeps its bump protection because the original member paid for it. The replacement gets no `membership_usages` row.
+1. Insert the replacement as `confirmed`. Copy `is_premium`, `membership_id`, and `paid_at` from the old row, and set `paid_by_user_id` to the old row's user. `checked_in_at` is reset to null, because the replacement has not arrived. `consented_at` is left null; the replacement confirms through the existing `member_confirm_participation` flow, as host-added rows do. If the replacement already has a cancelled row on the session, that row is revived and every per-row field is reset. The seat keeps its bump protection because the original member paid for it. The replacement gets no `membership_usages` row.
 2. Update the old row to `status = 'cancelled'` with `replaced_by` set to the new row, in the same statement. Check how `participants` invariants and capacity are enforced (`20260911000012_invariant_fixes.sql`); if a capacity check fires on the insert, cancel first and insert second.
 3. The promotion trigger and the refund trigger both return early when `new.replaced_by is not null`. Nobody on the waitlist takes the seat, and the original usage row stays consumed.
 

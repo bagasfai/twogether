@@ -24,6 +24,10 @@
 //         also a grant to a missing user)
 //   JB019 membership already cancelled
 //   JB020 session kind cannot change once participant rows exist
+//   JB021 replacement already has a seat on the session (transfer_participation)
+//   JB022 seat is not confirmed (transfer_participation)
+//   JB023 transfer not allowed now: member after starts_at, or session not
+//         scheduled or live (transfer_participation)
 
 export const RPC_CODE_MAP = {
   JB001: "registration_closed",
@@ -46,6 +50,9 @@ export const RPC_CODE_MAP = {
   JB018: "not_found",
   JB019: "invalid_state",
   JB020: "invalid_state",
+JB021: "invalid_state",
+JB022: "invalid_state",
+JB023: "invalid_state",
 } as const;
 
 export type RpcErrorCode = Exclude<(typeof RPC_CODE_MAP)[keyof typeof RPC_CODE_MAP], "validation">;
