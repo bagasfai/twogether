@@ -94,6 +94,8 @@ found by review, triaged, and deliberately left. Verdicts are from the final who
 - `JB003` is overloaded (already-registered / nothing-to-cancel / not-found) and `JB004`
   conflates 401 with 403. Split them when the first Server Actions map errors to form messages.
 - `guard_match_player`'s message says "not checked in" when the real cause is a hidden row.
+  Still open; the function now also raises `JB017` (player already in an active match), so a
+  caller sees two different causes behind one trigger.
 - Galleries and photos are anon-readable via `using (true)`, matching the public-gallery intent.
 - `JB006` also rejects SERIALIZABLE, which would in fact be safe. Fails closed; nothing takes it.
 - Migration 0011 has no `create publication` fallback, so it would fail on a non-Supabase
@@ -105,8 +107,10 @@ found by review, triaged, and deliberately left. Verdicts are from the final who
 
 ## From Task 10 (host session creation and roster management)
 
-- Resend and React Email are unconfigured, so email confirmation works locally through
-  Inbucket but not in any deployed environment. Must be wired before the first real user.
+- Resend and React Email: the `send-email` edge function and its secrets are deployed to the
+  hosted project (2026-10-23), but the Auth Send Email hook is not enabled in the dashboard,
+  so email confirmation still works only locally through Inbucket. Must be wired before the
+  first real user.
 - Google OAuth ships disabled and has never been exercised end to end.
 - No password reset flow exists.
 - ~~No admin UI: roles are changed by seed or by a service-role script.~~ **Resolved**:
@@ -119,6 +123,7 @@ found by review, triaged, and deliberately left. Verdicts are from the final who
 - ~~`host_add_participant` has no UI; it needs a member picker.~~ **Resolved** together with
   the consent fix above — see that entry.
 - No E2E coverage — signup, login, registration and override flows are verified by hand only.
+  The auto-match panel (below) is in the same state: browser-verified by hand on 2026-10-26.
 
 ## From the gallery work
 
@@ -179,6 +184,35 @@ found by review, triaged, and deliberately left. Verdicts are from the final who
 - `faq_lock_key()` keeps the default PUBLIC `EXECUTE`. It is an immutable constant and harmless; `030_about_faq_grant_surface_negatives.test.sql` pins that state deliberately so a change is conscious.
 - Mutation check (Task 7) confirmed the pins bite: dropping the `faq_move` revoke, adding `sort_order` to the `faq_items` column grant, and dropping `is_admin()` from either update policy each turn at least one pgTAP assertion red.
 
+## From skill levels and auto-match (phases 1-3)
+
+- **Confirm returns `ok: true` for a non-host.** `confirmSuggestions` has no host check of its
+  own; the `create_match` RPC rejects with `JB007`, so a non-host gets a per-match "You do not
+  have permission" inside a successful result rather than a top-level `not_authorized` like
+  `generateSuggestions`. Nothing leaks and nothing is created (verified in the browser). Make
+  the shapes consistent if a client ever branches on `ok`.
+- **The format Select trigger is 36px high on mobile**, not the `h-11` the panel asks for; the
+  shadcn default size appears to win. Other touch targets in the panel are 44px.
+- **`--warning-foreground` is near-black in dark mode**, so `badge.tsx`'s
+  `text-warning-foreground` on `bg-warning/20` is likely unreadable there. The panel's warning
+  text uses `text-warning-foreground dark:text-warning` instead; the badge was not touched.
+- **A suggestion rejected for "court taken" can only be discarded and regenerated**, not moved
+  to another free court. Deliberately left: discard and regenerate recovers, and host control
+  (rule 3) is intact.
+- **Matcher DAL and actions have no automated tests.** The pool filter, name resolution and the
+  named-busy message live in `lib/matcher/pool.ts` and are unit-tested; the Supabase queries
+  around them (busy lookup, court and history queries) are covered only by the manual browser
+  run.
+- **`scripts/test-concurrent-create-match.sh` proves the `create_match` race, not the guard's
+  own lock.** Removing only the row lock in `guard_match_player` leaves the script green,
+  because the ordered lock in `create_match` already serialises those callers. The guard's
+  lock matters only for a `match_players` insert that bypasses `create_match`; no racer covers
+  that path.
+- **The admin sees a 404 on the manage page of a session they are not a host of.** Seed data
+  makes the admin a cohost only on Wednesday League Night. This matches `getHostSession`, but
+  it differs from CLAUDE.md §4 ("Admin: everything a Host can do"). Decide whether that is
+  intended.
+
 ## Process note
 
 The "delete the code, the suite still passes" gap was found **five** separate times across this
@@ -190,12 +224,23 @@ guard, and trigger in turn and confirm something actually goes red.
 transaction, so the advisory lock is never contended — the suite cannot distinguish the shipped
 code from the same code with every lock line deleted. `scripts/test-concurrent-registration.sh`
 is the only artefact proving the property this entire schema exists to guarantee. Keep it alive.
+`scripts/test-concurrent-create-match.sh` does the same for double-booking a player across
+matches (20 rounds of crossed-order overlapping lineups); a mutation check confirmed it fails
+on a deadlock and on removing both locks.
 
 ## Deploy checklist
 
-- `supabase/migrations/20260910050037_initial_schema.sql` was removed on this branch, and its
+- **Pending migrations on the hosted project.** 31 migrations were pushed on 2026-10-23; the
+  repo now has 37. The skill-level, gender, guest-attribute, match-stats and match-guard
+  migrations (`20261026000001` through `20261027000002`, plus possibly
+  `20261023000001_public_community_stats`) are almost certainly not on the hosted project and
+  must be pushed before the app code that uses them goes live. Not confirmed:
+  `supabase migration list` fails locally on the `send_email` hook config error.
+- ~~`supabase/migrations/20260910050037_initial_schema.sql` was removed on this branch, and its
   timestamp precedes every surviving migration. Harmless for a fresh local reset. But if any
   remote/hosted Supabase project ever recorded that migration as applied, `supabase db push`
   will report a missing local migration (the remote's migration history table references a
   filename that no longer exists locally) — reconcile with `supabase migration repair` (or
-  equivalent) before pushing to any such project, rather than assuming a clean push.
+  equivalent) before pushing to any such project, rather than assuming a clean push.~~
+  **Resolved** (2026-10-23): the hosted project has no `20260910050037` entry, so no repair is
+  needed.
