@@ -437,7 +437,7 @@ enabled = true
 # flipping `enabled` -- no code change; the callback route and the button ship
 # in this slice.
 [auth.external.google]
-enabled = false
+enabled = true
 client_id = "env(GOOGLE_CLIENT_ID)"
 secret = "env(GOOGLE_SECRET)"
 redirect_uri = ""
