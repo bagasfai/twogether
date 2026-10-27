@@ -7,7 +7,7 @@ const skillLevelSchema = z.enum(SKILL_LEVELS);
 const genderSchema = z.enum(GENDERS);
 
 export const setMemberLevelSchema = z.object({
-  userId: z.uuid(),
+  userId: z.guid(),
   level: skillLevelSchema,
 });
 
@@ -22,7 +22,7 @@ export const setGuestAttributesSchema = z.object({
 export type SetGuestAttributesInput = z.infer<typeof setGuestAttributesSchema>;
 
 export const setMemberGenderSchema = z.object({
-  userId: z.uuid(),
+  userId: z.guid(),
   gender: genderSchema,
 });
 

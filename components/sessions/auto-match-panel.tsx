@@ -38,6 +38,12 @@ export function AutoMatchPanel({ sessionId }: { sessionId: string }) {
 
   const nameOf = (id: string) => players.get(id)?.name ?? "Unknown player";
 
+  const levelBadge = (id: string) => (
+    <Badge variant="outline" className="ml-2 capitalize">
+      {players.get(id)?.level ?? "?"}
+    </Badge>
+  );
+
   const generate = () =>
     startTransition(async () => {
       const result = await generateSuggestions({ sessionId, format });
@@ -137,7 +143,7 @@ export function AutoMatchPanel({ sessionId }: { sessionId: string }) {
         onClick={() => clickSlot(slot)}
       >
         {nameOf(id)}
-        {players.get(id)?.unrated ? <Badge variant="outline" className="ml-2">?</Badge> : null}
+        {levelBadge(id)}
       </Button>
     );
   };
@@ -219,6 +225,7 @@ export function AutoMatchPanel({ sessionId }: { sessionId: string }) {
                   onClick={() => clickUnused(id)}
                 >
                   {nameOf(id)}
+                  {levelBadge(id)}
                 </Button>
               </li>
             ))}

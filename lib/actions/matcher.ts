@@ -7,6 +7,7 @@ import { getMatcherInput } from "@/lib/dal/matcher";
 import { busyPlayerMessage, displayName } from "@/lib/matcher/pool";
 import { suggestMatches } from "@/lib/matcher/suggest";
 import type { PoolPlayer, SuggestedMatch } from "@/lib/matcher/types";
+import { SKILL_LEVELS, type SkillLevel } from "@/lib/players/levels";
 import { fail, failFromRpc, failFromZod, ok, type ActionResult } from "@/lib/actions/result";
 import {
   confirmSuggestionsSchema,
@@ -15,9 +16,9 @@ import {
   type GenerateSuggestionsInput,
 } from "@/lib/validation/matcher";
 
-// What the host UI needs to render and edit a suggestion. `weight` (a stand-in
-// for skill level) and `gamesPlayed` stay on the server.
-export type SuggestionPlayer = Pick<PoolPlayer, "participantId" | "name" | "gender" | "unrated">;
+// What the host UI needs to render and edit a suggestion. `weight` and
+// `gamesPlayed` stay on the server; `level` is the weight shown as a label.
+export type SuggestionPlayer = Pick<PoolPlayer, "participantId" | "name" | "gender" | "unrated"> & { level: SkillLevel | null };
 
 export type Suggestion = SuggestedMatch & { courtId: string; courtNumber: number };
 
@@ -58,7 +59,13 @@ export async function generateSuggestions(input: GenerateSuggestionsInput): Prom
 
   return ok({
     suggestions,
-    players: matcherInput.pool.map(({ participantId, name, gender, unrated }) => ({ participantId, name, gender, unrated })),
+    players: matcherInput.pool.map(({ participantId, name, gender, unrated, weight }) => ({
+      participantId,
+      name,
+      gender,
+      unrated,
+      level: unrated ? null : SKILL_LEVELS[weight - 1] ?? null,
+    })),
     unused: result.unused,
     reason,
   });
