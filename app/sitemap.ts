@@ -12,13 +12,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Nothing to build without an absolute origin; skip the queries.
   if (!siteUrl) return [];
 
-  // TEMP: diagnose "Invalid API key" on Vercel build. Remove after.
-  console.log(
-    "sitemap env",
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.length,
-  );
-
   const [sessions, albums] = await Promise.all([
     listSitemapSessions(),
     listSitemapAlbums(),
