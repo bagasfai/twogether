@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
@@ -40,5 +41,14 @@ describe("touch targets", () => {
     const m = html(createElement(Button, { className: "h-8" }, "x"));
     expect(m).toContain("h-8");
     expect(m).not.toContain("h-9");
+  });
+});
+
+describe("reduced motion", () => {
+  it("Button has no hover translate", () => {
+    expect(html(createElement(Button, null, "x"))).not.toContain("hover:-translate-y-px");
+  });
+  it("globals.css honours prefers-reduced-motion", () => {
+    expect(readFileSync("app/globals.css", "utf8")).toContain("prefers-reduced-motion: reduce");
   });
 });

@@ -9,7 +9,7 @@ export function SessionCard({ session }: { session: PublicSession }) {
   const t = useTranslations();
 
   return (
-    <Card className="transition-[transform,border-color] duration-[var(--dur-short)] ease-[var(--ease-out)] hover:-translate-y-0.5 hover:border-accent/40">
+    <Card className="transition-border-color duration-[var(--dur-short)] ease-[var(--ease-out)] hover:border-accent/40">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Link href={`/sessions/${session.id}`} className="hover:underline">
