@@ -42,7 +42,7 @@ export function LoginForm({ next }: { next?: string }) {
   return (
     <Card className="w-full max-w-sm">
       <CardHeader>
-        <CardTitle>Log in</CardTitle>
+        <CardTitle><h1>Log in</h1></CardTitle>
         <CardDescription>Welcome back to Jakbar Twogether.</CardDescription>
       </CardHeader>
       <Form {...form}>

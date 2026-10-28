@@ -46,7 +46,7 @@ export function SignupForm() {
     return (
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle>Check your email</CardTitle>
+          <CardTitle><h1>Check your email</h1></CardTitle>
           <CardDescription>
             We sent a confirmation link. Open it to finish creating your account.
           </CardDescription>
@@ -58,7 +58,7 @@ export function SignupForm() {
   return (
     <Card className="w-full max-w-sm">
       <CardHeader>
-        <CardTitle>Sign up</CardTitle>
+        <CardTitle><h1>Sign up</h1></CardTitle>
         <CardDescription>Join the Jakbar Twogether community.</CardDescription>
       </CardHeader>
       <Form {...form}>

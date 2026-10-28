@@ -1,7 +1,10 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { MatchHistoryList } from "@/components/sessions/match-history-list";
 import { getMatchHistory } from "@/lib/dal/match-history";
 import { requireUser } from "@/lib/dal/user";
+
+export const metadata: Metadata = { title: "Matches" };
 
 export default async function SessionMatchesPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

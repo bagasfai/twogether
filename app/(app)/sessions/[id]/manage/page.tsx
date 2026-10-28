@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { requireHost } from "@/lib/dal/user";
 import { getHostSession } from "@/lib/dal/sessions";
@@ -25,6 +26,8 @@ import { getHostAlbum, listApprovedPhotos, listPendingPhotos } from "@/lib/dal/g
 import { PhotosPanel } from "@/components/gallery/photos-panel";
 import { StartSessionButton } from "@/components/sessions/start-session-button";
 import { formatDateTime } from "@/lib/format/datetime";
+
+export const metadata: Metadata = { title: "Manage session" };
 
 export default async function ManageSessionPage({ params }: PageProps<"/sessions/[id]/manage">) {
   const { id } = await params;

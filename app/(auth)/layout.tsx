@@ -6,5 +6,9 @@ import type { ReactNode } from "react";
 // layout applies to /login and /signup, no single route literal fits, so a
 // plain children prop is the honest type.
 export default function AuthLayout({ children }: { children: ReactNode }) {
-  return <div className="flex flex-1 items-center justify-center p-6">{children}</div>;
+  return (
+    <main id="main" className="flex flex-1 items-center justify-center p-6">
+      {children}
+    </main>
+  );
 }

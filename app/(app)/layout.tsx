@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { requireUser } from "@/lib/dal/user";
+import { SkipLink } from "@/components/skip-link";
+import { NavLinks } from "@/components/nav/nav-links";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 
 // LayoutProps<"/"> would be wrong here even though it type-checks: Next's
@@ -25,8 +27,18 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   const user = await requireUser("/dashboard");
   const canHost = user.role === "host" || user.role === "admin";
 
+  const navItems = [
+    { href: "/sessions", label: "Sessions" },
+    { href: "/history", label: "History" },
+    { href: "/leaderboard", label: "Leaderboard" },
+    ...(canHost ? [{ href: "/sessions/new", label: "New session" }] : []),
+    { href: "/profile", label: "Profile" },
+    ...(user.role === "admin" ? [{ href: "/admin", label: "Admin" }] : []),
+  ];
+
   return (
     <div className="flex flex-1 flex-col">
+      <SkipLink />
       <header className="flex flex-col gap-2 border-b bg-background px-4 py-3 sm:px-6">
         <div className="flex items-center gap-4">
           <Link href="/dashboard" className="whitespace-nowrap text-sm font-semibold tracking-tight">
@@ -39,50 +51,13 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
             <SignOutButton />
           </div>
         </div>
-        <nav className="-mx-1 flex items-center gap-1 overflow-x-auto text-sm text-muted-foreground">
-          <Link
-            href="/sessions"
-            className="whitespace-nowrap rounded-full px-3 py-1.5 transition-colors hover:bg-accent/10 hover:text-foreground"
-          >
-            Sessions
-          </Link>
-          <Link
-            href="/history"
-            className="whitespace-nowrap rounded-full px-3 py-1.5 transition-colors hover:bg-accent/10 hover:text-foreground"
-          >
-            History
-          </Link>
-          <Link
-            href="/leaderboard"
-            className="whitespace-nowrap rounded-full px-3 py-1.5 transition-colors hover:bg-accent/10 hover:text-foreground"
-          >
-            Leaderboard
-          </Link>
-          {canHost ? (
-            <Link
-              href="/sessions/new"
-              className="whitespace-nowrap rounded-full px-3 py-1.5 transition-colors hover:bg-accent/10 hover:text-foreground"
-            >
-              New session
-            </Link>
-          ) : null}
-          <Link
-            href="/profile"
-            className="whitespace-nowrap rounded-full px-3 py-1.5 transition-colors hover:bg-accent/10 hover:text-foreground"
-          >
-            Profile
-          </Link>
-          {user.role === "admin" ? (
-            <Link
-              href="/admin"
-              className="whitespace-nowrap rounded-full px-3 py-1.5 transition-colors hover:bg-accent/10 hover:text-foreground"
-            >
-              Admin
-            </Link>
-          ) : null}
-        </nav>
+        <NavLinks
+          items={navItems}
+          className="-mx-1 flex items-center gap-1 overflow-x-auto text-sm text-muted-foreground"
+          linkClassName="whitespace-nowrap rounded-full px-3 py-1.5 transition-colors hover:bg-accent/10 hover:text-foreground"
+        />
       </header>
-      <main className="flex-1 p-6">{children}</main>
+      <main id="main" className="flex-1 p-6">{children}</main>
     </div>
   );
 }

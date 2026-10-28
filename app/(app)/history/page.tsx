@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,6 +8,8 @@ import {
   listMyPastGuestRegistrations,
 } from "@/lib/dal/participants";
 import { formatDateTime } from "@/lib/format/datetime";
+
+export const metadata: Metadata = { title: "History" };
 
 export default async function HistoryPage() {
   await requireUser("/history");

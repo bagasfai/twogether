@@ -1,6 +1,9 @@
+import type { Metadata } from "next";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { getAllTimeLeaderboard } from "@/lib/dal/stats";
 import { requireUser } from "@/lib/dal/user";
+
+export const metadata: Metadata = { title: "Leaderboard" };
 
 export default async function LeaderboardPage() {
   await requireUser("/leaderboard");

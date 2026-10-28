@@ -1,6 +1,9 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+
+export const metadata: Metadata = { title: "Sign-in problem" };
 
 const REASONS: Record<string, string> = {
   invalid_link: "That confirmation link is invalid or has expired.",
@@ -12,16 +15,16 @@ export default async function AuthErrorPage({ searchParams }: PageProps<"/auth/e
   const key = typeof reason === "string" ? reason : "";
 
   return (
-    <div className="flex flex-1 items-center justify-center p-6">
+    <main id="main" className="flex flex-1 items-center justify-center p-6">
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle>Sign-in problem</CardTitle>
+          <CardTitle><h1>Sign-in problem</h1></CardTitle>
           <CardDescription>{REASONS[key] ?? "Something went wrong signing you in."}</CardDescription>
         </CardHeader>
         <CardFooter>
           <Button asChild className="w-full"><Link href="/login">Back to login</Link></Button>
         </CardFooter>
       </Card>
-    </div>
+    </main>
   );
 }

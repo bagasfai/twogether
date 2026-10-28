@@ -1,5 +1,8 @@
+import type { Metadata } from "next";
 import { requireHost } from "@/lib/dal/user";
 import { SessionForm } from "@/components/sessions/session-form";
+
+export const metadata: Metadata = { title: "New session" };
 
 export default async function NewSessionPage() {
   // UX gate only: a member who reaches this URL is bounced to /dashboard, and

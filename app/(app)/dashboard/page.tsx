@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,6 +11,8 @@ import { listMyHostedSessions } from "@/lib/dal/sessions";
 import { getMyMemberships } from "@/lib/dal/memberships";
 import { listMyAnnouncementsFeed } from "@/lib/dal/announcements";
 import { formatDateTime } from "@/lib/format/datetime";
+
+export const metadata: Metadata = { title: "Dashboard" };
 
 export default async function DashboardPage() {
   const user = await requireUser("/dashboard");

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { requireAdmin } from "@/lib/dal/user";
 import { listAllMembers } from "@/lib/dal/admin";
 import { MemberRoleTable } from "@/components/admin/member-role-table";
@@ -14,6 +15,8 @@ import { listMembershipsForAdmin, listPlans } from "@/lib/dal/memberships";
 import { MembershipPlansPanel } from "@/components/admin/membership-plans-panel";
 import { GrantMembershipDialog } from "@/components/admin/grant-membership-dialog";
 import { MembershipsTable } from "@/components/admin/memberships-table";
+
+export const metadata: Metadata = { title: "Admin" };
 
 export default async function AdminPage() {
   const user = await requireAdmin("/admin");
