@@ -6,6 +6,7 @@ import {
   listMyPastRegistrations,
   listMyPastGuestRegistrations,
 } from "@/lib/dal/participants";
+import { formatDateTime } from "@/lib/format/datetime";
 
 export default async function HistoryPage() {
   await requireUser("/history");
@@ -40,7 +41,7 @@ export default async function HistoryPage() {
                     )}
                   </CardTitle>
                   <CardDescription>
-                    {new Date(row.startsAt).toLocaleString()} · {row.location}
+                    {formatDateTime(row.startsAt)} · {row.location}
                     {" · "}
                     <Link href={`/sessions/${row.sessionId}/matches`} className="font-medium text-accent hover:underline">
                       Matches
@@ -69,7 +70,7 @@ export default async function HistoryPage() {
                     )}
                   </CardTitle>
                   <CardDescription>
-                    {row.guestName} · {new Date(row.startsAt).toLocaleString()}
+                    {row.guestName} · {formatDateTime(row.startsAt)}
                     {" · "}
                     <Link href={`/sessions/${row.sessionId}/matches`} className="font-medium text-accent hover:underline">
                       Matches

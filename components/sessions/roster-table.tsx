@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 // added or removed in the database fails this file at compile time instead of
 // silently drifting from lib/dal/participants.ts's RosterEntry type.
 import type { Database } from "@/types/supabase";
+import { formatDateTime } from "@/lib/format/datetime";
 
 type ParticipantStatus = Database["public"]["Enums"]["participant_status"];
 
@@ -183,7 +184,7 @@ export function RosterTable({
               </div>
             </div>
             <p className="text-xs text-muted-foreground">
-              Registered {new Date(entry.registeredAt).toLocaleString()}
+              Registered {formatDateTime(entry.registeredAt)}
             </p>
             <OwedLine entry={entry} pricing={pricing} />
 
@@ -344,7 +345,7 @@ export function RosterTable({
                   <ConsentBadge addedBy={entry.addedBy} consentedAt={entry.consentedAt} />
                 </div>
               </TableCell>
-              <TableCell className="whitespace-normal text-xs text-muted-foreground">{new Date(entry.registeredAt).toLocaleString()}</TableCell>
+              <TableCell className="whitespace-normal text-xs text-muted-foreground">{formatDateTime(entry.registeredAt)}</TableCell>
               <TableCell className="whitespace-normal">
                 <OwedLine entry={entry} pricing={pricing} />
               </TableCell>

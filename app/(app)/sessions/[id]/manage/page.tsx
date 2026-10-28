@@ -24,6 +24,7 @@ import { getMessages } from "next-intl/server";
 import { getHostAlbum, listApprovedPhotos, listPendingPhotos } from "@/lib/dal/galleries";
 import { PhotosPanel } from "@/components/gallery/photos-panel";
 import { StartSessionButton } from "@/components/sessions/start-session-button";
+import { formatDateTime } from "@/lib/format/datetime";
 
 export default async function ManageSessionPage({ params }: PageProps<"/sessions/[id]/manage">) {
   const { id } = await params;
@@ -70,7 +71,7 @@ export default async function ManageSessionPage({ params }: PageProps<"/sessions
         <div className="flex flex-col gap-1">
           <h1 className="text-xl font-semibold tracking-tight">{session.title}</h1>
           <p className="text-sm text-muted-foreground">
-            {new Date(session.startsAt).toLocaleString()} · {session.location}
+            {formatDateTime(session.startsAt)} · {session.location}
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-2">

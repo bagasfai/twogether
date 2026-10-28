@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { setUserRole } from "@/lib/actions/admin";
 import type { MemberRow } from "@/lib/dal/admin";
 import type { Database } from "@/types/supabase";
+import { formatDate } from "@/lib/format/datetime";
 
 type UserRole = Database["public"]["Enums"]["user_role"];
 
@@ -39,7 +40,7 @@ export function MemberRoleTable({ members, currentUserId }: { members: MemberRow
         {members.map((member) => (
           <TableRow key={member.id}>
             <TableCell>{member.fullName ?? "Unnamed player"}</TableCell>
-            <TableCell>{new Date(member.createdAt).toLocaleDateString()}</TableCell>
+            <TableCell>{formatDate(member.createdAt)}</TableCell>
             <TableCell className="text-right">
               {member.id === currentUserId ? (
                 <span className="text-sm text-muted-foreground">{ROLE_LABEL[member.role]} (you)</span>

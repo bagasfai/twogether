@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { HoldToConfirmButton } from "@/components/gallery/hold-to-confirm-button";
 import { cancelMembership } from "@/lib/actions/memberships";
 import type { AdminMembershipRow, MembershipStatus } from "@/lib/dal/memberships";
+import { formatDate } from "@/lib/format/datetime";
 
 const STATUS_LABEL: Record<MembershipStatus, string> = {
   queued: "Queued",
@@ -23,10 +24,6 @@ const STATUS_VARIANT: Record<MembershipStatus, "success" | "warning" | "secondar
   expired: "outline",
   cancelled: "destructive",
 };
-
-function formatDate(value: string | null): string {
-  return value ? new Date(value).toLocaleDateString() : "-";
-}
 
 export function MembershipsTable({ memberships }: { memberships: AdminMembershipRow[] }) {
   const [pending, startTransition] = useTransition();

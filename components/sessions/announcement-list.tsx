@@ -1,6 +1,7 @@
 import { AnnouncementForm } from "@/components/sessions/announcement-form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import type { AnnouncementRow } from "@/lib/dal/announcements";
+import { formatDateTime } from "@/lib/format/datetime";
 
 export function AnnouncementList({
   sessionId,
@@ -27,7 +28,7 @@ export function AnnouncementList({
                   <CardTitle>{announcement.title}</CardTitle>
                   <AnnouncementForm sessionId={sessionId} announcement={announcement} />
                 </div>
-                <CardDescription>{new Date(announcement.publishedAt).toLocaleString()}</CardDescription>
+                <CardDescription>{formatDateTime(announcement.publishedAt)}</CardDescription>
               </CardHeader>
               <CardContent className="whitespace-pre-wrap text-sm">{announcement.body}</CardContent>
             </Card>

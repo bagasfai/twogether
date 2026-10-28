@@ -7,6 +7,7 @@ import { RegisterPanel } from "@/components/sessions/register-panel";
 import { RegisteredParticipants } from "@/components/sessions/registered-participants";
 import { UploadPanel } from "@/components/gallery/upload-panel";
 import { getAlbumForSession } from "@/lib/dal/galleries";
+import { formatDateTime, formatTime } from "@/lib/format/datetime";
 
 export const revalidate = 60;
 
@@ -22,11 +23,11 @@ export async function generateStaticParams() {
 export async function generateMetadata({
   params,
 }: PageProps<"/[locale]/sessions/[id]">): Promise<Metadata> {
-  const { id } = await params;
+  const { id, locale } = await params;
   const [session, t] = await Promise.all([getPublicSession(id), getTranslations("sessionDetail")]);
   if (!session) return { title: t("notFound") };
 
-  const description = `${new Date(session.startsAt).toLocaleString()} · ${session.location}`;
+  const description = `${formatDateTime(session.startsAt, locale)} · ${session.location}`;
 
   return {
     title: `${session.title} — Jakbar Twogether`,
@@ -39,7 +40,7 @@ export async function generateMetadata({
 export default async function SessionDetailPage({
   params,
 }: PageProps<"/[locale]/sessions/[id]">) {
-  const { id } = await params;
+  const { id, locale } = await params;
   const [session, t, tAnnouncements] = await Promise.all([
     getPublicSession(id),
     getTranslations("sessionDetail"),
@@ -55,7 +56,7 @@ export default async function SessionDetailPage({
       <header className="flex flex-col gap-2">
         <h1 className="text-3xl font-semibold tracking-tight text-balance">{session.title}</h1>
         <p className="text-muted-foreground">
-          {new Date(session.startsAt).toLocaleString()} – {new Date(session.endsAt).toLocaleTimeString()}
+          {formatDateTime(session.startsAt, locale)} – {formatTime(session.endsAt, locale)}
         </p>
         <p className="text-muted-foreground">
           {session.locationUrl ? (

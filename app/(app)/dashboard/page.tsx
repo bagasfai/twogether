@@ -9,6 +9,7 @@ import { listMyUpcomingRegistrations } from "@/lib/dal/participants";
 import { listMyHostedSessions } from "@/lib/dal/sessions";
 import { getMyMemberships } from "@/lib/dal/memberships";
 import { listMyAnnouncementsFeed } from "@/lib/dal/announcements";
+import { formatDateTime } from "@/lib/format/datetime";
 
 export default async function DashboardPage() {
   const user = await requireUser("/dashboard");
@@ -49,7 +50,7 @@ export default async function DashboardPage() {
                     )}
                   </CardTitle>
                   <CardDescription>
-                    {new Date(row.startsAt).toLocaleString()} · {row.location}
+                    {formatDateTime(row.startsAt)} · {row.location}
                   </CardDescription>
                 </CardHeader>
                 {row.needsConfirmation ? (
@@ -71,7 +72,7 @@ export default async function DashboardPage() {
               <Card key={announcement.id}>
                 <CardHeader>
                   <CardTitle>{announcement.title}</CardTitle>
-                  <CardDescription>{new Date(announcement.publishedAt).toLocaleString()}</CardDescription>
+                  <CardDescription>{formatDateTime(announcement.publishedAt)}</CardDescription>
                 </CardHeader>
                 <CardContent className="whitespace-pre-wrap text-sm">{announcement.body}</CardContent>
               </Card>
@@ -94,7 +95,7 @@ export default async function DashboardPage() {
                     <SessionActionsMenu session={session} />
                   </div>
                   <CardDescription>
-                    {new Date(session.startsAt).toLocaleString()} · {session.location} ·{" "}
+                    {formatDateTime(session.startsAt)} · {session.location} ·{" "}
                     {session.status} · registration {session.registrationState}
                   </CardDescription>
                 </CardHeader>

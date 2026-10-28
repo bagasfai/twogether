@@ -1,10 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import type { MyMembershipRow } from "@/lib/dal/memberships";
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
-}
+import { formatDate } from "@/lib/format/datetime";
 
 // Shows the active membership (quota left, expiry) and any queued ones.
 // Renders nothing when the member has neither; expired, exhausted and

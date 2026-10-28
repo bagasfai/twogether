@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import type { HostedSession } from "@/lib/dal/sessions";
+import { formatDateTime } from "@/lib/format/datetime";
 
 function isHostedSession(value: unknown): value is HostedSession {
   if (typeof value !== "object" || value === null) return false;
@@ -80,7 +81,7 @@ export function HostedSessionsPreview() {
                 </Badge>
               </CardTitle>
               <CardDescription>
-                {new Date(session.startsAt).toLocaleString()} · {session.location}
+                {formatDateTime(session.startsAt)} · {session.location}
               </CardDescription>
             </CardHeader>
             <CardContent className="font-mono text-sm tabular-nums text-muted-foreground">

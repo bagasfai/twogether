@@ -3,6 +3,7 @@ import { Link } from "@/i18n/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import type { PublicSession } from "@/lib/dal/public-sessions";
+import { formatDateTime } from "@/lib/format/datetime";
 
 export function SessionCard({ session }: { session: PublicSession }) {
   const t = useTranslations();
@@ -21,7 +22,7 @@ export function SessionCard({ session }: { session: PublicSession }) {
           )}
         </CardTitle>
         <CardDescription>
-          {new Date(session.startsAt).toLocaleString()} · {session.location}
+          {formatDateTime(session.startsAt)} · {session.location}
         </CardDescription>
       </CardHeader>
       <CardContent className="text-sm text-muted-foreground">
