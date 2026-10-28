@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import type { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, useFocusFormError, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { DateTimePicker } from "@/components/sessions/datetime-picker";
 import { createSession, updateSession } from "@/lib/actions/sessions";
@@ -17,7 +17,7 @@ import { applyFieldErrors } from "@/lib/forms/apply-field-errors";
 type SessionFormValues = z.input<typeof sessionSchema>;
 
 const CONTROL_CLASS =
-  "border-input bg-transparent flex h-9 w-full rounded-md border px-3 py-1 text-sm shadow-xs outline-none";
+  "border-input bg-transparent flex max-md:h-11 h-9 w-full rounded-md border px-3 py-1 text-base md:text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 aria-invalid:border-destructive disabled:cursor-not-allowed disabled:opacity-50";
 
 export function SessionForm({
   sessionId,
@@ -91,6 +91,8 @@ export function SessionForm({
     }
   };
 
+  const rootErrorRef = useFocusFormError(form.formState.errors.root);
+
   const onSubmit = form.handleSubmit((values) =>
     startTransition(async () => {
       // datetime-local has no zone. Convert HERE, in the browser, where the
@@ -159,7 +161,7 @@ export function SessionForm({
                   <FormControl>
                     <textarea
                       rows={3}
-                      className={`${CONTROL_CLASS} h-auto`}
+                      className={`${CONTROL_CLASS} max-md:h-auto h-auto`}
                       {...field}
                       value={field.value ?? ""}
                     />
@@ -435,7 +437,7 @@ export function SessionForm({
             </div>
 
             {form.formState.errors.root ? (
-              <p className="text-sm text-destructive-text">{form.formState.errors.root.message}</p>
+              <p ref={rootErrorRef} role="alert" tabIndex={-1} className="text-sm text-destructive-text outline-none">{form.formState.errors.root.message}</p>
             ) : null}
 
             <FormDescription>

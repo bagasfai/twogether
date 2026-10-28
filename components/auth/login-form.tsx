@@ -9,7 +9,7 @@ import {
   Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle,
 } from "@/components/ui/card";
 import {
-  Form, FormControl, FormField, FormItem, FormLabel, FormMessage,
+  Form, useFocusFormError, FormControl, FormField, FormItem, FormLabel, FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { signIn } from "@/lib/actions/auth";
@@ -24,6 +24,8 @@ export function LoginForm({ next }: { next?: string }) {
     resolver: zodResolver(signInSchema),
     defaultValues: { email: "", password: "" },
   });
+
+  const rootErrorRef = useFocusFormError(form.formState.errors.root);
 
   const onSubmit = form.handleSubmit((values) =>
     startTransition(async () => {
@@ -75,7 +77,7 @@ export function LoginForm({ next }: { next?: string }) {
               )}
             />
             {form.formState.errors.root ? (
-              <p className="text-sm text-destructive-text">{form.formState.errors.root.message}</p>
+              <p ref={rootErrorRef} role="alert" tabIndex={-1} className="text-sm text-destructive-text outline-none">{form.formState.errors.root.message}</p>
             ) : null}
           </CardContent>
           <CardFooter className="flex-col gap-3">

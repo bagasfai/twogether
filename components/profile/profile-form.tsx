@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import type { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, useFocusFormError, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { updateProfile } from "@/lib/actions/profile";
@@ -24,6 +24,8 @@ export function ProfileForm({ defaultValues }: { defaultValues: ProfileFormValue
     resolver: zodResolver(profileSchema),
     defaultValues,
   });
+
+  const rootErrorRef = useFocusFormError(form.formState.errors.root);
 
   const onSubmit = form.handleSubmit((values) =>
     startTransition(async () => {
@@ -114,7 +116,7 @@ export function ProfileForm({ defaultValues }: { defaultValues: ProfileFormValue
               )}
             />
             {form.formState.errors.root ? (
-              <p className="text-sm text-destructive-text">{form.formState.errors.root.message}</p>
+              <p ref={rootErrorRef} role="alert" tabIndex={-1} className="text-sm text-destructive-text outline-none">{form.formState.errors.root.message}</p>
             ) : null}
           </CardContent>
           <CardFooter>

@@ -125,9 +125,9 @@ export function MatchPanel({
 
       <div className="flex flex-col gap-3 rounded-md border p-3">
         <div className="flex flex-col gap-1.5">
-          <Label>Court</Label>
+          <Label htmlFor="match-court">Court</Label>
           <Select value={courtId} onValueChange={setCourtId}>
-            <SelectTrigger className="h-11 w-full">
+            <SelectTrigger id="match-court" className="h-11 w-full">
               <SelectValue placeholder={availableCourts.length === 0 ? "No idle courts" : "Pick a court"} />
             </SelectTrigger>
             <SelectContent>

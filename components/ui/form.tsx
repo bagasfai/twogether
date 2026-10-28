@@ -153,6 +153,7 @@ function FormMessage({ className, ...props }: React.ComponentProps<"p">) {
     <p
       data-slot="form-message"
       id={formMessageId}
+      role="alert"
       className={cn("text-destructive-text text-sm", className)}
       {...props}
     >
@@ -161,7 +162,30 @@ function FormMessage({ className, ...props }: React.ComponentProps<"p">) {
   );
 }
 
+/**
+ * Moves focus after a failed server submit: to the first field marked
+ * aria-invalid (set by FormControl) inside the same form, else to the root
+ * error element. Attach the returned ref to the root error element (give it
+ * tabIndex={-1}) and pass the current root error object.
+ */
+function useFocusFormError(rootError: unknown) {
+  const ref = React.useRef<HTMLParagraphElement>(null);
+
+  React.useEffect(() => {
+    if (!rootError) return;
+    const root = ref.current;
+    if (!root) return;
+    const firstInvalid = root
+      .closest("form")
+      ?.querySelector<HTMLElement>('[aria-invalid="true"]');
+    (firstInvalid ?? root).focus();
+  }, [rootError]);
+
+  return ref;
+}
+
 export {
+  useFocusFormError,
   useFormField,
   Form,
   FormItem,

@@ -154,9 +154,9 @@ export function AutoMatchPanel({ sessionId }: { sessionId: string }) {
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
         <div className="flex flex-col gap-1.5 sm:w-56">
-          <Label>Format</Label>
+          <Label htmlFor="auto-match-format">Format</Label>
           <Select value={format} onValueChange={(v) => setFormat(v as MatchFormat)}>
-            <SelectTrigger className="h-11 w-full">
+            <SelectTrigger id="auto-match-format" className="h-11 w-full">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
