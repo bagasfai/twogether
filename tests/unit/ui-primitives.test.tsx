@@ -52,3 +52,12 @@ describe("reduced motion", () => {
     expect(readFileSync("app/globals.css", "utf8")).toContain("prefers-reduced-motion: reduce");
   });
 });
+
+describe("dropdown destructive item contrast", () => {
+  it("uses text-destructive-text, not bare text-destructive, for item text", () => {
+    const src = readFileSync("components/ui/dropdown-menu.tsx", "utf8");
+    expect(src).toContain("data-[variant=destructive]:text-destructive-text");
+    expect(src).toContain("data-[variant=destructive]:focus:text-destructive-text");
+    expect(src).not.toMatch(/data-\[variant=destructive\]:(focus:)?text-destructive(?!-)/);
+  });
+});

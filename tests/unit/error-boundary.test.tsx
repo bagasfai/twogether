@@ -41,3 +41,14 @@ describe("AppError", () => {
     expect(onRetry).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("404 landmarks", () => {
+  it("root not-found keeps main (root layout has none); (app) not-found has no nested main", async () => {
+    const { readFileSync } = await import("node:fs");
+    expect(readFileSync("app/layout.tsx", "utf8")).not.toContain("<main");
+    expect(readFileSync("app/not-found.tsx", "utf8")).toContain("<main");
+    const appNf = readFileSync("app/(app)/not-found.tsx", "utf8");
+    expect(appNf).not.toContain("<main");
+    expect(appNf).toContain("404");
+  });
+});

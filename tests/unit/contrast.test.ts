@@ -32,6 +32,12 @@ describe("light theme contrast", () => {
     expect(contrastRatio(toRgb(root["success-text"]), tint)).toBeGreaterThanOrEqual(4.5);
   });
 
+  it("destructive-text on destructive menu-item focus tint over popover >= 4.5", () => {
+    const bg = toRgb(root["popover"]);
+    const tint = blend(toRgb(root["destructive"]), bg, 0.1);
+    expect(contrastRatio(toRgb(root["destructive-text"]), tint)).toBeGreaterThanOrEqual(4.5);
+  });
+
   it("input border on background >= 3", () => {
     expect(ratio("input", "background")).toBeGreaterThanOrEqual(3);
   });
