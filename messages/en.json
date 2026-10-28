@@ -149,5 +149,18 @@
     "empty": "No questions have been published yet.",
     "metaTitle": "FAQ — Jakbar Twogether",
     "metaDescription": "Answers to common questions about joining and playing at Jakbar Twogether open play sessions."
+  },
+  "errors": {
+    "notFound": {
+      "title": "Page not found",
+      "body": "The page you are looking for does not exist or has moved.",
+      "home": "Back to home"
+    },
+    "generic": {
+      "title": "Something went wrong",
+      "body": "We could not load this page. Try again, and if it keeps happening, come back in a few minutes.",
+      "offline": "Check your connection.",
+      "retry": "Try again"
+    }
   }
 }

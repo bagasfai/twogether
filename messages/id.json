@@ -149,5 +149,18 @@
     "empty": "Belum ada pertanyaan yang dipublikasikan.",
     "metaTitle": "FAQ — Jakbar Twogether",
     "metaDescription": "Jawaban atas pertanyaan umum tentang bergabung dan bermain di sesi open play Jakbar Twogether."
+  },
+  "errors": {
+    "notFound": {
+      "title": "Halaman tidak ditemukan",
+      "body": "Halaman yang kamu cari tidak ada atau sudah dipindahkan.",
+      "home": "Kembali ke beranda"
+    },
+    "generic": {
+      "title": "Terjadi kesalahan",
+      "body": "Halaman ini gagal dimuat. Coba lagi, dan jika masih terjadi, kembali lagi beberapa menit lagi.",
+      "offline": "Periksa koneksi internetmu.",
+      "retry": "Coba lagi"
+    }
   }
 }
