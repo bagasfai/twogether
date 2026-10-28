@@ -114,7 +114,7 @@ export function ProfileForm({ defaultValues }: { defaultValues: ProfileFormValue
               )}
             />
             {form.formState.errors.root ? (
-              <p className="text-sm text-destructive">{form.formState.errors.root.message}</p>
+              <p className="text-sm text-destructive-text">{form.formState.errors.root.message}</p>
             ) : null}
           </CardContent>
           <CardFooter>

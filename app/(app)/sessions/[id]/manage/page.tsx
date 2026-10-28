@@ -96,7 +96,7 @@ export default async function ManageSessionPage({ params }: PageProps<"/sessions
         {/* Checked-in is a distinct pool from registration status (courts/matches/
             rotation read from it, not the roster) -- accent-outline keeps it
             visually separate from the confirmed/waiting registration badges. */}
-        <Badge variant="outline" className="font-mono text-xs tabular-nums text-accent sm:text-sm">
+        <Badge variant="outline" className="font-mono text-xs tabular-nums text-accent-text sm:text-sm">
           {checkedIn} checked in
         </Badge>
         <Badge variant="outline" className="text-xs capitalize sm:text-sm">

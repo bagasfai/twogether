@@ -64,7 +64,7 @@ export default async function GalleryAlbumPage({ params }: PageProps<"/[locale]/
       <header className="flex flex-col gap-3">
         <Link
           href="/gallery"
-          className="inline-flex min-h-11 w-fit items-center gap-1 whitespace-nowrap rounded-sm text-sm font-medium text-accent outline-none hover:underline focus-visible:ring-[3px] focus-visible:ring-ring"
+          className="inline-flex min-h-11 w-fit items-center gap-1 whitespace-nowrap rounded-sm text-sm font-medium text-accent-text outline-none hover:underline focus-visible:ring-[3px] focus-visible:ring-ring"
         >
           <ArrowLeftIcon className="size-4" aria-hidden />
           {t("back")}

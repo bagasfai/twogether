@@ -117,7 +117,7 @@ export function SignupForm() {
               )}
             />
             {form.formState.errors.root ? (
-              <p className="text-sm text-destructive">{form.formState.errors.root.message}</p>
+              <p className="text-sm text-destructive-text">{form.formState.errors.root.message}</p>
             ) : null}
           </CardContent>
           <CardFooter className="flex-col gap-3">

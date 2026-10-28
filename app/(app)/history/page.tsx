@@ -22,7 +22,7 @@ export default async function HistoryPage() {
         {registrations.length === 0 ? (
           <p className="text-sm text-muted-foreground">
             No past sessions yet.{" "}
-            <Link href="/sessions" className="font-medium text-accent hover:underline">
+            <Link href="/sessions" className="font-medium text-accent-text hover:underline">
               Browse sessions
             </Link>
             .
@@ -43,7 +43,7 @@ export default async function HistoryPage() {
                   <CardDescription>
                     {formatDateTime(row.startsAt)} · {row.location}
                     {" · "}
-                    <Link href={`/sessions/${row.sessionId}/matches`} className="font-medium text-accent hover:underline">
+                    <Link href={`/sessions/${row.sessionId}/matches`} className="font-medium text-accent-text hover:underline">
                       Matches
                     </Link>
                   </CardDescription>
@@ -72,7 +72,7 @@ export default async function HistoryPage() {
                   <CardDescription>
                     {row.guestName} · {formatDateTime(row.startsAt)}
                     {" · "}
-                    <Link href={`/sessions/${row.sessionId}/matches`} className="font-medium text-accent hover:underline">
+                    <Link href={`/sessions/${row.sessionId}/matches`} className="font-medium text-accent-text hover:underline">
                       Matches
                     </Link>
                   </CardDescription>

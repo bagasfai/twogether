@@ -29,7 +29,7 @@ export default async function DashboardPage() {
         {registrations.length === 0 ? (
           <p className="text-sm text-muted-foreground">
             Nothing yet.{" "}
-            <Link href="/sessions" className="font-medium text-accent hover:underline">
+            <Link href="/sessions" className="font-medium text-accent-text hover:underline">
               Browse sessions
             </Link>
             .

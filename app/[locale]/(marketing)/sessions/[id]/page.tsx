@@ -62,7 +62,7 @@ export default async function SessionDetailPage({
           {session.locationUrl ? (
             <a
               href={session.locationUrl}
-              className="text-accent underline-offset-4 hover:underline"
+              className="text-accent-text underline-offset-4 hover:underline"
               rel="noreferrer noopener"
               target="_blank"
             >

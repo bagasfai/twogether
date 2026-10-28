@@ -122,7 +122,7 @@ export function HoldToConfirmButton({
         }}
         style={{ "--hold-duration": `${holdMs}ms` } as CSSProperties}
         className={cn(
-          "relative inline-flex h-9 touch-none select-none items-center justify-center overflow-hidden rounded-full border border-destructive px-4 text-sm font-medium text-destructive outline-none focus-visible:ring-[3px] focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 aria-disabled:cursor-not-allowed aria-disabled:opacity-50",
+          "relative inline-flex h-9 touch-none select-none items-center justify-center overflow-hidden rounded-full border border-destructive px-4 text-sm font-medium text-destructive-text outline-none focus-visible:ring-[3px] focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 aria-disabled:cursor-not-allowed aria-disabled:opacity-50",
           className,
         )}
       >

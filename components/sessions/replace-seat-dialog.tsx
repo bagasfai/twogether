@@ -184,7 +184,7 @@ export function ReplaceSeatDialog({
           ) : null}
 
           {invalidNote ? (
-            <p role="alert" className="text-sm text-destructive">
+            <p role="alert" className="text-sm text-destructive-text">
               {INVALID_STATE_NOTE}
             </p>
           ) : null}
