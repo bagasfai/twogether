@@ -6,8 +6,10 @@ import { getHostSession } from "@/lib/dal/sessions";
 import { resolvePlayerAttributes, type PlayerAttributes } from "@/lib/players/resolve";
 
 // Host/admin only. Level and guest gender are never exposed to members: RLS
-// on member_levels / guest_attributes denies them, and profiles_private is
-// readable by a host only under the consent gate. Denied or failed reads
+// on member_levels / guest_attributes denies them. Member gender is read through
+// host_roster_genders, not profiles_private directly: that table's host read
+// policy requires participant consent (it also guards phone), which would hide
+// the gender of a host-added member. Denied or failed reads
 // yield an empty map rather than throwing, and a non-host caller short-circuits
 // before any attribute table is queried.
 //
@@ -37,7 +39,7 @@ export async function getRosterAttributes(
 
   const [genders, levels, guests] = await Promise.all([
     memberIds.length > 0
-      ? supabase.from("profiles_private").select("user_id, gender").in("user_id", memberIds)
+      ? supabase.rpc("host_roster_genders", { p_session_id: sessionId })
       : null,
     memberIds.length > 0
       ? supabase.from("member_levels").select("user_id, level").in("user_id", memberIds)

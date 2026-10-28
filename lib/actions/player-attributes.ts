@@ -47,8 +47,9 @@ export async function setMemberLevel(input: SetMemberLevelInput): Promise<Action
 
 // Goes through host_set_member_gender: profiles_private.gender is not
 // directly writable by a host. The RPC is write-only: it lets any host/admin
-// set any user's gender, with no consent or session check. The consent gate
-// only limits what hosts can READ from profiles_private.
+// set any user's gender, with no consent or session check. Reads go through
+// host_roster_genders (see lib/dal/player-attributes.ts), which is scoped to
+// the host's own session and not consent-gated.
 export async function setMemberGender(input: SetMemberGenderInput): Promise<ActionResult<null>> {
   const parsed = setMemberGenderSchema.safeParse(input);
   if (!parsed.success) return failFromZod(parsed.error);

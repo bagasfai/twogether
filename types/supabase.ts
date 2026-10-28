@@ -1197,6 +1197,13 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      host_roster_genders: {
+        Args: { p_session_id: string }
+        Returns: {
+          gender: Database["public"]["Enums"]["gender"]
+          user_id: string
+        }[]
+      }
       host_set_member_gender: {
         Args: {
           p_gender: Database["public"]["Enums"]["gender"]
