@@ -101,7 +101,9 @@ export async function setGuestAttributes(
       .eq("participant_id", participantId)
       .select("participant_id");
 
-  let { data, error } = await update();
+  const first = await update();
+  const data = first.data;
+  let error = first.error;
   if (!error && (data ?? []).length === 0) {
     const insert = await supabase
       .from("guest_attributes")
