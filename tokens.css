@@ -1,34 +1,27 @@
-/* Hallmark · genre: modern-minimal · theme: Coral · design-system: design.md · designed-as-app
- * Portable export — mirrors app/globals.css :root. See design.md § Exports for @theme / DTCG / shadcn variants.
+/* Impeccable · world: badminton court (sky-blue vinyl, white court lines, navy ink, cork-yellow action)
+ * Portable export; mirrors app/globals.css :root. See design.md.
  */
 :root {
-  --color-paper:      oklch(97% 0.008 35);
-  --color-paper-2:    oklch(94% 0.010 35);
-  --color-ink:        oklch(20% 0.012 35);
-  --color-ink-2:      oklch(48% 0.012 35);
-  --color-rule:       oklch(88% 0.010 35);
-  --color-accent:     oklch(64% 0.170 32);
-  --color-focus:      oklch(64% 0.190 32);
-  --color-success:    oklch(58% 0.140 150);
-  --color-warning:    oklch(70% 0.150 80);
-  --color-danger:     oklch(58% 0.200 25);
+  --navy:      oklch(28% 0.13 264);   /* ink, header, footer, primary */
+  --sky:       oklch(62% 0.17 248);
+  --sky-deep:  oklch(50% 0.19 258);
+  --sky-pale:  oklch(94% 0.04 235);
+  --cork:      oklch(87% 0.17 92);    /* the one action colour */
+  --background: oklch(98.5% 0.008 240);
+  --foreground: oklch(26% 0.11 265);
+  --muted-foreground: oklch(45% 0.06 258);
+  --border:    oklch(88% 0.03 240);
+  --accent-text: oklch(46% 0.17 258);
+  --ring:      oklch(55% 0.20 255);
+  --success:   oklch(58% 0.14 150);
+  --warning:   oklch(80% 0.15 85);
+  --destructive: oklch(55% 0.21 25);
 
-  --font-display: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-body:    var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-outlier: var(--font-geist-mono), ui-monospace, monospace;
-
-  --space-3xs: 0.125rem; --space-2xs: 0.25rem; --space-xs: 0.5rem;
-  --space-sm:  0.75rem;  --space-md:  1rem;    --space-lg: 1.5rem;
-  --space-xl:  2.5rem;   --space-2xl: 4rem;    --space-3xl: 6rem;
-
-  --text-xs: 0.8rem; --text-sm: 0.875rem; --text-md: 1.125rem;
-  --text-lg: 1.375rem; --text-xl: 1.75rem;
-  --text-display: clamp(2.5rem, 4vw + 1rem, 4.25rem);
+  --font-display: var(--font-barlow), var(--font-figtree), system-ui, sans-serif;
+  --font-sans:    var(--font-figtree), system-ui, sans-serif;
+  --font-mono:    var(--font-geist-mono), ui-monospace, monospace;
 
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-  --ease-in:  cubic-bezier(0.7, 0, 0.84, 0);
-  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
   --dur-micro: 120ms; --dur-short: 220ms; --dur-long: 420ms;
-
-  --radius-card: 12px; --radius-pill: 999px; --radius-input: 8px;
+  --radius: 1rem;
 }
