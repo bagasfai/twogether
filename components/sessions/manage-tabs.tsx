@@ -55,7 +55,7 @@ export function ManageTabs({
       <div
         role="tablist"
         aria-label="Session panels"
-        className="grid grid-cols-4 gap-1 rounded-lg border bg-muted p-1 lg:hidden"
+        className="grid grid-cols-4 gap-1 rounded-2xl border bg-sky-pale p-1 lg:hidden"
       >
         {TABS.map((tab) => (
           <button
@@ -67,10 +67,10 @@ export function ManageTabs({
             aria-controls={`panel-${tab.id}`}
             onClick={() => setActive(tab.id)}
             className={cn(
-              "flex min-h-11 flex-col items-center justify-center gap-0.5 rounded-md px-2 py-1.5 text-sm font-medium transition-colors duration-[var(--dur-short)] ease-[var(--ease-out)]",
+              "flex min-h-11 flex-col items-center justify-center gap-0.5 rounded-xl px-2 py-1.5 text-sm font-semibold outline-none focus-visible:ring-[3px] focus-visible:ring-ring transition-colors duration-[var(--dur-short)] ease-[var(--ease-out)]",
               active === tab.id
-                ? "bg-background text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
+                ? "bg-navy text-white shadow-sm"
+                : "text-navy hover:bg-white/70"
             )}
           >
             <span>{tab.label}</span>

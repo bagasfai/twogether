@@ -59,7 +59,7 @@ function OwedLine({
   return (
     <div className="flex flex-col gap-0.5 text-xs">
       {entry.status === "confirmed" ? (
-        <span className="font-mono tabular-nums">{rupiah(amountOwed(pricing, entry))}</span>
+        <span className="tabular-nums">{rupiah(amountOwed(pricing, entry))}</span>
       ) : null}
       {differentPayer ? (
         <span className="text-muted-foreground">paid by {entry.paidByName ?? "another member"}</span>
@@ -153,8 +153,8 @@ export function RosterTable({
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between gap-2">
-        <h2 className="text-sm font-medium">
-          Roster <span className="font-mono tabular-nums text-muted-foreground">({entries.length})</span>
+        <h2 className="font-display text-2xl font-bold uppercase italic leading-none tracking-tight">
+          Roster <span className="tabular-nums text-muted-foreground">({entries.length})</span>
         </h2>
         <AddParticipantDialog sessionId={sessionId} />
       </div>
@@ -162,16 +162,16 @@ export function RosterTable({
       {entries.length === 0 ? <p className="text-sm text-muted-foreground">Nobody has registered yet.</p> : null}
 
       {/* Mobile / tablet: one card per participant, all columns re-flowed
-          into stacked rows so nothing needs horizontal scrolling. A left
-          accent bar marks the checked-in pool without merging it into the
+          into stacked rows so nothing needs horizontal scrolling. A pale-sky
+          tint marks the checked-in pool without merging it into the
           registration-status column. */}
       <ul className={cn("flex-col gap-2 md:hidden", entries.length > 0 ? "flex" : "hidden")}>
         {entries.map((entry) => (
           <li
             key={entry.id}
             className={cn(
-              "flex flex-col gap-2 rounded-lg border p-3",
-              entry.checkedInAt && "border-l-4 border-l-accent"
+              "flex flex-col gap-2 rounded-2xl border p-3",
+              entry.checkedInAt && "border-sky-deep/40 bg-sky-pale"
             )}
           >
             <div className="flex items-start justify-between gap-2">

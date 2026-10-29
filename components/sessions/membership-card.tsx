@@ -28,7 +28,7 @@ export function MembershipCard({ memberships }: { memberships: MyMembershipRow[]
       <CardContent className="flex flex-col gap-3 text-sm">
         {active ? (
           <p>
-            <span className="font-mono text-2xl font-semibold tabular-nums">{active.quotaLeft}</span>
+            <span className="font-display text-4xl font-extrabold italic leading-none tabular-nums">{active.quotaLeft}</span>
             <span className="text-muted-foreground"> of {active.quotaTotal} sessions left</span>
           </p>
         ) : null}
@@ -38,7 +38,7 @@ export function MembershipCard({ memberships }: { memberships: MyMembershipRow[]
             <ul className="flex flex-col gap-1 text-muted-foreground">
               {queued.map((m) => (
                 <li key={m.id}>
-                  {m.planName ?? "Membership"} · <span className="font-mono tabular-nums">{m.quotaTotal}</span> sessions,
+                  {m.planName ?? "Membership"} · <span className="tabular-nums">{m.quotaTotal}</span> sessions,
                   starts when the current one ends
                 </li>
               ))}

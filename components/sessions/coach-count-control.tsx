@@ -85,7 +85,7 @@ export function CoachCountControl({
             <Minus />
           </Button>
           <span
-            className="min-w-8 text-center font-mono text-lg tabular-nums"
+            className="min-w-8 text-center text-lg tabular-nums"
             aria-live="polite"
             aria-label={`${coachCount} coaches`}
           >

@@ -46,9 +46,9 @@ export function SignupForm() {
 
   if (sent) {
     return (
-      <Card className="w-full max-w-sm">
+      <Card className="w-full max-w-sm rounded-3xl border-0 shadow-[0_24px_48px_-16px_oklch(20%_0.13_264/0.6)]">
         <CardHeader>
-          <CardTitle><h1>Check your email</h1></CardTitle>
+          <CardTitle className="text-4xl font-extrabold uppercase italic"><h1>Check your email</h1></CardTitle>
           <CardDescription>
             We sent a confirmation link. Open it to finish creating your account.
           </CardDescription>
@@ -58,13 +58,13 @@ export function SignupForm() {
   }
 
   return (
-    <Card className="w-full max-w-sm">
+    <Card className="w-full max-w-sm rounded-3xl border-0 shadow-[0_24px_48px_-16px_oklch(20%_0.13_264/0.6)]">
       <CardHeader>
-        <CardTitle><h1>Sign up</h1></CardTitle>
+        <CardTitle className="text-4xl font-extrabold uppercase italic"><h1>Sign up</h1></CardTitle>
         <CardDescription>Join the Jakbar Twogether community.</CardDescription>
       </CardHeader>
       <Form {...form}>
-        <form onSubmit={onSubmit}>
+        <form onSubmit={onSubmit} className="flex flex-col gap-6">
           <CardContent className="space-y-4">
             <FormField
               control={form.control}

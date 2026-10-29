@@ -48,7 +48,7 @@ export function ProfileForm({ defaultValues }: { defaultValues: ProfileFormValue
         <CardDescription>How you appear to hosts and other players.</CardDescription>
       </CardHeader>
       <Form {...form}>
-        <form onSubmit={onSubmit}>
+        <form onSubmit={onSubmit} className="flex flex-col gap-6">
           <CardContent className="space-y-4">
             <FormField
               control={form.control}

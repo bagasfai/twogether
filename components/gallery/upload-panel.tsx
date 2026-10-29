@@ -223,7 +223,7 @@ export function UploadPanel({ galleryId, autoApproved = false }: { galleryId: st
   return (
     <section aria-labelledby="upload-panel-title" className="flex min-w-0 flex-col gap-4">
       <div className="flex flex-col gap-1">
-        <h2 id="upload-panel-title" className="text-base font-semibold">
+        <h2 id="upload-panel-title" className="font-display text-2xl font-bold uppercase italic leading-none tracking-tight">
           {t("uploadTitle")}
         </h2>
         <p className="text-sm text-muted-foreground">
@@ -322,7 +322,7 @@ export function UploadPanel({ galleryId, autoApproved = false }: { galleryId: st
 
       {photos.length > 0 ? (
         <div className="flex flex-col gap-3">
-          <h3 className="text-sm font-medium text-muted-foreground">{t("myPhotos")}</h3>
+          <h3 className="text-base font-semibold">{t("myPhotos")}</h3>
           <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {photos.map((photo) => (
               <li key={photo.id} className="flex min-w-0 flex-col gap-2">

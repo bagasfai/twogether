@@ -17,6 +17,7 @@ import { SessionLeaderboard } from "@/components/sessions/session-leaderboard";
 import { ManageTabs } from "@/components/sessions/manage-tabs";
 import { SessionRealtimeWatcher } from "@/components/sessions/session-realtime-watcher";
 import { SessionActionsMenu } from "@/components/sessions/session-actions-menu";
+import { PageTitle, SectionTitle } from "@/components/app/page-title";
 import { Badge } from "@/components/ui/badge";
 import { listHostAnnouncements } from "@/lib/dal/announcements";
 import { AnnouncementList } from "@/components/sessions/announcement-list";
@@ -72,10 +73,7 @@ export default async function ManageSessionPage({ params }: PageProps<"/sessions
           instead of squeezing it into a narrow column. */}
       <header className="flex flex-wrap items-start justify-between gap-2">
         <div className="flex flex-col gap-1">
-          <h1 className="text-xl font-semibold tracking-tight">{session.title}</h1>
-          <p className="text-sm text-muted-foreground">
-            {formatDateTime(session.startsAt)} · {session.location}
-          </p>
+          <PageTitle description={`${formatDateTime(session.startsAt)} · ${session.location}`}>{session.title}</PageTitle>
         </div>
         <div className="flex shrink-0 items-center gap-2">
           {session.status === "scheduled" ? <StartSessionButton sessionId={session.id} /> : null}
@@ -85,24 +83,18 @@ export default async function ManageSessionPage({ params }: PageProps<"/sessions
 
       {/* Sticky so confirmed/waiting/checked-in counts stay visible while
           the host scrolls through courts/matches/roster on a phone. */}
-      <div className="sticky top-0 z-10 flex flex-wrap items-center gap-2 rounded-lg border bg-background/95 px-3 py-2.5 backdrop-blur supports-[backdrop-filter]:bg-background/80">
-        <span className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-          <span className="size-1.5 shrink-0 rounded-full bg-success motion-safe:animate-pulse" aria-hidden="true" />
+      <div className="sticky top-0 z-10 flex flex-wrap items-center gap-x-5 gap-y-2 rounded-2xl bg-navy px-4 py-3 text-white shadow-[0_8px_20px_-10px_oklch(28%_0.13_264/0.6)]">
+        <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide">
+          <span className="size-2 shrink-0 rounded-full bg-cork motion-safe:animate-pulse" aria-hidden="true" />
           Live
         </span>
-        <Badge variant="success" className="font-mono text-xs tabular-nums sm:text-sm">
-          {confirmed}/{session.maxParticipants} confirmed
-        </Badge>
-        <Badge variant="warning" className="font-mono text-xs tabular-nums sm:text-sm">
-          {waiting}/{session.waitlistCapacity} waiting
-        </Badge>
+        <Stat label="confirmed" value={`${confirmed}/${session.maxParticipants}`} />
+        <Stat label="waiting" value={`${waiting}/${session.waitlistCapacity}`} />
         {/* Checked-in is a distinct pool from registration status (courts/matches/
-            rotation read from it, not the roster) -- accent-outline keeps it
-            visually separate from the confirmed/waiting registration badges. */}
-        <Badge variant="outline" className="font-mono text-xs tabular-nums text-accent-text sm:text-sm">
-          {checkedIn} checked in
-        </Badge>
-        <Badge variant="outline" className="text-xs capitalize sm:text-sm">
+            rotation read from it, not the roster) -- it gets its own cork
+            numeral so it never reads as a registration count. */}
+        <Stat label="checked in" value={String(checkedIn)} accent />
+        <Badge variant="outline" className="border-white/50 text-xs capitalize text-white sm:text-sm">
           {session.registrationState}
         </Badge>
       </div>
@@ -158,5 +150,18 @@ export default async function ManageSessionPage({ params }: PageProps<"/sessions
         }
       />
     </div>
+  );
+}
+
+function Stat({ label, value, accent = false }: { label: string; value: string; accent?: boolean }) {
+  return (
+    <span className="flex items-baseline gap-1.5">
+      <span
+        className={`font-display text-3xl font-extrabold italic leading-none tabular-nums ${accent ? "text-cork" : "text-white"}`}
+      >
+        {value}
+      </span>
+      <span className="text-sm text-white/85">{label}</span>
+    </span>
   );
 }

@@ -43,3 +43,6 @@ Real: the logo image; session data, albums and photos from Supabase; admin-autho
 
 ## Accessibility & Inclusion
 Keep the existing a11y work: skip link, landmarks, visible focus rings, AA contrast, 44px touch targets on mobile, reduced-motion support.
+
+## Operate surfaces
+Hosts run live sessions from a phone at the court: the manage console must show confirmed/waiting/checked-in counts, court state and the match queue at a glance, with 44px targets. Members mostly use the dashboard (their registrations, waitlist position, membership quota), history and leaderboard. Admins manage members, memberships, announcements, albums, About and FAQ. Seeded demo data in the dev database is not real content.

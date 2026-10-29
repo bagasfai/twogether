@@ -121,9 +121,9 @@ export function MatchPanel({
 
   return (
     <div className="flex flex-col gap-4">
-      <h2 className="text-sm font-medium">Matches</h2>
+      <h2 className="font-display text-2xl font-bold uppercase italic leading-none tracking-tight">Matches</h2>
 
-      <div className="flex flex-col gap-3 rounded-md border p-3">
+      <div className="flex flex-col gap-3 rounded-2xl border p-3">
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="match-court">Court</Label>
           <Select value={courtId} onValueChange={setCourtId}>
@@ -193,7 +193,7 @@ export function MatchPanel({
             .map((m) => (
               <li
                 key={m.id}
-                className="flex flex-col gap-2 rounded-md border p-3 sm:flex-row sm:items-center sm:justify-between"
+                className="flex flex-col gap-2 rounded-2xl border p-3 sm:flex-row sm:items-center sm:justify-between"
               >
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="text-sm font-medium">

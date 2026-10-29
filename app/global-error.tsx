@@ -22,12 +22,12 @@ export default function GlobalError({
           gap: 12,
           padding: 24,
           fontFamily: "system-ui, sans-serif",
-          color: "#1f1a18",
-          background: "#fff",
+          color: "#0a1a5c",
+          background: "#f6faff",
         }}
       >
         <h1 style={{ fontSize: 20, margin: 0 }}>Something went wrong</h1>
-        <p style={{ margin: 0, color: "#5c5350", textAlign: "center" }}>
+        <p style={{ margin: 0, color: "#3d4f8a", textAlign: "center" }}>
           The app hit an unexpected error.
           {error.digest ? ` Reference: ${error.digest}` : ""}
         </p>
@@ -37,9 +37,9 @@ export default function GlobalError({
           style={{
             minHeight: 44,
             padding: "0 20px",
-            borderRadius: 8,
-            border: "1px solid #1f1a18",
-            background: "#1f1a18",
+            borderRadius: 999,
+            border: "1px solid #0a1a5c",
+            background: "#0a1a5c",
             color: "#fff",
             fontSize: 14,
             cursor: "pointer",

@@ -2,6 +2,7 @@
 
 import { useTransition } from "react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { createCourt, deleteCourt, setCourtStatus } from "@/lib/actions/courts";
@@ -63,8 +64,8 @@ export function CourtPanel({
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between gap-2">
-        <h2 className="text-sm font-medium">
-          Courts <span className="font-mono tabular-nums text-muted-foreground">({courts.length}/{courtCount})</span>
+        <h2 className="font-display text-2xl font-bold uppercase italic leading-none tracking-tight">
+          Courts <span className="tabular-nums text-muted-foreground">({courts.length}/{courtCount})</span>
         </h2>
         <Button size="sm" className="h-11 sm:h-9" disabled={pending || courts.length >= courtCount} onClick={addCourt}>
           Add court
@@ -78,11 +79,25 @@ export function CourtPanel({
           {courts.map((court) => (
             <li
               key={court.id}
-              className="flex flex-col gap-2 rounded-md border p-3 sm:flex-row sm:items-center sm:justify-between"
+              className={cn(
+                "flex flex-col gap-2 rounded-2xl border-2 p-3 sm:flex-row sm:items-center sm:justify-between",
+                // Court state is readable at a glance: in use is solid navy, idle
+                // is pale sky, unavailable is dashed.
+                court.status === "in_use" && "border-navy bg-navy text-white",
+                court.status === "idle" && "border-sky-deep/30 bg-sky-pale",
+                court.status === "unavailable" && "border-dashed border-input bg-muted text-muted-foreground",
+              )}
             >
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium">{courtLabel(court.courtNumber)}</span>
-                <Badge variant={STATUS_VARIANT[court.status]}>{STATUS_LABEL[court.status]}</Badge>
+              <div className="flex items-center gap-3">
+                <span className="font-display text-2xl font-extrabold uppercase italic leading-none">
+                  {courtLabel(court.courtNumber)}
+                </span>
+                <Badge
+                  variant={STATUS_VARIANT[court.status]}
+                  className={court.status === "in_use" ? "border-transparent bg-cork text-navy" : undefined}
+                >
+                  {STATUS_LABEL[court.status]}
+                </Badge>
               </div>
               <div className="grid grid-cols-3 gap-2 sm:flex sm:w-auto">
                 {(["idle", "in_use", "unavailable"] as const)
@@ -99,7 +114,7 @@ export function CourtPanel({
                       {STATUS_LABEL[status]}
                     </Button>
                   ))}
-                <Button size="sm" variant="ghost" className="h-11 sm:h-8" disabled={pending} onClick={() => remove(court.id)}>
+                <Button size="sm" variant="ghost" className={cn("h-11 sm:h-8", court.status === "in_use" && "text-white hover:text-navy")} disabled={pending} onClick={() => remove(court.id)}>
                   Delete
                 </Button>
               </div>

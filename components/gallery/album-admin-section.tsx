@@ -43,7 +43,7 @@ export function AlbumAdminSection({
   return (
     <div className="flex min-w-0 flex-col gap-6">
       <header className="flex flex-col gap-1">
-        <h2 className="text-lg font-semibold tracking-tight">Albums</h2>
+        <h2 className="font-display text-2xl font-bold uppercase italic leading-none tracking-tight">Albums</h2>
         <p className="text-sm text-muted-foreground">
           Session albums appear when a session starts. Create other albums here for events outside a
           session.
@@ -94,7 +94,7 @@ function CreateAlbumForm() {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="flex min-w-0 flex-col gap-3 rounded-lg border p-3">
-        <h3 className="text-sm font-medium text-muted-foreground">New album</h3>
+        <h3 className="text-base font-semibold">New album</h3>
         <FormField
           control={form.control}
           name="title"
@@ -156,7 +156,7 @@ function AlbumRow({ album }: { album: AdminAlbum }) {
           <span className="min-w-0 break-words text-sm font-medium">{album.title}</span>
           {album.sessionId ? <Badge variant="outline">Session album</Badge> : null}
         </div>
-        <p className="font-mono text-xs tabular-nums text-muted-foreground">
+        <p className="text-xs tabular-nums text-muted-foreground">
           {album.photoCount} {album.photoCount === 1 ? "photo" : "photos"} · {album.pendingCount} pending
         </p>
         {album.description ? (

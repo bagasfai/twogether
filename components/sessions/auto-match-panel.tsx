@@ -149,8 +149,8 @@ export function AutoMatchPanel({ sessionId }: { sessionId: string }) {
   };
 
   return (
-    <div className="flex flex-col gap-3 rounded-md border p-3">
-      <h2 className="text-sm font-medium">Auto-match</h2>
+    <div className="flex flex-col gap-3 rounded-2xl border p-3">
+      <h2 className="font-display text-2xl font-bold uppercase italic leading-none tracking-tight">Auto-match</h2>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
         <div className="flex flex-col gap-1.5 sm:w-56">
@@ -181,7 +181,7 @@ export function AutoMatchPanel({ sessionId }: { sessionId: string }) {
       {matches.length > 0 ? (
         <ul className="flex flex-col gap-3">
           {matches.map((m, i) => (
-            <li key={courts[i].courtId} className="flex flex-col gap-2 rounded-md border p-3">
+            <li key={courts[i].courtId} className="flex flex-col gap-2 rounded-2xl border p-3">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">{courtLabel(courts[i].courtNumber)}</span>
                 <Button size="sm" variant="ghost" className="h-11 sm:h-9" disabled={pending} onClick={() => discard(i)}>

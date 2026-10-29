@@ -13,7 +13,7 @@ export function AppErrorView({
 }) {
   return (
     <div role="alert" className="mx-auto flex max-w-md flex-col items-start gap-3 py-12">
-      <h1 className="text-xl font-semibold tracking-tight">Something went wrong</h1>
+      <h1 className="font-display text-4xl font-extrabold uppercase italic leading-none tracking-tight">Something went wrong</h1>
       <p className="text-sm text-muted-foreground">
         We could not load this page. Try again, and if it keeps happening, come back in a few
         minutes.

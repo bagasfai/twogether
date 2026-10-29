@@ -136,7 +136,7 @@ export function SessionForm({
         <CardTitle>Session details</CardTitle>
       </CardHeader>
       <Form {...form}>
-        <form onSubmit={onSubmit}>
+        <form onSubmit={onSubmit} className="flex flex-col gap-6">
           <CardContent className="space-y-4">
             <FormField
               control={form.control}

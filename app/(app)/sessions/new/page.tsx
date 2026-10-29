@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { requireHost } from "@/lib/dal/user";
+import { PageTitle, SectionTitle } from "@/components/app/page-title";
 import { SessionForm } from "@/components/sessions/session-form";
 
 export const metadata: Metadata = { title: "New session" };
@@ -11,7 +12,7 @@ export default async function NewSessionPage() {
 
   return (
     <div className="mx-auto max-w-xl">
-      <h1 className="mb-6 text-xl font-semibold tracking-tight">New session</h1>
+      <PageTitle className="mb-6">New session</PageTitle>
       <SessionForm />
     </div>
   );

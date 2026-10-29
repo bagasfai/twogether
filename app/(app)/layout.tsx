@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { requireUser } from "@/lib/dal/user";
 import { SkipLink } from "@/components/skip-link";
@@ -39,25 +40,40 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex flex-1 flex-col">
       <SkipLink />
-      <header className="flex flex-col gap-2 border-b bg-background px-4 py-3 sm:px-6">
-        <div className="flex items-center gap-4">
-          <Link href="/dashboard" className="whitespace-nowrap text-sm font-semibold tracking-tight">
-            Jakbar Twogether
-          </Link>
-          <div className="ml-auto flex min-w-0 items-center gap-3 text-sm">
-            <span className="hidden truncate text-muted-foreground sm:inline">
-              {user.fullName ?? user.email}
-            </span>
-            <SignOutButton />
+      <header className="bg-navy px-4 py-3 text-white sm:px-6">
+        <div className="mx-auto flex max-w-6xl flex-col gap-2">
+          <div className="flex items-center gap-4">
+            <Link
+              href="/dashboard"
+              className="flex items-center gap-3 whitespace-nowrap rounded-full outline-none focus-visible:ring-[3px] focus-visible:ring-white"
+            >
+              <Image
+                src="/brand/jakbar-twogether.jpeg"
+                alt=""
+                width={36}
+                height={36}
+                className="size-9 rounded-full border-2 border-white object-cover"
+              />
+              <span className="font-display text-xl font-extrabold uppercase italic tracking-tight">
+                Jakbar Twogether
+              </span>
+            </Link>
+            <div className="ml-auto flex min-w-0 items-center gap-3 text-sm">
+              <span className="hidden truncate text-white/85 sm:inline">
+                {user.fullName ?? user.email}
+              </span>
+              <SignOutButton />
+            </div>
           </div>
+          <NavLinks
+            items={navItems}
+            className="flex flex-wrap items-center gap-1 py-1 text-sm"
+            linkClassName="inline-flex items-center whitespace-nowrap rounded-full px-3 py-1.5 font-medium text-white outline-none transition-colors duration-[var(--dur-micro)] hover:bg-white/15 focus-visible:ring-[3px] focus-visible:ring-white max-md:min-h-11"
+            activeClassName="bg-cork text-navy hover:bg-cork"
+          />
         </div>
-        <NavLinks
-          items={navItems}
-          className="-mx-1 flex items-center gap-1 overflow-x-auto text-sm text-muted-foreground"
-          linkClassName="whitespace-nowrap rounded-full px-3 py-1.5 transition-colors hover:bg-accent/10 hover:text-foreground"
-        />
       </header>
-      <main id="main" className="flex-1 p-6">{children}</main>
+      <main id="main" className="flex-1 p-4 sm:p-6">{children}</main>
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { PageTitle, SectionTitle } from "@/components/app/page-title";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { getAllTimeLeaderboard } from "@/lib/dal/stats";
 import { requireUser } from "@/lib/dal/user";
@@ -11,10 +12,11 @@ export default async function LeaderboardPage() {
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-4">
-      <h1 className="text-xl font-semibold tracking-tight">All-time leaderboard</h1>
+      <PageTitle>All-time leaderboard</PageTitle>
       {rows.length === 0 ? (
         <p className="text-sm text-muted-foreground">No completed games yet.</p>
       ) : (
+        <div className="rounded-2xl border bg-card p-2 shadow-[0_6px_20px_-12px_oklch(28%_0.13_264/0.35)]">
         <Table>
           <TableHeader>
             <TableRow>
@@ -25,8 +27,8 @@ export default async function LeaderboardPage() {
           </TableHeader>
           <TableBody>
             {rows.map((row, index) => (
-              <TableRow key={index} className={row.isMe ? "bg-accent/10 font-medium" : undefined}>
-                <TableCell>{row.rank}</TableCell>
+              <TableRow key={index} className={row.isMe ? "bg-sky-pale font-semibold" : undefined}>
+                <TableCell className="font-display text-xl font-extrabold italic tabular-nums">{row.rank}</TableCell>
                 <TableCell>
                   {row.name}
                   {row.isMe ? " (you)" : ""}
@@ -36,6 +38,7 @@ export default async function LeaderboardPage() {
             ))}
           </TableBody>
         </Table>
+        </div>
       )}
     </div>
   );

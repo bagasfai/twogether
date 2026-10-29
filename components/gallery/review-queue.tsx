@@ -64,8 +64,8 @@ export function ReviewQueue({
 
   return (
     <section aria-labelledby="review-queue-title" className="flex min-w-0 flex-col gap-3">
-      <h3 id="review-queue-title" className="text-sm font-medium text-muted-foreground">
-        Waiting for review <span className="font-mono tabular-nums">({visible.length})</span>
+      <h3 id="review-queue-title" className="text-base font-semibold">
+        Waiting for review <span className="tabular-nums">({visible.length})</span>
       </h3>
 
       {visible.length === 0 ? (
@@ -91,7 +91,7 @@ export function ReviewQueue({
                       in {albumTitles[photo.galleryId]}
                     </span>
                   ) : null}
-                  <time dateTime={photo.createdAt} className="font-mono text-xs tabular-nums text-muted-foreground">
+                  <time dateTime={photo.createdAt} className="text-xs tabular-nums text-muted-foreground">
                     {formatPhotoTime(photo.createdAt)}
                   </time>
                   {photo.caption ? (

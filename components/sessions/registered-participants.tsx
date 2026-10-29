@@ -85,8 +85,8 @@ export function RegisteredParticipants({ sessionId }: { sessionId: string }) {
 
   return (
     <div className="flex flex-col gap-3">
-      <h2 className="text-sm font-medium">
-        {t("registered")} <span className="font-mono tabular-nums text-muted-foreground">({confirmed.length})</span>
+      <h2 className="font-display text-2xl font-bold uppercase italic leading-none tracking-tight">
+        {t("registered")} <span className="tabular-nums text-muted-foreground">({confirmed.length})</span>
       </h2>
       <ul className="flex flex-col gap-2">
         {confirmed.map((entry, index) => (

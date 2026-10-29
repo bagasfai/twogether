@@ -37,6 +37,14 @@ One authored moment: shuttlecocks drift in on the landing hero (`shuttle-drift`,
 
 Skip link, `main#main`, labelled navs, 3px focus rings (white on navy and sky), 44px touch targets below md, AA contrast, decorative SVGs `aria-hidden`.
 
-## Scope
+## Operate surfaces (signed-in app, auth)
 
-Marketing routes only. `(app)` and `(auth)` inherit the new tokens (navy primary, sky accent, Figtree) but were not redesigned.
+Same world, quieter: the app is a working tool, so ambition shows as precision. White-blue ground, no hero banners, the court appears as state.
+- App shell: navy header with logo thumb and wordmark, wrapping pill nav (active = solid cork pill), outline sign-out. Content on the pale ground.
+- Titles: `PageTitle` / `SectionTitle` (`components/app/page-title.tsx`) in the display voice; everything else stays Figtree.
+- Live session console (`/sessions/[id]/manage`): sticky navy scoreboard strip (confirmed, waiting, checked-in numerals; checked-in is cork so it never reads as a registration count). Courts are tiles by state: in use = solid navy with a cork chip, idle = pale sky, unavailable = dashed and muted. Checked-in roster rows get a pale-sky tint (no side stripes). Tabs below lg: navy active tab on a pale-sky track.
+- Tables: small uppercase muted headers, sky-tinted row hover, display numerals for rank; own row highlighted pale sky.
+- Cards: radius 16px, soft navy-tinted shadow; titles in display voice. Status uses badges, not run-on text.
+- Auth: the sky court field with the logo sticker above a single white card (`AuthShell`). The caller owns `main#main`.
+- Mono type is gone from the UI; numerals use Figtree tabular figures or the display face.
+- Known: `components/sessions/player-attributes-editor.tsx` keeps one pre-existing lint error (`set-state-in-effect`), left untouched because fixing it changes behavior.

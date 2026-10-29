@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { PageTitle, SectionTitle } from "@/components/app/page-title";
 import { requireAdmin } from "@/lib/dal/user";
 import { listAllMembers } from "@/lib/dal/admin";
 import { MemberRoleTable } from "@/components/admin/member-role-table";
@@ -35,10 +36,10 @@ export default async function AdminPage() {
   ]);
 
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-8">
+    <div className="mx-auto flex max-w-3xl flex-col gap-8 [&>section:not(:first-child)]:border-t [&>section:not(:first-child)]:pt-8">
       <section className="flex flex-col gap-4">
         <header className="flex flex-col gap-1">
-          <h1 className="text-xl font-semibold tracking-tight">Members</h1>
+          <PageTitle>Members</PageTitle>
           <p className="text-sm text-muted-foreground">
             Change a member&apos;s role. Hosts can manage sessions; admins can do everything a host
             can, plus this page.
@@ -49,7 +50,7 @@ export default async function AdminPage() {
 
       <section className="flex flex-col gap-4">
         <header className="flex flex-col gap-1">
-          <h2 className="text-lg font-semibold tracking-tight">Memberships</h2>
+          <SectionTitle>Memberships</SectionTitle>
           <p className="text-sm text-muted-foreground">
             Premium plans and the memberships granted to members. Payment is tracked manually.
           </p>
@@ -75,7 +76,7 @@ export default async function AdminPage() {
 
       <section className="flex flex-col gap-4">
         <header className="flex flex-col gap-1">
-          <h2 className="text-lg font-semibold tracking-tight">About page</h2>
+          <SectionTitle>About page</SectionTitle>
           <p className="text-sm text-muted-foreground">
             Shown publicly at /about in both languages.
           </p>

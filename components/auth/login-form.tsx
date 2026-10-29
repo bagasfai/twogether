@@ -42,13 +42,13 @@ export function LoginForm({ next }: { next?: string }) {
   );
 
   return (
-    <Card className="w-full max-w-sm">
+    <Card className="w-full max-w-sm rounded-3xl border-0 shadow-[0_24px_48px_-16px_oklch(20%_0.13_264/0.6)]">
       <CardHeader>
-        <CardTitle><h1>Log in</h1></CardTitle>
+        <CardTitle className="text-4xl font-extrabold uppercase italic"><h1>Log in</h1></CardTitle>
         <CardDescription>Welcome back to Jakbar Twogether.</CardDescription>
       </CardHeader>
       <Form {...form}>
-        <form onSubmit={onSubmit}>
+        <form onSubmit={onSubmit} className="flex flex-col gap-6">
           <CardContent className="space-y-4">
             <FormField
               control={form.control}

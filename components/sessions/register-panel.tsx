@@ -156,7 +156,7 @@ export function RegisterPanel({
             {guest.status === "confirmed" ? (
               <Badge variant="success">{t("confirmed")}</Badge>
             ) : (
-              <Badge variant="warning" className="font-mono tabular-nums">
+              <Badge variant="warning" className="tabular-nums">
                 {t("waitlistPosition", { position: guest.waitlistPosition ?? 0 })}
               </Badge>
             )}
@@ -202,7 +202,7 @@ export function RegisterPanel({
           {registration.status === "confirmed" ? (
             <Badge variant="success">{t("confirmed")}</Badge>
           ) : (
-            <Badge variant="warning" className="font-mono tabular-nums">
+            <Badge variant="warning" className="tabular-nums">
               {t("waitlistPosition", { position: registration.waitlistPosition ?? 0 })}
             </Badge>
           )}

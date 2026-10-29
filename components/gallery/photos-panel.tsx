@@ -46,7 +46,7 @@ export function PhotosPanel({
 
   return (
     <div className="flex min-w-0 flex-col gap-3">
-      <h2 className="text-sm font-medium">Photos</h2>
+      <h2 className="font-display text-2xl font-bold uppercase italic leading-none tracking-tight">Photos</h2>
       <div className="flex min-w-0 flex-col gap-8">
         <ReviewQueue photos={pending} />
         <ApprovedPhotos photos={approved} />
@@ -82,8 +82,8 @@ function ApprovedPhotos({ photos }: { photos: GalleryPhotoRow[] }) {
 
   return (
     <section aria-labelledby="approved-photos-title" className="flex min-w-0 flex-col gap-3">
-      <h3 id="approved-photos-title" className="text-sm font-medium text-muted-foreground">
-        In the album <span className="font-mono tabular-nums">({visible.length})</span>
+      <h3 id="approved-photos-title" className="text-base font-semibold">
+        In the album <span className="tabular-nums">({visible.length})</span>
       </h3>
       {visible.length === 0 ? (
         <p className="text-sm text-muted-foreground">No approved photos yet.</p>
@@ -189,7 +189,7 @@ function AlbumDescription({ album }: { album: PhotosPanelAlbum }) {
 
   return (
     <section aria-labelledby="album-description-title" className="flex min-w-0 flex-col gap-3">
-      <h3 id="album-description-title" className="text-sm font-medium text-muted-foreground">
+      <h3 id="album-description-title" className="text-base font-semibold">
         Album description
       </h3>
       <Textarea

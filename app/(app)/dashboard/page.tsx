@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { PageTitle, SectionTitle } from "@/components/app/page-title";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ConfirmParticipationBanner } from "@/components/sessions/confirm-participation-banner";
@@ -28,11 +29,11 @@ export default async function DashboardPage() {
       <MembershipCard memberships={memberships} />
 
       <section className="flex flex-col gap-3">
-        <h1 className="text-xl font-semibold tracking-tight">Your upcoming sessions</h1>
+        <PageTitle>Your upcoming sessions</PageTitle>
         {registrations.length === 0 ? (
           <p className="text-sm text-muted-foreground">
             Nothing yet.{" "}
-            <Link href="/sessions" className="font-medium text-accent-text hover:underline">
+            <Link href="/sessions" className="font-semibold text-accent-text underline-offset-4 hover:underline">
               Browse sessions
             </Link>
             .
@@ -47,7 +48,7 @@ export default async function DashboardPage() {
                     {row.status === "confirmed" ? (
                       <Badge variant="success">Confirmed</Badge>
                     ) : (
-                      <Badge variant="warning" className="font-mono tabular-nums">
+                      <Badge variant="warning" className="tabular-nums">
                         Waitlist #{row.waitlistPosition}
                       </Badge>
                     )}
@@ -69,7 +70,7 @@ export default async function DashboardPage() {
 
       {announcements.length > 0 ? (
         <section className="flex flex-col gap-3">
-          <h2 className="text-lg font-semibold tracking-tight">Announcements</h2>
+          <SectionTitle>Announcements</SectionTitle>
           <div className="flex flex-col gap-3">
             {announcements.map((announcement) => (
               <Card key={announcement.id}>
@@ -86,23 +87,28 @@ export default async function DashboardPage() {
 
       {hosted.length > 0 ? (
         <section className="flex flex-col gap-3">
-          <h2 className="text-lg font-semibold tracking-tight">Sessions you host</h2>
+          <SectionTitle>Sessions you host</SectionTitle>
           <div className="flex flex-col gap-3">
             {hosted.map((session) => (
               <Card key={session.id}>
                 <CardHeader>
                   <div className="flex items-start justify-between gap-2">
                     <CardTitle>
-                      <Link href={`/sessions/${session.id}/manage`}>{session.title}</Link>
+                      <Link href={`/sessions/${session.id}/manage`} className="underline-offset-4 hover:underline">{session.title}</Link>
                     </CardTitle>
                     <SessionActionsMenu session={session} />
                   </div>
                   <CardDescription>
-                    {formatDateTime(session.startsAt)} · {session.location} ·{" "}
-                    {session.status} · registration {session.registrationState}
+                    {formatDateTime(session.startsAt)} · {session.location}
                   </CardDescription>
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    <Badge variant={session.status === "live" ? "success" : "secondary"} className="capitalize">
+                      {session.status}
+                    </Badge>
+                    <Badge variant="outline">Registration {session.registrationState}</Badge>
+                  </div>
                 </CardHeader>
-                <CardContent className="font-mono text-sm tabular-nums text-muted-foreground">
+                <CardContent className="text-sm tabular-nums text-muted-foreground">
                   {session.maxParticipants} capacity · {session.waitlistCapacity} waitlist
                 </CardContent>
               </Card>

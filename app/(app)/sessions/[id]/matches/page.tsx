@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { PageTitle, SectionTitle } from "@/components/app/page-title";
 import { MatchHistoryList } from "@/components/sessions/match-history-list";
 import { getMatchHistory } from "@/lib/dal/match-history";
 import { requireUser } from "@/lib/dal/user";
@@ -15,7 +16,7 @@ export default async function SessionMatchesPage({ params }: { params: Promise<{
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-4">
-      <h1 className="text-xl font-semibold tracking-tight">{history.sessionTitle}: matches</h1>
+      <PageTitle>{history.sessionTitle}: matches</PageTitle>
       <MatchHistoryList matches={history.matches} />
     </div>
   );
