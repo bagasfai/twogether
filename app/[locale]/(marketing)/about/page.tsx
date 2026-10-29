@@ -5,8 +5,6 @@ import { PageHero } from "@/components/marketing/page-hero";
 import { Button } from "@/components/ui/button";
 import { getAbout } from "@/lib/dal/community-content";
 
-// Inert while the marketing layout reads cookies (getCurrentUser), same as
-// gallery: the page renders dynamically. Kept per spec.
 export const revalidate = 60;
 
 export async function generateMetadata({

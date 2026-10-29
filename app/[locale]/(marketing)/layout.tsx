@@ -1,16 +1,24 @@
 import type { ReactNode } from "react";
 import Image from "next/image";
-import NextLink from "next/link";
-import { getTranslations } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
-import { Button } from "@/components/ui/button";
+import { AccountButton } from "@/components/nav/account-button";
 import { SkipLink } from "@/components/skip-link";
 import { NavLinks } from "@/components/nav/nav-links";
 import { LanguageSwitcher } from "@/components/language-switcher";
-import { getCurrentUser } from "@/lib/dal/user";
 
-export default async function MarketingLayout({ children }: { children: ReactNode }) {
-  const [user, t] = await Promise.all([getCurrentUser(), getTranslations()]);
+export default async function MarketingLayout({
+  children,
+  params,
+}: {
+  children: ReactNode;
+  params: Promise<{ locale: string }>;
+}) {
+  // Locale passed explicitly: with no argument next-intl reads request headers,
+  // which would make every page in this group dynamic.
+  const { locale } = await params;
+  setRequestLocale(locale);
+  const t = await getTranslations({ locale });
 
   return (
     <div className="flex flex-1 flex-col">
@@ -50,12 +58,7 @@ export default async function MarketingLayout({ children }: { children: ReactNod
             />
             <LanguageSwitcher />
           </div>
-          {/* /dashboard and /login live outside app/[locale] -- plain Link, no locale prefix */}
-          <Button asChild size="sm" className="bg-white text-navy shadow-none hover:bg-white/90 focus-visible:ring-white">
-            <NextLink href={user ? "/dashboard" : "/login"}>
-              {user ? t("nav.dashboard") : t("nav.login")}
-            </NextLink>
-          </Button>
+          <AccountButton loginLabel={t("nav.login")} dashboardLabel={t("nav.dashboard")} />
         </div>
       </header>
       <main id="main" className="flex flex-1 flex-col">{children}</main>

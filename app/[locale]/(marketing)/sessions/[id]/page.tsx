@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getTranslations } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import { getPublicSession } from "@/lib/dal/public-sessions";
 import { listPublicSessionAnnouncements } from "@/lib/dal/announcements";
 import { PageHero } from "@/components/marketing/page-hero";
@@ -25,7 +25,7 @@ export async function generateMetadata({
   params,
 }: PageProps<"/[locale]/sessions/[id]">): Promise<Metadata> {
   const { id, locale } = await params;
-  const [session, t] = await Promise.all([getPublicSession(id), getTranslations("sessionDetail")]);
+  const [session, t] = await Promise.all([getPublicSession(id), getTranslations({ locale, namespace: "sessionDetail" })]);
   if (!session) return { title: t("notFound") };
 
   const description = `${formatDateTime(session.startsAt, locale)} · ${session.location}`;
@@ -47,10 +47,11 @@ export default async function SessionDetailPage({
   params,
 }: PageProps<"/[locale]/sessions/[id]">) {
   const { id, locale } = await params;
+  setRequestLocale(locale);
   const [session, t, tAnnouncements] = await Promise.all([
     getPublicSession(id),
-    getTranslations("sessionDetail"),
-    getTranslations("announcements"),
+    getTranslations({ locale, namespace: "sessionDetail" }),
+    getTranslations({ locale, namespace: "announcements" }),
   ]);
   if (!session) notFound();
 

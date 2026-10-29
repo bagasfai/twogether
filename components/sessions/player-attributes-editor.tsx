@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -74,10 +74,19 @@ export function PlayerAttributesEditor({
   );
 
   // Re-sync when the server re-renders with fresh data (after revalidation).
-  useEffect(() => {
-    setGender(attributes?.gender ?? null);
-    setLevel(attributes?.level ?? null);
-  }, [attributes?.gender, attributes?.level]);
+  // Adjusting state during render, keyed on the incoming props, avoids the
+  // extra effect pass and a stale frame.
+  const [seen, setSeen] = useState({
+    gender: attributes?.gender ?? null,
+    level: attributes?.level ?? null,
+  });
+  const incomingGender = attributes?.gender ?? null;
+  const incomingLevel = attributes?.level ?? null;
+  if (seen.gender !== incomingGender || seen.level !== incomingLevel) {
+    setSeen({ gender: incomingGender, level: incomingLevel });
+    setGender(incomingGender);
+    setLevel(incomingLevel);
+  }
 
   const saveLevel = async (next: SkillLevel) => {
     const prev = level;

@@ -12,12 +12,7 @@ import { getCommunityStats } from "@/lib/dal/community-stats";
 import { listUpcomingPublicSessions } from "@/lib/dal/public-sessions";
 import { shouldShowStats } from "@/lib/community-stats";
 
-// This page previously did no data fetching. `revalidate` is set here for
-// when/if this route group stops being forced dynamic (currently
-// (marketing)/layout.tsx's getCurrentUser() call forces every page in this
-// group to render dynamically regardless of this value) -- matches the
-// sibling (marketing)/sessions/page.tsx's value so both are consistent if
-// that ever changes.
+// Matches the sibling (marketing)/sessions/page.tsx revalidate window.
 export const revalidate = 60;
 
 const NEXT_SESSIONS = 3;

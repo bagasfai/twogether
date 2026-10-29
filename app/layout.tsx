@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Barlow_Condensed, Figtree, Geist_Mono } from "next/font/google";
-import { getLocale } from "next-intl/server";
 import { Toaster } from "@/components/ui/sonner";
 import { getSiteUrl } from "@/lib/seo/urls";
 import "./globals.css";
@@ -39,15 +38,10 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function RootLayout({ children }: LayoutProps<"/">) {
-  // Only the (marketing) group under app/[locale] runs through the i18n
-  // proxy; (app)/(auth)/auth routes fall back to the default locale here,
-  // which is harmless since they aren't localized or SEO-indexed.
-  const locale = await getLocale();
-
+export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
-      lang={locale}
+      lang="en"
       className={`${figtree.variable} ${geistMono.variable} ${barlow.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
