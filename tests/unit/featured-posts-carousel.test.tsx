@@ -49,6 +49,13 @@ describe("FeaturedPostsCarousel", () => {
     const html = render([post(1), post(2), post(3), post(4)], "en");
     expect(html).toContain("carousel-previous");
     expect(html).toContain("carousel-next");
+    // size-11 (44px) must win over the stock size-8
+    for (const slot of ["carousel-previous", "carousel-next"]) {
+      const tag = html.match(new RegExp(`<button[^>]*data-slot="${slot}"[^>]*>`))![0];
+      expect(tag).toContain("size-11");
+      expect(tag).not.toContain("size-8");
+    }
+    expect(html).toContain('alt=""');
   });
 
   it("shows the locale's caption and translated kind", () => {

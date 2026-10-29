@@ -50,7 +50,7 @@ export function FeaturedPostsCarousel({
                     <div className="relative aspect-square overflow-hidden rounded-2xl bg-sky-pale">
                       <Image
                         src={post.imageUrl}
-                        alt={caption}
+                        alt=""
                         fill
                         sizes="(min-width:1024px) 33vw, 85vw"
                         className="object-cover transition-transform duration-300 group-hover:scale-105 motion-reduce:transition-none motion-reduce:group-hover:scale-100"
@@ -70,8 +70,8 @@ export function FeaturedPostsCarousel({
           </CarouselContent>
           {multiple ? (
             <div className="mt-4 flex gap-2 max-sm:hidden">
-              <CarouselPrevious className="static translate-y-0" />
-              <CarouselNext className="static translate-y-0" />
+              <CarouselPrevious className="static size-11 translate-y-0" />
+              <CarouselNext className="static size-11 translate-y-0" />
             </div>
           ) : null}
         </Carousel>
