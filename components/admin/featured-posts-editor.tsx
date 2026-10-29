@@ -375,12 +375,10 @@ export function FeaturedPostsEditor({ posts }: { posts: FeaturedPost[] }) {
             <li key={post.id} className="min-w-0">
               <Card className="h-full overflow-hidden">
                 <div className="relative aspect-video bg-muted">
-                  {/* unoptimized: next/image remotePatterns only allow the gallery bucket. */}
                   <Image
                     src={post.imageUrl}
                     alt={post.captionEn}
                     fill
-                    unoptimized
                     sizes="(min-width: 640px) 336px, 100vw"
                     className="object-cover"
                   />

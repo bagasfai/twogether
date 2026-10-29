@@ -70,6 +70,15 @@ export function PartnerInquiryForm() {
       }
       form.setError("root", { message: t("genericError") });
     }),
+    // A browser autofilling the hidden honeypot fails client validation on a
+    // field with no visible message; surface the generic error instead of a
+    // silent no-op. Server-side honeypot handling is unchanged.
+    (errors) => {
+      const keys = Object.keys(errors);
+      if (keys.length === 1 && keys[0] === "website") {
+        form.setError("root", { message: t("genericError") });
+      }
+    },
   );
 
   if (sent) {

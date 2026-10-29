@@ -1,4 +1,4 @@
-export type RevalidationPath = { path: string; type?: "page" };
+export type RevalidationPath = { path: string; type?: "page" | "layout" };
 
 // Pattern forms (per the Next docs for revalidatePath): a dynamic segment
 // requires type "page", and the [locale] pattern invalidates every locale in

@@ -25,7 +25,7 @@ describe("createSocialLink", () => {
     createClient.mockResolvedValue({ rpc });
   });
 
-  it("revalidates both social paths and /admin on success", async () => {
+  it("revalidates the marketing layout and /admin on success", async () => {
     const result = await createSocialLink(valid);
     expect(result).toEqual({ ok: true, data: { id: "11111111-1111-4111-8111-111111111111" } });
     expect(rpc).toHaveBeenCalledWith("social_link_create", {
@@ -34,8 +34,7 @@ describe("createSocialLink", () => {
       p_label: "Instagram",
       p_is_visible: true,
     });
-    expect(revalidatePath).toHaveBeenCalledWith("/[locale]/(marketing)", "page");
-    expect(revalidatePath).toHaveBeenCalledWith("/[locale]/(marketing)/partner", "page");
+    expect(revalidatePath).toHaveBeenCalledWith("/[locale]/(marketing)", "layout");
     expect(revalidatePath).toHaveBeenCalledWith("/admin");
   });
 

@@ -67,12 +67,18 @@ function Carousel({
     setCanScrollNext(api.canScrollNext())
   }, [])
 
+  // Embla animates scroll in JS, which the global reduced-motion CSS rule
+  // cannot reach, so jump instead of animating when the user asks for it.
+  const prefersReducedMotion = () =>
+    typeof window !== "undefined" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches
+
   const scrollPrev = React.useCallback(() => {
-    api?.scrollPrev()
+    api?.scrollPrev(prefersReducedMotion())
   }, [api])
 
   const scrollNext = React.useCallback(() => {
-    api?.scrollNext()
+    api?.scrollNext(prefersReducedMotion())
   }, [api])
 
   const handleKeyDown = React.useCallback(
