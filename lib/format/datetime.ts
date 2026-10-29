@@ -64,3 +64,13 @@ export function formatTime(
 ): string {
   return format("time", value, locale);
 }
+
+// "YYYY-MM-DD" for the given instant in Asia/Jakarta (en-CA formats as ISO).
+export function jakartaDateString(value: Date = new Date()): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(value);
+}

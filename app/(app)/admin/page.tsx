@@ -12,8 +12,9 @@ import { AlbumAdminSection } from "@/components/gallery/album-admin-section";
 import { getAboutForAdmin, listFaqItemsForAdmin } from "@/lib/dal/community-content-admin";
 import { AboutEditor } from "@/components/admin/about-editor";
 import { FaqEditor } from "@/components/admin/faq-editor";
-import { listSocialLinksForAdmin } from "@/lib/dal/socials";
+import { listFeaturedPostsForAdmin, listSocialLinksForAdmin } from "@/lib/dal/socials";
 import { SocialLinksEditor } from "@/components/admin/social-links-editor";
+import { FeaturedPostsEditor } from "@/components/admin/featured-posts-editor";
 import { listMembershipsForAdmin, listPlans } from "@/lib/dal/memberships";
 import { MembershipPlansPanel } from "@/components/admin/membership-plans-panel";
 import { GrantMembershipDialog } from "@/components/admin/grant-membership-dialog";
@@ -23,7 +24,7 @@ export const metadata: Metadata = { title: "Admin" };
 
 export default async function AdminPage() {
   const user = await requireAdmin("/admin");
-  const [members, announcements, albums, pending, about, faqItems, socialLinks, plans, memberships, messages] = await Promise.all([
+  const [members, announcements, albums, pending, about, faqItems, socialLinks, featuredPosts, plans, memberships, messages] = await Promise.all([
     listAllMembers(),
     listCommunityAnnouncementsForAdmin(),
     listAdminAlbums(),
@@ -31,6 +32,7 @@ export default async function AdminPage() {
     getAboutForAdmin(),
     listFaqItemsForAdmin(),
     listSocialLinksForAdmin(),
+    listFeaturedPostsForAdmin(),
     listPlans(),
     listMembershipsForAdmin(),
     // (app) has no NextIntlClientProvider; the gallery components read the
@@ -101,6 +103,16 @@ export default async function AdminPage() {
           </p>
         </header>
         <SocialLinksEditor links={socialLinks} />
+      </section>
+
+      <section className="flex flex-col gap-4">
+        <header className="flex flex-col gap-1">
+          <SectionTitle>Featured posts</SectionTitle>
+          <p className="text-sm text-muted-foreground">
+            The 6 newest visible posts appear on the home page.
+          </p>
+        </header>
+        <FeaturedPostsEditor posts={featuredPosts} />
       </section>
     </div>
   );
