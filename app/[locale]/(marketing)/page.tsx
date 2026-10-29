@@ -136,7 +136,7 @@ export default async function Home() {
         </section>
       ) : null}
 
-      <SocialLinksSection links={socialLinks} />
+      <SocialLinksSection links={socialLinks} title={t("socialsTitle")} body={t("socialsBody")} />
 
       <PartnerCta />
 

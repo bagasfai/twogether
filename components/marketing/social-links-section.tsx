@@ -3,18 +3,32 @@ import { SocialIcon } from "@/components/marketing/social-icon";
 import type { SocialLink } from "@/lib/dal/socials";
 import { socialVerbKey } from "@/lib/socials/verb";
 
-export async function SocialLinksSection({ links }: { links: SocialLink[] }) {
+export async function SocialLinksSection({
+  links,
+  title,
+  body,
+  className = "px-6 py-16",
+  titleClassName = "text-4xl sm:text-5xl",
+}: {
+  links: SocialLink[];
+  title: string;
+  body: string;
+  className?: string;
+  titleClassName?: string;
+}) {
   if (links.length === 0) return null;
-  const [t, tSocials] = await Promise.all([getTranslations("home"), getTranslations("socials")]);
+  const tSocials = await getTranslations("socials");
 
   return (
-    <section className="px-6 py-16">
+    <section className={className}>
       <div className="mx-auto flex max-w-5xl flex-col gap-6">
         <div className="flex flex-col gap-2">
-          <h2 className="font-display text-4xl font-extrabold uppercase italic leading-none tracking-tight sm:text-5xl">
-            {t("socialsTitle")}
+          <h2
+            className={`font-display font-extrabold uppercase italic leading-none tracking-tight ${titleClassName}`}
+          >
+            {title}
           </h2>
-          <p className="max-w-[52ch] text-base text-muted-foreground">{t("socialsBody")}</p>
+          <p className="max-w-[52ch] text-base text-muted-foreground">{body}</p>
         </div>
         <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {links.map((link) => (

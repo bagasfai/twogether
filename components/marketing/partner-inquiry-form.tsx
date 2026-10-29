@@ -65,6 +65,8 @@ export function PartnerInquiryForm() {
       }
       if (result.code === "validation") {
         applyFieldErrors(form, result.fieldErrors);
+        const mapped = Object.keys(form.formState.errors).some((k) => k !== "root");
+        if (mapped) return;
       }
       form.setError("root", { message: t("genericError") });
     }),
@@ -142,7 +144,7 @@ export function PartnerInquiryForm() {
           render={({ field }) => (
             <FormItem>
               <FormLabel>{t("inquiryType")}</FormLabel>
-              <Select value={field.value ?? ""} onValueChange={field.onChange}>
+              <Select value={field.value ?? ""} onValueChange={field.onChange} onOpenChange={(open) => { if (!open) field.onBlur(); }}>
                 <FormControl>
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder={t("inquiryTypePlaceholder")} />
