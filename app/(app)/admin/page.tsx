@@ -15,6 +15,9 @@ import { FaqEditor } from "@/components/admin/faq-editor";
 import { listFeaturedPostsForAdmin, listSocialLinksForAdmin } from "@/lib/dal/socials";
 import { SocialLinksEditor } from "@/components/admin/social-links-editor";
 import { FeaturedPostsEditor } from "@/components/admin/featured-posts-editor";
+import { listPartnerInquiriesForAdmin, countNewPartnerInquiries } from "@/lib/dal/partner-inquiries";
+import { PartnerInquiriesTable } from "@/components/admin/partner-inquiries-table";
+import { Badge } from "@/components/ui/badge";
 import { listMembershipsForAdmin, listPlans } from "@/lib/dal/memberships";
 import { MembershipPlansPanel } from "@/components/admin/membership-plans-panel";
 import { GrantMembershipDialog } from "@/components/admin/grant-membership-dialog";
@@ -24,7 +27,7 @@ export const metadata: Metadata = { title: "Admin" };
 
 export default async function AdminPage() {
   const user = await requireAdmin("/admin");
-  const [members, announcements, albums, pending, about, faqItems, socialLinks, featuredPosts, plans, memberships, messages] = await Promise.all([
+  const [members, announcements, albums, pending, about, faqItems, socialLinks, featuredPosts, inquiries, newInquiryCount, plans, memberships, messages] = await Promise.all([
     listAllMembers(),
     listCommunityAnnouncementsForAdmin(),
     listAdminAlbums(),
@@ -33,6 +36,8 @@ export default async function AdminPage() {
     listFaqItemsForAdmin(),
     listSocialLinksForAdmin(),
     listFeaturedPostsForAdmin(),
+    listPartnerInquiriesForAdmin(),
+    countNewPartnerInquiries(),
     listPlans(),
     listMembershipsForAdmin(),
     // (app) has no NextIntlClientProvider; the gallery components read the
@@ -113,6 +118,19 @@ export default async function AdminPage() {
           </p>
         </header>
         <FeaturedPostsEditor posts={featuredPosts} />
+      </section>
+
+      <section className="flex flex-col gap-4">
+        <header className="flex flex-col gap-1">
+          <div className="flex items-center gap-2">
+            <SectionTitle>Partner inquiries</SectionTitle>
+            {newInquiryCount > 0 ? <Badge>{newInquiryCount} new</Badge> : null}
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Sent from /partner. Reply by email or WhatsApp, then update the status.
+          </p>
+        </header>
+        <PartnerInquiriesTable inquiries={inquiries} />
       </section>
     </div>
   );
