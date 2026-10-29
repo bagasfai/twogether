@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { submitPartnerInquiry } from "@/lib/actions/partner-inquiry";
+import { hasVisibleFieldError } from "@/lib/partner/visible-field-error";
 import { applyFieldErrors } from "@/lib/forms/apply-field-errors";
 import {
   PARTNER_INQUIRY_TYPES,
@@ -65,8 +66,7 @@ export function PartnerInquiryForm() {
       }
       if (result.code === "validation") {
         applyFieldErrors(form, result.fieldErrors);
-        const mapped = Object.keys(form.formState.errors).some((k) => k !== "root");
-        if (mapped) return;
+        if (hasVisibleFieldError(result.fieldErrors)) return;
       }
       form.setError("root", { message: t("genericError") });
     }),
