@@ -27,7 +27,7 @@ export function PhotoGrid({
               type="button"
               onClick={() => setOpenIndex(i)}
               aria-label={t("openPhoto", { current: i + 1, total: photos.length })}
-              className="relative block aspect-square w-full overflow-hidden rounded-lg bg-muted outline-none focus-visible:ring-[3px] focus-visible:ring-ring"
+              className="relative block aspect-square w-full overflow-hidden rounded-2xl bg-muted outline-none focus-visible:ring-[3px] focus-visible:ring-ring"
             >
               <Image
                 src={galleryPhotoUrl(photo.storagePath)}

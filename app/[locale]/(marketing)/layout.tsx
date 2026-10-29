@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import Image from "next/image";
 import NextLink from "next/link";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
@@ -14,15 +15,27 @@ export default async function MarketingLayout({ children }: { children: ReactNod
   return (
     <div className="flex flex-1 flex-col">
       <SkipLink />
-      <header className="sticky top-0 z-20 border-b border-border/60 bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <header className="sticky top-0 z-20 bg-navy text-white">
         {/* Below sm, brand + login share the first row and the nav links +
             language switcher drop to a second row, so a 320px viewport never
-            scrolls horizontally. From sm up it is the original single row. */}
-        <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-6 gap-y-2 px-6 py-4">
-          <Link href="/" className="mr-auto whitespace-nowrap text-base font-semibold tracking-tight sm:mr-0">
-            {t("nav.brand")}
+            scrolls horizontally. From sm up it is a single row. */}
+        <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-6 gap-y-2 px-6 py-3">
+          <Link
+            href="/"
+            className="mr-auto flex items-center gap-3 whitespace-nowrap rounded-full outline-none focus-visible:ring-[3px] focus-visible:ring-white sm:mr-0"
+          >
+            <Image
+              src="/brand/jakbar-twogether.jpeg"
+              alt=""
+              width={40}
+              height={40}
+              className="size-10 rounded-full border-2 border-white object-cover"
+            />
+            <span className="font-display text-xl font-extrabold uppercase italic tracking-tight">
+              {t("nav.brand")}
+            </span>
           </Link>
-          <div className="order-last flex basis-full items-center gap-4 sm:order-none sm:gap-6 sm:flex-1 sm:basis-auto">
+          <div className="order-last flex basis-full items-center gap-4 sm:order-none sm:flex-1 sm:basis-auto sm:gap-6">
             <NavLinks
               localized
               items={[
@@ -31,13 +44,14 @@ export default async function MarketingLayout({ children }: { children: ReactNod
                 { href: "/about", label: t("nav.about") },
                 { href: "/faq", label: t("nav.faq") },
               ]}
-              className="flex flex-1 flex-wrap items-center gap-x-4 gap-y-1 text-sm sm:gap-x-6 text-muted-foreground"
-              linkClassName="whitespace-nowrap transition-colors hover:text-foreground"
+              className="flex flex-1 flex-wrap items-center gap-1 text-sm"
+              linkClassName="inline-flex items-center whitespace-nowrap rounded-full px-3 py-1.5 font-medium text-white outline-none transition-colors duration-[var(--dur-micro)] hover:bg-white/15 focus-visible:ring-[3px] focus-visible:ring-white max-md:min-h-11"
+              activeClassName="bg-cork text-navy hover:bg-cork"
             />
             <LanguageSwitcher />
           </div>
           {/* /dashboard and /login live outside app/[locale] -- plain Link, no locale prefix */}
-          <Button asChild size="sm" variant={user ? "default" : "outline"}>
+          <Button asChild size="sm" className="bg-white text-navy shadow-none hover:bg-white/90 focus-visible:ring-white">
             <NextLink href={user ? "/dashboard" : "/login"}>
               {user ? t("nav.dashboard") : t("nav.login")}
             </NextLink>
@@ -45,19 +59,46 @@ export default async function MarketingLayout({ children }: { children: ReactNod
         </div>
       </header>
       <main id="main" className="flex flex-1 flex-col">{children}</main>
-      <footer className="border-t border-border/60">
-        <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-2 px-6 py-5 text-xs text-muted-foreground">
-          <span>{t("nav.brand")}</span>
-          <span>{t("footer.tagline")}</span>
-          <span className="flex items-center gap-4">
-            <Link href="/about" className="transition-colors hover:text-foreground">
-              {t("nav.about")}
-            </Link>
-            <Link href="/faq" className="transition-colors hover:text-foreground">
-              {t("nav.faq")}
-            </Link>
-          </span>
-          <span>{t("footer.copyright", { year: new Date().getFullYear() })}</span>
+      <footer className="bg-navy text-white">
+        <div className="mx-auto flex max-w-5xl flex-col gap-6 px-6 py-10 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-4">
+            <Image
+              src="/brand/jakbar-twogether.jpeg"
+              alt=""
+              width={64}
+              height={64}
+              className="size-16 -rotate-3 rounded-2xl border-2 border-white object-cover"
+            />
+            <div className="flex flex-col">
+              <span className="font-display text-2xl font-extrabold uppercase italic leading-none tracking-tight">
+                {t("nav.brand")}
+              </span>
+              <span className="mt-1 text-sm text-white/80">{t("footer.tagline")}</span>
+            </div>
+          </div>
+          <nav aria-label="Footer" className="flex flex-wrap items-center gap-x-6 gap-y-1 text-sm">
+            {(
+              [
+                ["/sessions", t("nav.sessions")],
+                ["/gallery", t("nav.gallery")],
+                ["/about", t("nav.about")],
+                ["/faq", t("nav.faq")],
+              ] as const
+            ).map(([href, label]) => (
+              <Link
+                key={href}
+                href={href}
+                className="inline-flex min-h-11 items-center rounded-sm text-white/90 underline-offset-4 outline-none hover:text-white hover:underline focus-visible:ring-[3px] focus-visible:ring-white"
+              >
+                {label}
+              </Link>
+            ))}
+          </nav>
+        </div>
+        <div className="border-t border-white/15">
+          <p className="mx-auto max-w-5xl px-6 py-4 text-xs text-white/80">
+            {t("footer.copyright", { year: new Date().getFullYear() })}
+          </p>
         </div>
       </footer>
     </div>

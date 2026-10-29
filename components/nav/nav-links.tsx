@@ -21,6 +21,7 @@ type Props = {
   localized?: boolean;
   className?: string;
   linkClassName?: string;
+  activeClassName?: string;
 };
 
 // Two variants so the locale-aware pathname hook only runs under the
@@ -43,6 +44,7 @@ function NavList({
   Link,
   className,
   linkClassName,
+  activeClassName = "font-medium text-accent-text",
 }: Omit<Props, "localized"> & { pathname: string; Link: NavAnchor }) {
   const active = activeHref(pathname, items.map((i) => i.href));
   return (
@@ -54,7 +56,7 @@ function NavList({
             key={item.href}
             href={item.href}
             aria-current={isActive ? "page" : undefined}
-            className={cn(linkClassName, isActive && "font-medium text-accent-text")}
+            className={cn(linkClassName, isActive && activeClassName)}
           >
             {item.label}
           </Link>

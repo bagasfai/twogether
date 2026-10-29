@@ -1,6 +1,5 @@
-/* Hallmark · genre: modern-minimal · macrostructure: Marquee Hero (marketing) / Workbench (app)
- * theme: Coral · nav: N1b-derived (marketing) / functional app shell · footer: Ft2
- * design-system: design.md · designed-as-app
+/* Impeccable · world: badminton court (sky-blue vinyl, white court lines, navy ink, cork-yellow action)
+ * design-system: design.md · tokens.css mirrors :root
  */
 @import "tailwindcss";
 @import "tw-animate-css";
@@ -8,45 +7,51 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --radius: 0.75rem;
-  --background: oklch(97% 0.008 35);
-  --foreground: oklch(20% 0.012 35);
-  --card: oklch(97% 0.008 35);
-  --card-foreground: oklch(20% 0.012 35);
-  --popover: oklch(97% 0.008 35);
-  --popover-foreground: oklch(20% 0.012 35);
-  --primary: oklch(20% 0.012 35);
-  --primary-foreground: oklch(97% 0.008 35);
-  --secondary: oklch(94% 0.010 35);
-  --secondary-foreground: oklch(20% 0.012 35);
-  --muted: oklch(94% 0.010 35);
-  --muted-foreground: oklch(48% 0.012 35);
-  --accent: oklch(64% 0.170 32);
-  --accent-foreground: oklch(20% 0.012 35);
-  --accent-text: oklch(50% 0.170 32);
-  --destructive: oklch(58% 0.200 25);
-  --border: oklch(88% 0.010 35);
-  --input: oklch(63% 0.010 35);
-  --ring: oklch(64% 0.190 32);
-  --success: oklch(58% 0.140 150);
-  --success-foreground: oklch(97% 0.008 35);
-  --success-text: oklch(45% 0.140 150);
-  --destructive-text: oklch(52% 0.200 25);
-  --warning: oklch(70% 0.150 80);
-  --warning-foreground: oklch(20% 0.012 35);
-  --chart-1: oklch(64% 0.170 32);
-  --chart-2: oklch(58% 0.140 150);
-  --chart-3: oklch(70% 0.150 80);
-  --chart-4: oklch(58% 0.200 25);
-  --chart-5: oklch(48% 0.012 35);
-  --sidebar: oklch(97% 0.008 35);
-  --sidebar-foreground: oklch(20% 0.012 35);
-  --sidebar-primary: oklch(20% 0.012 35);
-  --sidebar-primary-foreground: oklch(97% 0.008 35);
-  --sidebar-accent: oklch(94% 0.010 35);
-  --sidebar-accent-foreground: oklch(20% 0.012 35);
-  --sidebar-border: oklch(88% 0.010 35);
-  --sidebar-ring: oklch(64% 0.190 32);
+  --radius: 1rem;
+  /* Sky-blue court palette, sampled from public/brand/jakbar-twogether.jpeg */
+  --navy: oklch(28% 0.13 264);
+  --sky: oklch(62% 0.17 248);
+  --sky-deep: oklch(50% 0.19 258);
+  --sky-pale: oklch(94% 0.04 235);
+  --cork: oklch(87% 0.17 92);
+  --background: oklch(98.5% 0.008 240);
+  --foreground: oklch(26% 0.11 265);
+  --card: oklch(100% 0 0);
+  --card-foreground: oklch(26% 0.11 265);
+  --popover: oklch(100% 0 0);
+  --popover-foreground: oklch(26% 0.11 265);
+  --primary: oklch(28% 0.13 264);
+  --primary-foreground: oklch(98.5% 0.008 240);
+  --secondary: oklch(94% 0.03 240);
+  --secondary-foreground: oklch(26% 0.11 265);
+  --muted: oklch(95% 0.02 240);
+  --muted-foreground: oklch(45% 0.06 258);
+  --accent: oklch(93% 0.05 235);
+  --accent-foreground: oklch(26% 0.11 265);
+  --accent-text: oklch(46% 0.17 258);
+  --destructive: oklch(55% 0.21 25);
+  --border: oklch(88% 0.03 240);
+  --input: oklch(62% 0.06 250);
+  --ring: oklch(55% 0.20 255);
+  --success: oklch(58% 0.14 150);
+  --success-foreground: oklch(98.5% 0.008 240);
+  --success-text: oklch(42% 0.14 150);
+  --destructive-text: oklch(50% 0.21 25);
+  --warning: oklch(80% 0.15 85);
+  --warning-foreground: oklch(26% 0.11 265);
+  --chart-1: oklch(62% 0.17 248);
+  --chart-2: oklch(58% 0.14 150);
+  --chart-3: oklch(80% 0.15 85);
+  --chart-4: oklch(55% 0.21 25);
+  --chart-5: oklch(45% 0.06 258);
+  --sidebar: oklch(98.5% 0.008 240);
+  --sidebar-foreground: oklch(26% 0.11 265);
+  --sidebar-primary: oklch(28% 0.13 264);
+  --sidebar-primary-foreground: oklch(98.5% 0.008 240);
+  --sidebar-accent: oklch(93% 0.05 235);
+  --sidebar-accent-foreground: oklch(26% 0.11 265);
+  --sidebar-border: oklch(88% 0.03 240);
+  --sidebar-ring: oklch(55% 0.20 255);
 
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-in: cubic-bezier(0.7, 0, 0.84, 0);
@@ -57,48 +62,54 @@
 }
 
 .dark {
-  --background: oklch(15% 0.010 35);
-  --foreground: oklch(94% 0.008 35);
-  --card: oklch(18% 0.012 35);
-  --card-foreground: oklch(94% 0.008 35);
-  --popover: oklch(18% 0.012 35);
-  --popover-foreground: oklch(94% 0.008 35);
-  --primary: oklch(94% 0.008 35);
-  --primary-foreground: oklch(18% 0.012 35);
-  --secondary: oklch(24% 0.012 35);
-  --secondary-foreground: oklch(94% 0.008 35);
-  --muted: oklch(24% 0.012 35);
-  --muted-foreground: oklch(68% 0.010 35);
-  --accent: oklch(70% 0.160 32);
-  --accent-foreground: oklch(15% 0.010 35);
-  --destructive: oklch(66% 0.190 25);
-  --border: oklch(94% 0.008 35 / 12%);
-  --input: oklch(94% 0.008 35 / 15%);
-  --ring: oklch(70% 0.170 32);
-  --success: oklch(66% 0.130 150);
-  --success-foreground: oklch(15% 0.010 35);
-  --warning: oklch(76% 0.140 80);
-  --warning-foreground: oklch(15% 0.010 35);
-  --chart-1: oklch(70% 0.160 32);
-  --chart-2: oklch(66% 0.130 150);
-  --chart-3: oklch(76% 0.140 80);
-  --chart-4: oklch(66% 0.190 25);
-  --chart-5: oklch(68% 0.010 35);
-  --sidebar: oklch(18% 0.012 35);
-  --sidebar-foreground: oklch(94% 0.008 35);
-  --sidebar-primary: oklch(70% 0.160 32);
-  --sidebar-primary-foreground: oklch(15% 0.010 35);
-  --sidebar-accent: oklch(24% 0.012 35);
-  --sidebar-accent-foreground: oklch(94% 0.008 35);
-  --sidebar-border: oklch(94% 0.008 35 / 12%);
-  --sidebar-ring: oklch(70% 0.170 32);
+  --background: oklch(18% 0.06 265);
+  --foreground: oklch(95% 0.012 240);
+  --card: oklch(22% 0.07 265);
+  --card-foreground: oklch(95% 0.012 240);
+  --popover: oklch(22% 0.07 265);
+  --popover-foreground: oklch(95% 0.012 240);
+  --primary: oklch(95% 0.012 240);
+  --primary-foreground: oklch(22% 0.08 265);
+  --secondary: oklch(28% 0.07 265);
+  --secondary-foreground: oklch(95% 0.012 240);
+  --muted: oklch(28% 0.07 265);
+  --muted-foreground: oklch(72% 0.04 250);
+  --accent: oklch(32% 0.09 262);
+  --accent-foreground: oklch(95% 0.012 240);
+  --destructive: oklch(66% 0.19 25);
+  --border: oklch(95% 0.012 240 / 14%);
+  --input: oklch(95% 0.012 240 / 18%);
+  --ring: oklch(72% 0.15 245);
+  --success: oklch(66% 0.13 150);
+  --success-foreground: oklch(18% 0.06 265);
+  --warning: oklch(84% 0.15 88);
+  --warning-foreground: oklch(18% 0.06 265);
+  --chart-1: oklch(72% 0.15 245);
+  --chart-2: oklch(66% 0.13 150);
+  --chart-3: oklch(84% 0.15 88);
+  --chart-4: oklch(66% 0.19 25);
+  --chart-5: oklch(72% 0.04 250);
+  --sidebar: oklch(22% 0.07 265);
+  --sidebar-foreground: oklch(95% 0.012 240);
+  --sidebar-primary: oklch(72% 0.15 245);
+  --sidebar-primary-foreground: oklch(18% 0.06 265);
+  --sidebar-accent: oklch(28% 0.07 265);
+  --sidebar-accent-foreground: oklch(95% 0.012 240);
+  --sidebar-border: oklch(95% 0.012 240 / 14%);
+  --sidebar-ring: oklch(72% 0.15 245);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-figtree);
   --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-barlow), var(--font-figtree), ui-sans-serif, system-ui, sans-serif;
+  --color-navy: var(--navy);
+  --color-sky: var(--sky);
+  --color-sky-deep: var(--sky-deep);
+  --color-sky-pale: var(--sky-pale);
+  --color-cork: var(--cork);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
   --color-popover: var(--popover);
@@ -151,6 +162,48 @@
   body {
     @apply bg-background text-foreground;
   }
+  /* Browser surfaces carry the palette too */
+  ::selection {
+    background: var(--cork);
+    color: var(--navy);
+  }
+  p {
+    text-wrap: pretty;
+  }
+  a:not([class]) {
+    text-underline-offset: 0.2em;
+  }
+  * {
+    scrollbar-color: var(--sky) var(--sky-pale);
+  }
+  input,
+  textarea {
+    caret-color: var(--sky-deep);
+  }
+}
+
+/* Court-vinyl field used by marketing heroes: light sun flare to deep sky. */
+.court-field {
+  background-color: var(--sky-deep);
+  background-image:
+    radial-gradient(60rem 28rem at 88% -8%, oklch(78% 0.12 238 / 0.9), transparent 70%),
+    linear-gradient(165deg, oklch(57% 0.18 252) 0%, var(--sky-deep) 100%);
+}
+
+/* One authored moment: the shuttlecocks drift in once on load. */
+@keyframes shuttle-drift {
+  from {
+    opacity: 0;
+    transform: translate3d(0, -1.25rem, 0) rotate(var(--shuttle-from, -20deg));
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) rotate(var(--shuttle-to, 12deg));
+  }
+}
+.shuttle-drift {
+  animation: shuttle-drift var(--dur-long) var(--ease-out) both;
+  animation-delay: var(--shuttle-delay, 0ms);
 }
 
 @media (prefers-reduced-motion: reduce) {

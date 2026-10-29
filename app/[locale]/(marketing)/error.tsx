@@ -22,9 +22,9 @@ export function MarketingErrorView({
 }) {
   return (
     <div role="alert" className="mx-auto flex max-w-md flex-col items-start gap-3 px-6 py-16">
-      <h1 className="text-xl font-semibold tracking-tight">{title}</h1>
-      <p className="text-sm text-muted-foreground">{body}</p>
-      {offline ? <p className="text-sm text-muted-foreground">{offlineHint}</p> : null}
+      <h1 className="font-display text-4xl font-extrabold uppercase italic leading-none tracking-tight">{title}</h1>
+      <p className="text-base text-muted-foreground">{body}</p>
+      {offline ? <p className="text-base text-muted-foreground">{offlineHint}</p> : null}
       <Button onClick={onRetry}>{retryLabel}</Button>
     </div>
   );

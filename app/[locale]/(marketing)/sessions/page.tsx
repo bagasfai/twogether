@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { listUpcomingPublicSessions } from "@/lib/dal/public-sessions";
+import { PageHero } from "@/components/marketing/page-hero";
 import { SessionCard } from "@/components/sessions/session-card";
 import { HostedSessionsPreview } from "@/components/sessions/hosted-sessions-preview";
 
@@ -20,21 +21,22 @@ export default async function SessionsPage() {
   ]);
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-6 py-12">
-      <header className="flex flex-col gap-1">
-        <h1 className="text-2xl font-semibold tracking-tight">{t("title")}</h1>
-        <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
-      </header>
-      <HostedSessionsPreview />
-      {sessions.length === 0 ? (
-        <p className="text-sm text-muted-foreground">{t("empty")}</p>
-      ) : (
-        <div className="flex flex-col gap-4">
-          {sessions.map((session) => (
-            <SessionCard key={session.id} session={session} />
-          ))}
-        </div>
-      )}
-    </div>
+    <>
+      <PageHero title={t("title")} subtitle={t("subtitle")} />
+      <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-6 py-10">
+        <HostedSessionsPreview />
+        {sessions.length === 0 ? (
+          <p className="rounded-2xl border-2 border-dashed border-input p-6 text-base text-muted-foreground">
+            {t("empty")}
+          </p>
+        ) : (
+          <div className="flex flex-col gap-5">
+            {sessions.map((session) => (
+              <SessionCard key={session.id} session={session} />
+            ))}
+          </div>
+        )}
+      </div>
+    </>
   );
 }

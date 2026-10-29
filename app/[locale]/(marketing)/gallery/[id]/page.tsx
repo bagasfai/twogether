@@ -5,6 +5,7 @@ import { z } from "zod";
 import { getLocale, getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { getPublicAlbum, galleryPhotoUrl } from "@/lib/dal/galleries";
+import { PageHero } from "@/components/marketing/page-hero";
 import { PhotoGrid } from "@/components/gallery/photo-grid";
 import { formatAlbumDate } from "@/components/gallery/shared";
 
@@ -60,32 +61,34 @@ export default async function GalleryAlbumPage({ params }: PageProps<"/[locale]/
   const meta = [date, album.location].filter(Boolean).join(" · ");
 
   return (
-    <div className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-6 py-12">
-      <header className="flex flex-col gap-3">
+    <>
+      <PageHero
+        title={album.title}
+        subtitle={
+          meta ? <span className="font-display text-xl font-semibold tabular-nums [overflow-wrap:anywhere]">{meta}</span> : null
+        }
+      />
+      <div className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-6 py-8">
         <Link
           href="/gallery"
-          className="inline-flex min-h-11 w-fit items-center gap-1 whitespace-nowrap rounded-sm text-sm font-medium text-accent-text outline-none hover:underline focus-visible:ring-[3px] focus-visible:ring-ring"
+          className="inline-flex min-h-11 w-fit items-center gap-1 whitespace-nowrap rounded-full bg-sky-pale px-4 text-sm font-semibold text-navy outline-none hover:bg-accent focus-visible:ring-[3px] focus-visible:ring-ring"
         >
           <ArrowLeftIcon className="size-4" aria-hidden />
           {t("back")}
         </Link>
-        <h1 className="text-3xl font-semibold tracking-tight [overflow-wrap:anywhere]">{album.title}</h1>
-        {meta ? (
-          <p className="font-mono text-sm tabular-nums text-muted-foreground [overflow-wrap:anywhere]">{meta}</p>
-        ) : null}
         {album.description ? (
           <p className="max-w-[65ch] whitespace-pre-wrap text-base [overflow-wrap:anywhere]">{album.description}</p>
         ) : null}
-      </header>
 
-      {album.photos.length === 0 ? (
-        <div className="flex flex-col gap-1 rounded-lg border border-dashed p-6">
-          <p className="text-sm font-medium">{t("noPhotos")}</p>
-          <p className="text-sm text-muted-foreground">{t("noPhotosBody")}</p>
-        </div>
-      ) : (
-        <PhotoGrid albumTitle={album.title} photos={album.photos} />
-      )}
-    </div>
+        {album.photos.length === 0 ? (
+          <div className="flex flex-col gap-1 rounded-2xl border-2 border-dashed border-input p-6">
+            <p className="font-display text-xl font-bold">{t("noPhotos")}</p>
+            <p className="text-sm text-muted-foreground">{t("noPhotosBody")}</p>
+          </div>
+        ) : (
+          <PhotoGrid albumTitle={album.title} photos={album.photos} />
+        )}
+      </div>
+    </>
   );
 }

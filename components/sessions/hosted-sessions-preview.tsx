@@ -67,10 +67,10 @@ export function HostedSessionsPreview() {
 
   return (
     <section className="flex flex-col gap-3">
-      <h2 className="text-sm font-medium text-muted-foreground">{t("sessionsList.hostedTitle")}</h2>
+      <h2 className="font-display text-2xl font-bold uppercase italic leading-none tracking-tight">{t("sessionsList.hostedTitle")}</h2>
       <div className="flex flex-col gap-3">
         {state.sessions.map((session) => (
-          <Card key={session.id} className="border-accent/40">
+          <Card key={session.id} className="rounded-2xl border-2 border-navy">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Link href={`/sessions/${session.id}/manage`} className="hover:underline">
@@ -84,7 +84,7 @@ export function HostedSessionsPreview() {
                 {formatDateTime(session.startsAt)} · {session.location}
               </CardDescription>
             </CardHeader>
-            <CardContent className="font-mono text-sm tabular-nums text-muted-foreground">
+            <CardContent className="text-sm tabular-nums text-muted-foreground">
               {t("sessionCard.meta", {
                 spots: session.maxParticipants,
                 waitlist: session.waitlistCapacity,

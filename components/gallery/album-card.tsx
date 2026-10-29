@@ -13,11 +13,11 @@ export function AlbumCard({ album, eager = false }: { album: PublicAlbum; eager?
   const date = album.sessionStartsAt ? formatAlbumDate(album.sessionStartsAt, locale) : null;
 
   return (
-    // Whole card is one link. Hover is a 1px lift plus a border shift; under
+    // Whole card is one link. Hover is a small lift plus a navy border; under
     // reduced motion the lift is dropped and nothing is transitioned.
     <Link
       href={`/gallery/${album.id}`}
-      className="group flex min-w-0 flex-col overflow-hidden rounded-lg border bg-card outline-none transition-[transform,border-color] duration-[var(--dur-short)] ease-[var(--ease-out)] hover:-translate-y-px hover:border-accent/40 focus-visible:ring-[3px] focus-visible:ring-ring motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+      className="group flex min-w-0 flex-col overflow-hidden rounded-2xl border-2 border-border bg-card shadow-[0_8px_24px_-14px_oklch(28%_0.13_264/0.4)] outline-none transition-[transform,border-color] duration-[var(--dur-short)] ease-[var(--ease-out)] hover:-translate-y-0.5 hover:border-navy focus-visible:ring-[3px] focus-visible:ring-ring motion-reduce:transition-none motion-reduce:hover:translate-y-0"
     >
       <div className="relative aspect-[4/3] bg-muted">
         {album.coverPath ? (
@@ -33,11 +33,11 @@ export function AlbumCard({ album, eager = false }: { album: PublicAlbum; eager?
       </div>
       <div className="flex min-w-0 flex-col gap-1 p-3">
         {/* Single line so the clickable text never wraps; the full title is on the album page. */}
-        <span className="truncate text-sm font-semibold" title={album.title}>
+        <span className="truncate font-display text-xl font-bold leading-tight" title={album.title}>
           {album.title}
         </span>
         {/* --text-xs */}
-        <span className="flex flex-col font-mono text-[0.8rem] tabular-nums text-muted-foreground">
+        <span className="flex flex-col text-sm tabular-nums text-muted-foreground">
           {date ? <span className="truncate">{date}</span> : null}
           <span className="truncate">{t("albumPhotoCount", { count: album.photoCount })}</span>
         </span>
