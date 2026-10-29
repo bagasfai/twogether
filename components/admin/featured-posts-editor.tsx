@@ -148,7 +148,7 @@ function FeaturedPostDialog({ post }: { post?: FeaturedPost }) {
           router.refresh();
           return;
         }
-        if (uploadedPath) await deleteOrphanFeaturedImage(uploadedPath);
+        if (uploadedPath) await deleteOrphanFeaturedImage(uploadedPath).catch(() => {});
         applyFieldErrors(form, result.fieldErrors);
         toast.error(result.message);
       } catch (error) {

@@ -11,6 +11,7 @@ vi.mock("@/lib/dal/user", () => ({ getCurrentUser: async () => ({ id: "u1" }) })
 import {
   createFeaturedPost,
   deleteFeaturedPost,
+  deleteOrphanFeaturedImage,
   updateFeaturedPost,
 } from "@/lib/actions/featured-posts";
 
@@ -142,5 +143,46 @@ describe("createFeaturedPost", () => {
     const result = await createFeaturedPost({ ...valid, imagePath: "../x.webp" });
     expect(result).toMatchObject({ ok: false, code: "validation" });
     expect(createClient).not.toHaveBeenCalled();
+  });
+});
+
+describe("deleteOrphanFeaturedImage", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  function orphanClient(result: { data: unknown; error: unknown }) {
+    const remove = vi.fn(async () => ({ error: null }));
+    const client = {
+      from: () => ({ select: () => ({ eq: () => ({ limit: async () => result }) }) }),
+      storage: { from: () => ({ remove }) },
+    };
+    createClient.mockResolvedValue(client);
+    return remove;
+  }
+
+  it("ignores an invalid path", async () => {
+    const remove = orphanClient({ data: [], error: null });
+    await deleteOrphanFeaturedImage("../x.webp");
+    expect(remove).not.toHaveBeenCalled();
+  });
+
+  it("keeps a referenced object", async () => {
+    const remove = orphanClient({ data: [{ id: ID }], error: null });
+    await deleteOrphanFeaturedImage(NEW);
+    expect(remove).not.toHaveBeenCalled();
+  });
+
+  it("keeps the object when the reference check errors", async () => {
+    const remove = orphanClient({ data: null, error: { message: "boom" } });
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    await deleteOrphanFeaturedImage(NEW);
+    expect(remove).not.toHaveBeenCalled();
+    expect(spy).toHaveBeenCalled();
+    spy.mockRestore();
+  });
+
+  it("removes an unreferenced object", async () => {
+    const remove = orphanClient({ data: [], error: null });
+    await deleteOrphanFeaturedImage(NEW);
+    expect(remove).toHaveBeenCalledWith([NEW]);
   });
 });

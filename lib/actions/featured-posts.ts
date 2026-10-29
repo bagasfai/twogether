@@ -167,12 +167,16 @@ export async function deleteOrphanFeaturedImage(imagePath: string): Promise<void
   if (!user) return;
 
   const supabase = await createClient();
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("featured_posts")
     .select("id")
     .eq("image_path", parsed.data)
-    .maybeSingle();
-  if (data) return;
+    .limit(1);
+  if (error) {
+    console.error("[featured-posts] orphan check failed", parsed.data, error.message);
+    return;
+  }
+  if (data && data.length > 0) return;
 
   await removeObject(supabase, parsed.data);
 }
