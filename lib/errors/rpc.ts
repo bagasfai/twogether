@@ -64,7 +64,7 @@ export const RPC_CODE_MAP = {
 } as const;
 
 export type RpcErrorCode = Exclude<(typeof RPC_CODE_MAP)[keyof typeof RPC_CODE_MAP], "validation">;
-export type AppErrorCode = RpcErrorCode | "validation" | "unknown";
+export type AppErrorCode = RpcErrorCode | "validation" | "rate_limited" | "unknown";
 
 const MESSAGES: Record<AppErrorCode, string> = {
   registration_closed: "Registration for this session is not open.",
@@ -90,6 +90,7 @@ const MESSAGES: Record<AppErrorCode, string> = {
   invalid_state: "This has already changed. Reload and try again.",
   player_busy: "A player in this match is already in another active match.",
   validation: "Please check the highlighted fields.",
+  rate_limited: "Too many requests. Please try again later.",
   unknown: "Something went wrong. Please try again.",
 };
 
