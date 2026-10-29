@@ -12,6 +12,8 @@ import { AlbumAdminSection } from "@/components/gallery/album-admin-section";
 import { getAboutForAdmin, listFaqItemsForAdmin } from "@/lib/dal/community-content-admin";
 import { AboutEditor } from "@/components/admin/about-editor";
 import { FaqEditor } from "@/components/admin/faq-editor";
+import { listSocialLinksForAdmin } from "@/lib/dal/socials";
+import { SocialLinksEditor } from "@/components/admin/social-links-editor";
 import { listMembershipsForAdmin, listPlans } from "@/lib/dal/memberships";
 import { MembershipPlansPanel } from "@/components/admin/membership-plans-panel";
 import { GrantMembershipDialog } from "@/components/admin/grant-membership-dialog";
@@ -21,13 +23,14 @@ export const metadata: Metadata = { title: "Admin" };
 
 export default async function AdminPage() {
   const user = await requireAdmin("/admin");
-  const [members, announcements, albums, pending, about, faqItems, plans, memberships, messages] = await Promise.all([
+  const [members, announcements, albums, pending, about, faqItems, socialLinks, plans, memberships, messages] = await Promise.all([
     listAllMembers(),
     listCommunityAnnouncementsForAdmin(),
     listAdminAlbums(),
     listAllPendingForAdmin(),
     getAboutForAdmin(),
     listFaqItemsForAdmin(),
+    listSocialLinksForAdmin(),
     listPlans(),
     listMembershipsForAdmin(),
     // (app) has no NextIntlClientProvider; the gallery components read the
@@ -88,6 +91,16 @@ export default async function AdminPage() {
         <NextIntlClientProvider locale="en" messages={{ gallery: messages.gallery }}>
           <FaqEditor items={faqItems} />
         </NextIntlClientProvider>
+      </section>
+
+      <section className="flex flex-col gap-4">
+        <header className="flex flex-col gap-1">
+          <SectionTitle>Social links</SectionTitle>
+          <p className="text-sm text-muted-foreground">
+            Shown on the home page and footer. Hidden links stay saved.
+          </p>
+        </header>
+        <SocialLinksEditor links={socialLinks} />
       </section>
     </div>
   );
