@@ -6,11 +6,14 @@
     "dashboard": "Dashboard",
     "login": "Masuk",
     "about": "Tentang",
-    "faq": "FAQ"
+    "faq": "FAQ",
+    "partner": "Kemitraan"
   },
   "footer": {
     "tagline": "Badminton, dikelola dengan benar.",
-    "copyright": "© {year}"
+    "copyright": "© {year}",
+    "partner": "Jadi Partner",
+    "socials": "Ikuti kami"
   },
   "home": {
     "kicker": "Jakarta Barat · komunitas badminton",
@@ -179,6 +182,68 @@
       "match": "Pertandingan",
       "video": "Video",
       "other": "Postingan"
+    }
+  },
+  "partner": {
+    "metaTitle": "Jadi Partner Kami",
+    "metaDescription": "Sponsor, brand, atau media? Bermitra dengan Jakbar Twogether dan jangkau komunitas badminton aktif di Jakarta Barat.",
+    "heroTitle": "Jadi Partner Kami",
+    "heroSubtitle": "Komunitas badminton aktif di Jakarta Barat. Ceritakan idemu, kami balas lewat email atau WhatsApp.",
+    "offersTitle": "Bentuk kemitraan",
+    "offers": {
+      "sponsorship": {
+        "title": "Sponsor",
+        "body": "Dukung sesi mingguan kami: shuttlecock, hadiah, atau perlengkapan."
+      },
+      "event": {
+        "title": "Event bersama",
+        "body": "Turnamen kecil, fun match, atau sesi khusus bersama komunitas kami."
+      },
+      "brand": {
+        "title": "Kemitraan brand",
+        "body": "Produk atau layanan untuk pemain badminton, dari apparel sampai minuman."
+      },
+      "media": {
+        "title": "Media",
+        "body": "Liputan, konten, atau wawancara tentang komunitas badminton kami."
+      }
+    },
+    "formTitle": "Kirim pesan",
+    "formIntro": "Isi formulir ini dan kami hubungi kamu secepatnya.",
+    "name": "Nama",
+    "organisation": "Organisasi atau brand",
+    "email": "Email",
+    "whatsapp": "Nomor WhatsApp",
+    "whatsappHint": "Contoh: 0812-3456-7890",
+    "inquiryType": "Jenis kemitraan",
+    "inquiryTypePlaceholder": "Pilih jenis kemitraan",
+    "types": {
+      "sponsorship": "Sponsor",
+      "event": "Event bersama",
+      "brand": "Brand",
+      "media": "Media",
+      "other": "Lainnya"
+    },
+    "message": "Pesan",
+    "submit": "Kirim",
+    "submitting": "Mengirim…",
+    "successTitle": "Terima kasih!",
+    "successBody": "Pesanmu sudah kami terima. Kami akan menghubungimu lewat email atau WhatsApp.",
+    "rateLimited": "Terlalu banyak pesan dari jaringan ini. Coba lagi dalam satu jam.",
+    "genericError": "Pesan belum terkirim. Coba lagi sebentar lagi.",
+    "directTitle": "Atau hubungi kami langsung",
+    "directBody": "Lebih suka ngobrol? Kami ada di sini.",
+    "errors": {
+      "name": "Nama wajib diisi.",
+      "nameLong": "Nama maksimal 100 karakter.",
+      "organisation": "Organisasi atau brand wajib diisi.",
+      "organisationLong": "Maksimal 120 karakter.",
+      "email": "Masukkan alamat email yang valid.",
+      "whatsapp": "Masukkan nomor WhatsApp yang valid, misalnya 0812-3456-7890.",
+      "inquiryType": "Pilih jenis kemitraan.",
+      "messageShort": "Pesan minimal 10 karakter.",
+      "messageLong": "Pesan maksimal 4000 karakter.",
+      "spam": "Pesan tidak dapat dikirim."
     }
   }
 }

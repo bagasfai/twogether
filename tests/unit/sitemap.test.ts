@@ -12,7 +12,7 @@ describe("buildSitemap", () => {
 
   it("lists the static routes with both locale alternates", () => {
     const entries = buildSitemap(SITE, [], []);
-    for (const path of ["", "/sessions", "/gallery", "/about", "/faq"]) {
+    for (const path of ["", "/sessions", "/gallery", "/about", "/faq", "/partner"]) {
       const entry = entries.find((e) => e.url === `${SITE}${path}`);
       expect(entry, `missing ${path || "/"}`).toBeDefined();
       expect(entry?.alternates?.languages).toEqual({

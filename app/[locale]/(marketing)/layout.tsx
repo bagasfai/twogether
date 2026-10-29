@@ -6,6 +6,8 @@ import { AccountButton } from "@/components/nav/account-button";
 import { SkipLink } from "@/components/skip-link";
 import { NavLinks } from "@/components/nav/nav-links";
 import { LanguageSwitcher } from "@/components/language-switcher";
+import { SocialIcon } from "@/components/marketing/social-icon";
+import { listVisibleSocialLinks } from "@/lib/dal/socials";
 
 export default async function MarketingLayout({
   children,
@@ -18,7 +20,10 @@ export default async function MarketingLayout({
   // which would make every page in this group dynamic.
   const { locale } = await params;
   setRequestLocale(locale);
-  const t = await getTranslations({ locale });
+  const [t, socialLinks] = await Promise.all([
+    getTranslations({ locale }),
+    listVisibleSocialLinks(),
+  ]);
 
   return (
     <div className="flex flex-1 flex-col">
@@ -51,6 +56,7 @@ export default async function MarketingLayout({
                 { href: "/gallery", label: t("nav.gallery") },
                 { href: "/about", label: t("nav.about") },
                 { href: "/faq", label: t("nav.faq") },
+                { href: "/partner", label: t("nav.partner") },
               ]}
               className="flex flex-1 flex-wrap items-center gap-1 text-sm"
               linkClassName="inline-flex items-center whitespace-nowrap rounded-full px-3 py-1.5 font-medium text-white outline-none transition-colors duration-[var(--dur-micro)] hover:bg-white/15 focus-visible:ring-[3px] focus-visible:ring-white max-md:min-h-11"
@@ -86,6 +92,7 @@ export default async function MarketingLayout({
                 ["/gallery", t("nav.gallery")],
                 ["/about", t("nav.about")],
                 ["/faq", t("nav.faq")],
+                ["/partner", t("footer.partner")],
               ] as const
             ).map(([href, label]) => (
               <Link
@@ -97,6 +104,23 @@ export default async function MarketingLayout({
               </Link>
             ))}
           </nav>
+          {socialLinks.length > 0 ? (
+            <ul aria-label={t("footer.socials")} className="flex flex-wrap items-center gap-1">
+              {socialLinks.map((link) => (
+                <li key={link.id}>
+                  <a
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={link.label}
+                    className="inline-flex size-11 items-center justify-center rounded-full text-white/90 outline-none transition-colors hover:bg-white/15 hover:text-white focus-visible:ring-[3px] focus-visible:ring-white"
+                  >
+                    <SocialIcon platform={link.platform} className="size-5" />
+                  </a>
+                </li>
+              ))}
+            </ul>
+          ) : null}
         </div>
         <div className="border-t border-white/15">
           <p className="mx-auto max-w-5xl px-6 py-4 text-xs text-white/80">

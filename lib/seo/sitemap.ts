@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 import type { SitemapAlbum, SitemapSession } from "@/lib/dal/sitemap";
 import { localizedUrls } from "@/lib/seo/urls";
 
-const STATIC_PATHS = ["/", "/sessions", "/gallery", "/about", "/faq"];
+const STATIC_PATHS = ["/", "/sessions", "/gallery", "/about", "/faq", "/partner"];
 
 // Pure so it unit-tests without a database. An absolute site URL is required:
 // relative URLs are invalid in a sitemap, so null yields an empty list.
