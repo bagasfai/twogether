@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
 
-// Gallery photos are served from the public `gallery` Storage bucket. Derived
+// Gallery photos and featured-post images are served from the public
+// `gallery` and `featured-posts` Storage buckets. Derived
 // from the env so local (http://127.0.0.1:<port>) and hosted
 // (https://<ref>.supabase.co) both work without editing this file.
 // Unset (e.g. a tooling run without .env) means no pattern rather than a
@@ -19,6 +20,13 @@ const nextConfig: NextConfig = {
             hostname: supabaseUrl.hostname,
             port: supabaseUrl.port,
             pathname: "/storage/v1/object/public/gallery/**",
+            search: "",
+          },
+          {
+            protocol: supabaseUrl.protocol === "https:" ? "https" : "http",
+            hostname: supabaseUrl.hostname,
+            port: supabaseUrl.port,
+            pathname: "/storage/v1/object/public/featured-posts/**",
             search: "",
           },
         ]

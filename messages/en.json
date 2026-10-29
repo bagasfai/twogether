@@ -27,7 +27,14 @@
       "matchesPlayed": "Matches played",
       "totalCheckins": "Check-ins",
       "activeMembers": "Active members (last 90 days)"
-    }
+    },
+    "featuredTitle": "From our socials",
+    "featuredBody": "Fresh schedules, match highlights and videos from the community.",
+    "socialsTitle": "Follow our socials",
+    "socialsBody": "Find Jakbar Twogether wherever you already hang out.",
+    "partnerCtaTitle": "Brand or event organiser? Partner with us",
+    "partnerCtaBody": "Sponsorships, events, brand activations and media features: tell us what you have in mind.",
+    "partnerCtaButton": "Become a partner"
   },
   "sessionsList": {
     "title": "Upcoming sessions",
@@ -161,6 +168,17 @@
       "body": "We could not load this page. Try again, and if it keeps happening, come back in a few minutes.",
       "offline": "Check your connection.",
       "retry": "Try again"
+    }
+  },
+  "socials": {
+    "follow": "Follow",
+    "join": "Join",
+    "visit": "Visit",
+    "kinds": {
+      "schedule": "Schedule",
+      "match": "Match",
+      "video": "Video",
+      "other": "Post"
     }
   }
 }

@@ -1,14 +1,18 @@
 import Image from "next/image";
 import NextLink from "next/link";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { CommunityStatsStrip } from "@/components/community-stats";
+import { FeaturedPostsCarousel } from "@/components/marketing/featured-posts-carousel";
+import { PartnerCta } from "@/components/marketing/partner-cta";
+import { SocialLinksSection } from "@/components/marketing/social-links-section";
 import { CourtLines } from "@/components/marketing/court-lines";
 import { Shuttlecock } from "@/components/marketing/shuttlecock";
 import { SessionCard } from "@/components/sessions/session-card";
 import { listPublicCommunityAnnouncements } from "@/lib/dal/announcements";
 import { getCommunityStats } from "@/lib/dal/community-stats";
+import { listLatestFeaturedPosts, listVisibleSocialLinks } from "@/lib/dal/socials";
 import { listUpcomingPublicSessions } from "@/lib/dal/public-sessions";
 import { shouldShowStats } from "@/lib/community-stats";
 
@@ -18,13 +22,16 @@ export const revalidate = 60;
 const NEXT_SESSIONS = 3;
 
 export default async function Home() {
-  const [t, tAbout, tAnnouncements, announcements, stats, sessions] = await Promise.all([
+  const [t, tAbout, tAnnouncements, locale, announcements, stats, sessions, featuredPosts, socialLinks] = await Promise.all([
     getTranslations("home"),
     getTranslations("about"),
     getTranslations("announcements"),
+    getLocale(),
     listPublicCommunityAnnouncements(),
     getCommunityStats(),
     listUpcomingPublicSessions(),
+    listLatestFeaturedPosts(),
+    listVisibleSocialLinks(),
   ]);
   const nextSessions = sessions.slice(0, NEXT_SESSIONS);
 
@@ -106,6 +113,8 @@ export default async function Home() {
 
       {shouldShowStats(stats) ? <CommunityStatsStrip stats={stats} /> : null}
 
+      <FeaturedPostsCarousel posts={featuredPosts} locale={locale} />
+
       {announcements.length > 0 ? (
         <section className="px-6 py-16">
           <div className="mx-auto flex max-w-5xl flex-col gap-6">
@@ -126,6 +135,10 @@ export default async function Home() {
           </div>
         </section>
       ) : null}
+
+      <SocialLinksSection links={socialLinks} />
+
+      <PartnerCta />
 
       <section className="relative isolate overflow-hidden bg-cork py-14 text-navy">
         <CourtLines className="absolute inset-0 -z-10 size-full text-navy/10" />

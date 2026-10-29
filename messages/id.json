@@ -27,7 +27,14 @@
       "matchesPlayed": "Pertandingan dimainkan",
       "totalCheckins": "Check-in",
       "activeMembers": "Anggota aktif (90 hari terakhir)"
-    }
+    },
+    "featuredTitle": "Dari media sosial kami",
+    "featuredBody": "Jadwal terbaru, momen pertandingan, dan video dari komunitas.",
+    "socialsTitle": "Ikuti media sosial kami",
+    "socialsBody": "Temukan Jakbar Twogether di platform yang biasa kamu pakai.",
+    "partnerCtaTitle": "Brand atau penyelenggara acara? Jadi Partner Kami",
+    "partnerCtaBody": "Sponsor, acara, aktivasi brand, hingga liputan media: ceritakan rencanamu kepada kami.",
+    "partnerCtaButton": "Jadi Partner Kami"
   },
   "sessionsList": {
     "title": "Sesi mendatang",
@@ -161,6 +168,17 @@
       "body": "Halaman ini gagal dimuat. Coba lagi, dan jika masih terjadi, kembali lagi beberapa menit lagi.",
       "offline": "Periksa koneksi internetmu.",
       "retry": "Coba lagi"
+    }
+  },
+  "socials": {
+    "follow": "Ikuti",
+    "join": "Gabung",
+    "visit": "Kunjungi",
+    "kinds": {
+      "schedule": "Jadwal",
+      "match": "Pertandingan",
+      "video": "Video",
+      "other": "Postingan"
     }
   }
 }
