@@ -5,7 +5,6 @@ export type Json =
   | null
   | { [key: string]: Json | undefined }
   | Json[]
-
 export type Database = {
   graphql_public: {
     Tables: {
@@ -223,6 +222,59 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      featured_posts: {
+        Row: {
+          caption_en: string
+          caption_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          image_path: string
+          is_visible: boolean
+          kind: Database["public"]["Enums"]["featured_post_kind"]
+          platform: Database["public"]["Enums"]["social_platform"]
+          post_url: string
+          posted_at: string
+          updated_at: string
+        }
+        Insert: {
+          caption_en: string
+          caption_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          image_path: string
+          is_visible?: boolean
+          kind: Database["public"]["Enums"]["featured_post_kind"]
+          platform: Database["public"]["Enums"]["social_platform"]
+          post_url: string
+          posted_at?: string
+          updated_at?: string
+        }
+        Update: {
+          caption_en?: string
+          caption_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          image_path?: string
+          is_visible?: boolean
+          kind?: Database["public"]["Enums"]["featured_post_kind"]
+          platform?: Database["public"]["Enums"]["social_platform"]
+          post_url?: string
+          posted_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "featured_posts_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       galleries: {
         Row: {
@@ -777,6 +829,51 @@ export type Database = {
           },
         ]
       }
+      partner_inquiries: {
+        Row: {
+          created_at: string
+          email: string
+          email_sent_at: string | null
+          id: string
+          inquiry_type: Database["public"]["Enums"]["partner_inquiry_type"]
+          ip_hash: string
+          message: string
+          name: string
+          organisation: string
+          status: Database["public"]["Enums"]["partner_inquiry_status"]
+          updated_at: string
+          whatsapp: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          email_sent_at?: string | null
+          id?: string
+          inquiry_type: Database["public"]["Enums"]["partner_inquiry_type"]
+          ip_hash: string
+          message: string
+          name: string
+          organisation: string
+          status?: Database["public"]["Enums"]["partner_inquiry_status"]
+          updated_at?: string
+          whatsapp: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          email_sent_at?: string | null
+          id?: string
+          inquiry_type?: Database["public"]["Enums"]["partner_inquiry_type"]
+          ip_hash?: string
+          message?: string
+          name?: string
+          organisation?: string
+          status?: Database["public"]["Enums"]["partner_inquiry_status"]
+          updated_at?: string
+          whatsapp?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -948,6 +1045,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      social_links: {
+        Row: {
+          created_at: string
+          id: string
+          is_visible: boolean
+          label: string
+          platform: Database["public"]["Enums"]["social_platform"]
+          sort_order: number
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_visible?: boolean
+          label: string
+          platform: Database["public"]["Enums"]["social_platform"]
+          sort_order: number
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_visible?: boolean
+          label?: string
+          platform?: Database["public"]["Enums"]["social_platform"]
+          sort_order?: number
+          updated_at?: string
+          url?: string
+        }
+        Relationships: []
       }
     }
     Views: {
@@ -1348,6 +1478,21 @@ export type Database = {
       }
       session_is_public: { Args: { p_session_id: string }; Returns: boolean }
       session_lock_key: { Args: { p_session_id: string }; Returns: number }
+      social_link_create: {
+        Args: {
+          p_is_visible: boolean
+          p_label: string
+          p_platform: Database["public"]["Enums"]["social_platform"]
+          p_url: string
+        }
+        Returns: string
+      }
+      social_link_delete: { Args: { p_id: string }; Returns: undefined }
+      social_link_move: {
+        Args: { p_direction: string; p_id: string }
+        Returns: undefined
+      }
+      social_links_lock_key: { Args: never; Returns: number }
       start_match: {
         Args: { p_match_id: string }
         Returns: {
@@ -1408,10 +1553,18 @@ export type Database = {
     }
     Enums: {
       court_status: "idle" | "in_use" | "unavailable"
+      featured_post_kind: "schedule" | "match" | "video" | "other"
       gallery_photo_status: "pending" | "approved"
       gender: "male" | "female"
       match_status: "scheduled" | "in_progress" | "completed" | "cancelled"
       participant_status: "confirmed" | "waiting_list" | "cancelled"
+      partner_inquiry_status: "new" | "replied" | "closed"
+      partner_inquiry_type:
+        | "sponsorship"
+        | "event"
+        | "brand"
+        | "media"
+        | "other"
       registration_state: "closed" | "open"
       session_host_role: "owner" | "cohost"
       session_kind: "open_play" | "drilling"
@@ -1422,6 +1575,7 @@ export type Database = {
         | "novice"
         | "intermediate"
         | "advanced"
+      social_platform: "instagram" | "tiktok" | "whatsapp" | "ayo" | "other"
       user_role: "member" | "host" | "admin"
     }
     CompositeTypes: {
@@ -1432,11 +1586,8 @@ export type Database = {
     }
   }
 }
-
 type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
-
 type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
-
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
@@ -1465,7 +1616,6 @@ export type Tables<
       ? R
       : never
     : never
-
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
@@ -1490,7 +1640,6 @@ export type TablesInsert<
       ? I
       : never
     : never
-
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
@@ -1515,7 +1664,6 @@ export type TablesUpdate<
       ? U
       : never
     : never
-
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
@@ -1532,7 +1680,6 @@ export type Enums<
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
     ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
     : never
-
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
@@ -1549,7 +1696,6 @@ export type CompositeTypes<
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
     ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
-
 export const Constants = {
   graphql_public: {
     Enums: {},
@@ -1557,17 +1703,20 @@ export const Constants = {
   public: {
     Enums: {
       court_status: ["idle", "in_use", "unavailable"],
+      featured_post_kind: ["schedule", "match", "video", "other"],
       gallery_photo_status: ["pending", "approved"],
       gender: ["male", "female"],
       match_status: ["scheduled", "in_progress", "completed", "cancelled"],
       participant_status: ["confirmed", "waiting_list", "cancelled"],
+      partner_inquiry_status: ["new", "replied", "closed"],
+      partner_inquiry_type: ["sponsorship", "event", "brand", "media", "other"],
       registration_state: ["closed", "open"],
       session_host_role: ["owner", "cohost"],
       session_kind: ["open_play", "drilling"],
       session_status: ["draft", "scheduled", "live", "completed", "cancelled"],
       skill_level: ["newbie", "beginner", "novice", "intermediate", "advanced"],
+      social_platform: ["instagram", "tiktok", "whatsapp", "ayo", "other"],
       user_role: ["member", "host", "admin"],
     },
   },
 } as const
-
