@@ -21,7 +21,7 @@ describe("socialLinkSchema", () => {
     expect(socialLinkSchema.safeParse({ ...link, platform: "facebook" }).success).toBe(false);
   });
   it("exposes the enum tuples", () => {
-    expect(SOCIAL_PLATFORMS).toEqual(["instagram", "tiktok", "whatsapp", "ayo", "other"]);
+    expect(SOCIAL_PLATFORMS).toEqual(["instagram", "tiktok", "threads", "whatsapp", "ayo", "other"]);
     expect(FEATURED_POST_KINDS).toEqual(["schedule", "match", "video", "other"]);
   });
 });

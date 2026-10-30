@@ -1575,7 +1575,7 @@ export type Database = {
         | "novice"
         | "intermediate"
         | "advanced"
-      social_platform: "instagram" | "tiktok" | "whatsapp" | "ayo" | "other"
+      social_platform: "instagram" | "tiktok" | "threads" | "whatsapp" | "ayo" | "other"
       user_role: "member" | "host" | "admin"
     }
     CompositeTypes: {
@@ -1715,7 +1715,7 @@ export const Constants = {
       session_kind: ["open_play", "drilling"],
       session_status: ["draft", "scheduled", "live", "completed", "cancelled"],
       skill_level: ["newbie", "beginner", "novice", "intermediate", "advanced"],
-      social_platform: ["instagram", "tiktok", "whatsapp", "ayo", "other"],
+      social_platform: ["instagram", "tiktok", "threads", "whatsapp", "ayo", "other"],
       user_role: ["member", "host", "admin"],
     },
   },

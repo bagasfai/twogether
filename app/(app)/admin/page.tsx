@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { PageTitle, SectionTitle } from "@/components/app/page-title";
+import { PageTitle } from "@/components/app/page-title";
+import { AdminSection } from "@/components/admin/admin-section";
 import { requireAdmin } from "@/lib/dal/user";
 import { listAllMembers } from "@/lib/dal/admin";
 import { MemberRoleTable } from "@/components/admin/member-role-table";
@@ -46,25 +47,21 @@ export default async function AdminPage() {
   ]);
 
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-8 [&>section:not(:first-child)]:border-t [&>section:not(:first-child)]:pt-8">
-      <section className="flex flex-col gap-4">
-        <header className="flex flex-col gap-1">
-          <PageTitle>Members</PageTitle>
-          <p className="text-sm text-muted-foreground">
-            Change a member&apos;s role. Hosts can manage sessions; admins can do everything a host
-            can, plus this page.
-          </p>
-        </header>
-        <MemberRoleTable members={members} currentUserId={user.id} />
-      </section>
+    <div className="mx-auto flex max-w-3xl flex-col gap-4">
+      <PageTitle className="mb-2">Admin</PageTitle>
 
-      <section className="flex flex-col gap-4">
-        <header className="flex flex-col gap-1">
-          <SectionTitle>Memberships</SectionTitle>
-          <p className="text-sm text-muted-foreground">
-            Premium plans and the memberships granted to members. Payment is tracked manually.
-          </p>
-        </header>
+      <AdminSection
+        title="Members"
+        description="Change a member's role. Hosts can manage sessions; admins can do everything a host can, plus this page."
+        defaultOpen
+      >
+        <MemberRoleTable members={members} currentUserId={user.id} />
+      </AdminSection>
+
+      <AdminSection
+        title="Memberships"
+        description="Premium plans and the memberships granted to members. Payment is tracked manually."
+      >
         <MembershipPlansPanel plans={plans} />
         <div className="flex justify-end">
           <GrantMembershipDialog members={members} plans={plans} />
@@ -72,66 +69,47 @@ export default async function AdminPage() {
         <NextIntlClientProvider locale="en" messages={{ gallery: messages.gallery }}>
           <MembershipsTable memberships={memberships} />
         </NextIntlClientProvider>
-      </section>
+      </AdminSection>
 
-      <section>
-        <AnnouncementList sessionId={null} announcements={announcements} />
-      </section>
+      <AdminSection title="Announcements" description="Community-wide posts shown on every member's dashboard.">
+        <AnnouncementList sessionId={null} announcements={announcements} hideHeading />
+      </AdminSection>
 
-      <section>
+      <AdminSection
+        title="Albums"
+        description="Session albums appear when a session starts. Create other albums here for events outside a session."
+        badge={pending.length > 0 ? <Badge>{pending.length} to review</Badge> : null}
+      >
         <NextIntlClientProvider locale="en" messages={{ gallery: messages.gallery }}>
-          <AlbumAdminSection albums={albums} pending={pending} />
+          <AlbumAdminSection albums={albums} pending={pending} hideHeading />
         </NextIntlClientProvider>
-      </section>
+      </AdminSection>
 
-      <section className="flex flex-col gap-4">
-        <header className="flex flex-col gap-1">
-          <SectionTitle>About page</SectionTitle>
-          <p className="text-sm text-muted-foreground">
-            Shown publicly at /about in both languages.
-          </p>
-        </header>
+      <AdminSection title="About page" description="Shown publicly at /about in both languages.">
         <AboutEditor about={about} />
-      </section>
+      </AdminSection>
 
-      <section>
+      <AdminSection title="FAQ" description="Shown publicly at /faq in both languages.">
         <NextIntlClientProvider locale="en" messages={{ gallery: messages.gallery }}>
-          <FaqEditor items={faqItems} />
+          <FaqEditor items={faqItems} hideHeading />
         </NextIntlClientProvider>
-      </section>
+      </AdminSection>
 
-      <section className="flex flex-col gap-4">
-        <header className="flex flex-col gap-1">
-          <SectionTitle>Social links</SectionTitle>
-          <p className="text-sm text-muted-foreground">
-            Shown on the home page and footer. Hidden links stay saved.
-          </p>
-        </header>
+      <AdminSection title="Social links" description="Shown on the home page and footer. Hidden links stay saved.">
         <SocialLinksEditor links={socialLinks} />
-      </section>
+      </AdminSection>
 
-      <section className="flex flex-col gap-4">
-        <header className="flex flex-col gap-1">
-          <SectionTitle>Featured posts</SectionTitle>
-          <p className="text-sm text-muted-foreground">
-            The 6 newest visible posts appear on the home page.
-          </p>
-        </header>
+      <AdminSection title="Featured posts" description="The 6 newest visible posts appear on the home page.">
         <FeaturedPostsEditor posts={featuredPosts} />
-      </section>
+      </AdminSection>
 
-      <section className="flex flex-col gap-4">
-        <header className="flex flex-col gap-1">
-          <div className="flex items-center gap-2">
-            <SectionTitle>Partner inquiries</SectionTitle>
-            {newInquiryCount > 0 ? <Badge>{newInquiryCount} new</Badge> : null}
-          </div>
-          <p className="text-sm text-muted-foreground">
-            Sent from /partner. Reply by email or WhatsApp, then update the status.
-          </p>
-        </header>
+      <AdminSection
+        title="Partner inquiries"
+        description="Sent from /partner. Reply by email or WhatsApp, then update the status."
+        badge={newInquiryCount > 0 ? <Badge>{newInquiryCount} new</Badge> : null}
+      >
         <PartnerInquiriesTable inquiries={inquiries} />
-      </section>
+      </AdminSection>
     </div>
   );
 }

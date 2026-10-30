@@ -6,14 +6,19 @@ import { formatDateTime } from "@/lib/format/datetime";
 export function AnnouncementList({
   sessionId,
   announcements,
+  hideHeading = false,
 }: {
   sessionId: string | null;
   announcements: AnnouncementRow[];
+  // The admin page titles this from its collapsible section header instead.
+  hideHeading?: boolean;
 }) {
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex items-center justify-between gap-2">
-        <h2 className="font-display text-2xl font-bold uppercase italic leading-none tracking-tight">Announcements</h2>
+      <div className={hideHeading ? "flex justify-end" : "flex items-center justify-between gap-2"}>
+        {hideHeading ? null : (
+          <h2 className="font-display text-2xl font-bold uppercase italic leading-none tracking-tight">Announcements</h2>
+        )}
         <AnnouncementForm sessionId={sessionId} />
       </div>
 

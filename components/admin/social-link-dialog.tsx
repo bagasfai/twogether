@@ -30,6 +30,7 @@ import type { SocialLink } from "@/lib/dal/socials";
 export const PLATFORM_LABELS: Record<(typeof SOCIAL_PLATFORMS)[number], string> = {
   instagram: "Instagram",
   tiktok: "TikTok",
+  threads: "Threads",
   whatsapp: "WhatsApp",
   ayo: "AYO",
   other: "Other",

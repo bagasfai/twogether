@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { House } from "lucide-react";
 import { requireUser } from "@/lib/dal/user";
 import { SkipLink } from "@/components/skip-link";
 import { NavLinks } from "@/components/nav/nav-links";
@@ -62,6 +63,13 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
               <span className="hidden truncate text-white/85 sm:inline">
                 {user.fullName ?? user.email}
               </span>
+              <Link
+                href="/"
+                className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 font-medium text-white outline-none transition-colors duration-[var(--dur-micro)] hover:bg-white/15 focus-visible:ring-[3px] focus-visible:ring-white max-md:min-h-11"
+              >
+                <House className="size-4" aria-hidden="true" />
+                <span className="max-sm:sr-only">Main site</span>
+              </Link>
               <SignOutButton />
             </div>
           </div>

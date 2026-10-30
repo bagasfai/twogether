@@ -1,12 +1,11 @@
-import { Skeleton } from "@/components/ui/skeleton";
+import { CardListSkeleton, SkeletonPage, TitleSkeleton } from "@/components/app/page-skeletons";
 
+// Fallback for (app) routes without their own loading.tsx.
 export default function Loading() {
   return (
-    <div className="flex flex-col gap-4" role="status" aria-label="Loading">
-      <Skeleton className="h-10 w-full" />
-      <Skeleton className="h-32 w-full" />
-      <Skeleton className="h-32 w-full" />
-      <Skeleton className="h-32 w-full" />
-    </div>
+    <SkeletonPage className="mx-auto max-w-3xl gap-3">
+      <TitleSkeleton />
+      <CardListSkeleton count={3} />
+    </SkeletonPage>
   );
 }

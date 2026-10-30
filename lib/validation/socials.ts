@@ -5,7 +5,7 @@ type Enums = Database["public"]["Enums"];
 
 // Tuples mirror the DB enums; the `satisfies` checks fail the type-check if
 // they drift.
-export const SOCIAL_PLATFORMS = ["instagram", "tiktok", "whatsapp", "ayo", "other"] as const satisfies readonly Enums["social_platform"][];
+export const SOCIAL_PLATFORMS = ["instagram", "tiktok", "threads", "whatsapp", "ayo", "other"] as const satisfies readonly Enums["social_platform"][];
 export const FEATURED_POST_KINDS = ["schedule", "match", "video", "other"] as const satisfies readonly Enums["featured_post_kind"][];
 
 const httpsUrl = z

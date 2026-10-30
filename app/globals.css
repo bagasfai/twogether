@@ -206,6 +206,27 @@
   animation-delay: var(--shuttle-delay, 0ms);
 }
 
+/* Animated <details> open/close (FAQ, admin sections). Browsers without
+   ::details-content fall back to the native instant toggle. */
+@supports selector(::details-content) {
+  .disclosure {
+    interpolate-size: allow-keywords;
+  }
+  .disclosure::details-content {
+    block-size: 0;
+    opacity: 0;
+    overflow-y: clip;
+    transition:
+      block-size var(--dur-short) var(--ease-out),
+      opacity var(--dur-short) var(--ease-out),
+      content-visibility var(--dur-short) allow-discrete;
+  }
+  .disclosure[open]::details-content {
+    block-size: auto;
+    opacity: 1;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
