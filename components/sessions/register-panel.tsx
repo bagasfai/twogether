@@ -151,7 +151,7 @@ export function RegisterPanel({
     guests.length > 0 ? (
       <ul className="flex flex-col gap-1.5">
         {guests.map((guest) => (
-          <li key={guest.id} className="flex items-center gap-2 text-sm">
+          <li key={guest.id} className="flex flex-wrap items-center gap-2 text-sm">
             <span className="font-medium">{guest.guestName}</span>
             {guest.status === "confirmed" ? (
               <Badge variant="success">{t("confirmed")}</Badge>
@@ -198,7 +198,7 @@ export function RegisterPanel({
   if (registration) {
     return (
       <div className="flex flex-col gap-3">
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           {registration.status === "confirmed" ? (
             <Badge variant="success">{t("confirmed")}</Badge>
           ) : (
@@ -256,7 +256,7 @@ export function RegisterPanel({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <Button
           disabled={pending}
           onClick={() =>
