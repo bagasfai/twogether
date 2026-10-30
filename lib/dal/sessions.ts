@@ -73,8 +73,8 @@ function toHostedSession(row: Row): HostedSession {
 }
 
 // Excludes completed/cancelled -- this powers "sessions you host" on the
-// dashboard and the /sessions preview, both meant to surface what a host
-// still needs to act on, soonest first, not a full history.
+// dashboard, meant to surface what a host still needs to act on, soonest
+// first, not a full history.
 export async function listMyHostedSessions(): Promise<HostedSession[]> {
   const user = await getCurrentUser();
   if (!user) return [];

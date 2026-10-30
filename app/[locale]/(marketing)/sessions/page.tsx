@@ -3,7 +3,6 @@ import { getTranslations } from "next-intl/server";
 import { listUpcomingPublicSessions } from "@/lib/dal/public-sessions";
 import { PageHero } from "@/components/marketing/page-hero";
 import { SessionCard } from "@/components/sessions/session-card";
-import { HostedSessionsPreview } from "@/components/sessions/hosted-sessions-preview";
 
 // ISR. This route must never import lib/supabase/server -- touching cookies()
 // would make it dynamic and forfeit the caching this route group exists for.
@@ -24,7 +23,6 @@ export default async function SessionsPage() {
     <>
       <PageHero title={t("title")} subtitle={t("subtitle")} />
       <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-6 py-10">
-        <HostedSessionsPreview />
         {sessions.length === 0 ? (
           <p className="rounded-2xl border-2 border-dashed border-input p-6 text-base text-muted-foreground">
             {t("empty")}
