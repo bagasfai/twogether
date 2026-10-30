@@ -35,7 +35,7 @@ export default async function GalleryPage() {
       />
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-6 py-10">
         {albums.length === 0 ? (
-          <p className="max-w-[65ch] rounded-2xl border-2 border-dashed border-input p-6 text-base text-muted-foreground">
+          <p className="mx-auto w-full max-w-[65ch] rounded-2xl border-2 border-dashed border-input p-6 text-center text-base text-muted-foreground">
             {t("empty")}
           </p>
         ) : (
