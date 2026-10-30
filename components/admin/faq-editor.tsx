@@ -25,7 +25,7 @@ function Pair({ label, en, id }: { label: string; en: string; id: string }) {
   );
 }
 
-export function FaqEditor({ items }: { items: FaqRow[] }) {
+export function FaqEditor({ items, hideHeading = false }: { items: FaqRow[]; hideHeading?: boolean }) {
   const [pending, startTransition] = useTransition();
   const router = useRouter();
 
@@ -43,8 +43,10 @@ export function FaqEditor({ items }: { items: FaqRow[] }) {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between gap-2">
-        <h2 className="font-display text-2xl font-bold uppercase italic leading-none tracking-tight">FAQ</h2>
+      <div className={hideHeading ? "flex justify-end" : "flex items-center justify-between gap-2"}>
+        {hideHeading ? null : (
+          <h2 className="font-display text-2xl font-bold uppercase italic leading-none tracking-tight">FAQ</h2>
+        )}
         <FaqItemDialog />
       </div>
 

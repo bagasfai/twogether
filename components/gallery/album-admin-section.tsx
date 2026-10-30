@@ -34,14 +34,17 @@ import type { AdminAlbum, GalleryPhotoRow } from "@/lib/dal/galleries";
 export function AlbumAdminSection({
   albums,
   pending,
+  hideHeading = false,
 }: {
   albums: AdminAlbum[];
   pending: GalleryPhotoRow[];
+  hideHeading?: boolean;
 }) {
   const titles = Object.fromEntries(albums.map((album) => [album.id, album.title]));
 
   return (
     <div className="flex min-w-0 flex-col gap-6">
+      {hideHeading ? null : (
       <header className="flex flex-col gap-1">
         <h2 className="font-display text-2xl font-bold uppercase italic leading-none tracking-tight">Albums</h2>
         <p className="text-sm text-muted-foreground">
@@ -49,6 +52,7 @@ export function AlbumAdminSection({
           session.
         </p>
       </header>
+      )}
 
       <CreateAlbumForm />
 
