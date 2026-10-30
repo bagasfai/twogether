@@ -1,0 +1,249 @@
+{
+  "nav": {
+    "brand": "Jakbar Twogether",
+    "sessions": "Sesi",
+    "gallery": "Galeri",
+    "dashboard": "Dashboard",
+    "login": "Masuk",
+    "about": "Tentang",
+    "faq": "FAQ",
+    "partner": "Kemitraan"
+  },
+  "footer": {
+    "tagline": "Badminton, dikelola dengan benar.",
+    "copyright": "© {year}",
+    "partner": "Jadi Partner",
+    "socials": "Ikuti kami"
+  },
+  "home": {
+    "kicker": "Jakarta Barat · komunitas badminton",
+    "title": "Jadwal lapangan beres sebelum kamu datang.",
+    "subtitle": "Pendaftaran, waiting list, check-in, dan rotasi untuk sesi Jakbar Twogether — tidak perlu lagi menghitung nama di grup WhatsApp.",
+    "ctaBrowse": "Lihat sesi mendatang",
+    "ctaJoin": "Gabung komunitas",
+    "runningTitle": "Yang sedang berjalan",
+    "runningBody": "Setiap sesi — status pendaftaran, waiting list, lapangan — ada di satu halaman.",
+    "runningLink": "Lihat sesi mendatang →",
+    "stats": {
+      "title": "Komunitas sejauh ini",
+      "sessionsHeld": "Sesi terlaksana",
+      "matchesPlayed": "Pertandingan dimainkan",
+      "totalCheckins": "Check-in",
+      "activeMembers": "Anggota aktif (90 hari terakhir)"
+    },
+    "featuredTitle": "Dari media sosial kami",
+    "featuredBody": "Jadwal terbaru, momen pertandingan, dan video dari komunitas.",
+    "socialsTitle": "Ikuti media sosial kami",
+    "socialsBody": "Temukan Jakbar Twogether di platform yang biasa kamu pakai.",
+    "partnerCtaTitle": "Brand atau penyelenggara acara? Jadi Partner Kami",
+    "partnerCtaBody": "Sponsor, acara, aktivasi brand, hingga liputan media: ceritakan rencanamu kepada kami.",
+    "partnerCtaButton": "Jadi Partner Kami"
+  },
+  "sessionsList": {
+    "title": "Sesi mendatang",
+    "subtitle": "Status pendaftaran, waiting list, dan lapangan — semua di satu tempat.",
+    "empty": "Belum ada sesi terjadwal.",
+    "hostedTitle": "Sesi yang kamu host",
+    "metaTitle": "Sesi mendatang — Jakbar Twogether",
+    "metaDescription": "Sesi badminton yang membuka pendaftaran di Jakarta Barat."
+  },
+  "sessionCard": {
+    "meta": "{spots} slot · {waitlist} waiting list · {courts} lapangan"
+  },
+  "badge": {
+    "open": "Pendaftaran dibuka",
+    "closed": "Pendaftaran ditutup"
+  },
+  "sessionDetail": {
+    "courts": "Lapangan",
+    "capacity": "Kapasitas",
+    "waitlist": "Waiting list",
+    "notFound": "Sesi tidak ditemukan"
+  },
+  "register": {
+    "loginToRegister": "Masuk untuk daftar",
+    "confirmed": "Terkonfirmasi",
+    "waitlistPosition": "Waiting list #{position}",
+    "cancel": "Batalkan pendaftaran",
+    "registrationClosed": "Pendaftaran untuk sesi ini belum dibuka.",
+    "register": "Daftar",
+    "toastRegistered": "Kamu terdaftar.",
+    "toastWaitlisted": "Masuk waiting list di posisi #{position}.",
+    "toastCancelled": "Pendaftaran dibatalkan"
+  },
+  "participants": {
+    "loginToView": "Masuk untuk melihat siapa saja yang terdaftar.",
+    "empty": "Belum ada yang mendaftar.",
+    "registered": "Terdaftar",
+    "confirmedBadge": "Terkonfirmasi",
+    "waitlistBadge": "Waiting list",
+    "unnamed": "Pemain tanpa nama"
+  },
+  "languageSwitcher": {
+    "id": "ID",
+    "en": "EN"
+  },
+  "announcements": {
+    "title": "Pengumuman"
+  },
+  "gallery": {
+    "metaTitle": "Galeri — Jakbar Twogether",
+    "metaDescription": "Foto-foto dari sesi open play badminton Jakbar Twogether di Jakarta Barat.",
+    "tagline": "Open play, dalam foto.",
+    "inventory": "{albums, plural, other {# album}} · {photos, plural, other {# foto}}",
+    "empty": "Belum ada album. Foto dari sesi kami akan muncul di sini setelah dibagikan.",
+    "albumPhotoCount": "{count, plural, other {# foto}}",
+    "albumMetaTitle": "{album} — Galeri — Jakbar Twogether",
+    "albumNotFound": "Album tidak ditemukan",
+    "back": "Semua album",
+    "noPhotos": "Belum ada foto",
+    "noPhotosBody": "Foto di album ini akan muncul di sini setelah disetujui.",
+    "openPhoto": "Buka foto {current} dari {total}",
+    "position": "{current} / {total}",
+    "close": "Tutup",
+    "previous": "Foto sebelumnya",
+    "next": "Foto berikutnya",
+    "defaultAlt": "Foto dari {album}",
+    "uploadTitle": "Tambahkan fotomu",
+    "uploadHint": "JPEG, PNG, atau WebP. Foto besar akan diperkecil sebelum diunggah.",
+    "uploadReviewHint": "Host akan meninjaunya sebelum tampil di galeri.",
+    "uploadAutoApprovedHint": "Foto yang kamu tambahkan langsung tampil.",
+    "choosePhotos": "Pilih foto",
+    "dropHint": "atau seret ke sini",
+    "fileInvalidType": "Hanya JPEG, PNG, atau WebP. Foto HEIC perlu diekspor ke JPEG dulu.",
+    "fileEmpty": "File ini kosong.",
+    "fileTooLarge": "Foto ini masih lebih dari 5 MB setelah diperkecil.",
+    "fileOriginalTooLarge": "File ini lebih dari 40 MB.",
+    "fileReadFailed": "Foto ini tidak bisa dibaca. Coba file lain.",
+    "fileEncodeFailed": "Browser ini tidak bisa menyiapkan foto untuk diunggah. Coba browser lain.",
+    "fileUploadFailed": "Unggahan gagal. Periksa koneksimu lalu coba lagi.",
+    "fileSaveFailed": "Foto sudah terunggah tapi belum bisa ditambahkan. Coba lagi.",
+    "fileProgress": "Mengunggah {name}",
+    "stage": {
+      "queued": "Menunggu",
+      "resizing": "Menyiapkan",
+      "uploading": "Mengunggah",
+      "saving": "Menyimpan"
+    },
+    "retry": "Coba lagi",
+    "dismiss": "Tutup",
+    "dismissFile": "Tutup {name}",
+    "myPhotos": "Fotomu",
+    "myPhotoAlt": "Fotomu",
+    "pending": "Menunggu",
+    "deletePhoto": "Hapus",
+    "deleteFailed": "Foto tidak bisa dihapus. Coba lagi.",
+    "holdHint": "Tekan dan tahan untuk konfirmasi",
+    "holdRemaining": "Terus tahan, {seconds, plural, other {# detik}} lagi",
+    "holdCancelled": "Dilepas terlalu cepat. Tidak ada yang berubah.",
+    "error": {
+      "uploadNotEligible": "Kamu tidak bisa menambahkan foto ke album ini.",
+      "uploadWindowClosed": "Waktu untuk menambahkan foto ke sesi ini sudah habis.",
+      "uploadCapReached": "Ada 20 fotomu yang masih menunggu persetujuan. Tunggu host meninjaunya dulu.",
+      "invalidUpload": "Foto itu tidak bisa ditambahkan. Coba lagi.",
+      "notAuthorized": "Kamu tidak punya izin untuk melakukan itu.",
+      "invalidState": "Ini sudah berubah. Muat ulang halaman lalu coba lagi.",
+      "notAuthenticated": "Masuk lagi untuk melanjutkan."
+    }
+  },
+  "about": {
+    "metaTitle": "Tentang — Jakbar Twogether",
+    "metaDescription": "Siapa kami, di mana kami bermain, dan cara bergabung dengan Jakbar Twogether, komunitas badminton di Jakarta Barat.",
+    "ctaTitle": "Siap bermain?",
+    "ctaBody": "Buat akun gratis untuk mendaftar di sesi open play.",
+    "ctaButton": "Daftar",
+    "empty": "Halaman tentang belum tersedia. Silakan kembali lagi nanti."
+  },
+  "faq": {
+    "title": "Pertanyaan yang sering diajukan",
+    "empty": "Belum ada pertanyaan yang dipublikasikan.",
+    "metaTitle": "FAQ — Jakbar Twogether",
+    "metaDescription": "Jawaban atas pertanyaan umum tentang bergabung dan bermain di sesi open play Jakbar Twogether."
+  },
+  "errors": {
+    "notFound": {
+      "title": "Halaman tidak ditemukan",
+      "body": "Halaman yang kamu cari tidak ada atau sudah dipindahkan.",
+      "home": "Kembali ke beranda"
+    },
+    "generic": {
+      "title": "Terjadi kesalahan",
+      "body": "Halaman ini gagal dimuat. Coba lagi, dan jika masih terjadi, kembali lagi beberapa menit lagi.",
+      "offline": "Periksa koneksi internetmu.",
+      "retry": "Coba lagi"
+    }
+  },
+  "socials": {
+    "follow": "Ikuti",
+    "join": "Gabung",
+    "visit": "Kunjungi",
+    "kinds": {
+      "schedule": "Jadwal",
+      "match": "Pertandingan",
+      "video": "Video",
+      "other": "Postingan"
+    }
+  },
+  "partner": {
+    "metaTitle": "Jadi Partner Kami — Jakbar Twogether",
+    "metaDescription": "Sponsor, brand, atau media? Bermitra dengan Jakbar Twogether dan jangkau komunitas badminton aktif di Jakarta Barat.",
+    "heroTitle": "Jadi Partner Kami",
+    "heroSubtitle": "Komunitas badminton aktif di Jakarta Barat. Ceritakan idemu, kami balas lewat email atau WhatsApp.",
+    "offersTitle": "Bentuk kemitraan",
+    "offers": {
+      "sponsorship": {
+        "title": "Sponsor",
+        "body": "Dukung sesi mingguan kami: shuttlecock, hadiah, atau perlengkapan."
+      },
+      "event": {
+        "title": "Event bersama",
+        "body": "Turnamen kecil, fun match, atau sesi khusus bersama komunitas kami."
+      },
+      "brand": {
+        "title": "Kemitraan brand",
+        "body": "Produk atau layanan untuk pemain badminton, dari apparel sampai minuman."
+      },
+      "media": {
+        "title": "Media",
+        "body": "Liputan, konten, atau wawancara tentang komunitas badminton kami."
+      }
+    },
+    "formTitle": "Kirim pesan",
+    "formIntro": "Isi formulir ini dan kami hubungi kamu secepatnya.",
+    "name": "Nama",
+    "organisation": "Organisasi atau brand",
+    "email": "Email",
+    "whatsapp": "Nomor WhatsApp",
+    "whatsappHint": "Contoh: 0812-3456-7890",
+    "inquiryType": "Jenis kemitraan",
+    "inquiryTypePlaceholder": "Pilih jenis kemitraan",
+    "types": {
+      "sponsorship": "Sponsor",
+      "event": "Event bersama",
+      "brand": "Brand",
+      "media": "Media",
+      "other": "Lainnya"
+    },
+    "message": "Pesan",
+    "submit": "Kirim",
+    "submitting": "Mengirim…",
+    "successTitle": "Terima kasih!",
+    "successBody": "Pesanmu sudah kami terima. Kami akan menghubungimu lewat email atau WhatsApp.",
+    "rateLimited": "Terlalu banyak pesan dari jaringan ini. Coba lagi dalam satu jam.",
+    "genericError": "Pesan belum terkirim. Coba lagi sebentar lagi.",
+    "directTitle": "Atau hubungi kami langsung",
+    "directBody": "Lebih suka ngobrol? Kami ada di sini.",
+    "errors": {
+      "name": "Nama wajib diisi.",
+      "nameLong": "Nama maksimal 100 karakter.",
+      "organisation": "Organisasi atau brand wajib diisi.",
+      "organisationLong": "Maksimal 120 karakter.",
+      "email": "Masukkan alamat email yang valid.",
+      "whatsapp": "Masukkan nomor WhatsApp yang valid, misalnya 0812-3456-7890.",
+      "inquiryType": "Pilih jenis kemitraan.",
+      "messageShort": "Pesan minimal 10 karakter.",
+      "messageLong": "Pesan maksimal 4000 karakter.",
+      "spam": "Pesan tidak dapat dikirim."
+    }
+  }
+}

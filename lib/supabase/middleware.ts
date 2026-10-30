@@ -1,7 +1,10 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import type { User } from "@supabase/supabase-js";
 
-export async function updateSession(request: NextRequest) {
+export async function updateSession(
+  request: NextRequest,
+): Promise<{ response: NextResponse; user: User | null }> {
   let supabaseResponse = NextResponse.next({
     request,
   });
@@ -12,7 +15,7 @@ export async function updateSession(request: NextRequest) {
   if (!supabaseUrl || !supabaseAnonKey) {
     // No Supabase project configured yet (.env.local still has placeholder
     // values) — skip session refresh instead of crashing every request.
-    return supabaseResponse;
+    return { response: supabaseResponse, user: null };
   }
 
   const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
@@ -36,10 +39,11 @@ export async function updateSession(request: NextRequest) {
 
   // Refreshing the auth token — do not run any code between
   // createServerClient and this call, and do not remove it.
-  await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  // IMPORTANT: return supabaseResponse as-is (or a new NextResponse
-  // created from it, copying its cookies) so the refreshed session
-  // cookies reach the browser.
-  return supabaseResponse;
+  // IMPORTANT: return supabaseResponse as-is (or a new NextResponse created from
+  // it, copying its cookies) so the refreshed session cookies reach the browser.
+  return { response: supabaseResponse, user };
 }

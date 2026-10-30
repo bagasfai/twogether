@@ -1,0 +1,167 @@
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { requireHost } from "@/lib/dal/user";
+import { getHostSession } from "@/lib/dal/sessions";
+import { getRosterAttributes } from "@/lib/dal/player-attributes";
+import { listRoster } from "@/lib/dal/participants";
+import { listCourts } from "@/lib/dal/courts";
+import { listMatches } from "@/lib/dal/matches";
+import { getRotationQueue } from "@/lib/dal/rotation";
+import { getSessionLeaderboard } from "@/lib/dal/stats";
+import { CoachCountControl } from "@/components/sessions/coach-count-control";
+import { RosterTable } from "@/components/sessions/roster-table";
+import { CourtPanel } from "@/components/sessions/court-panel";
+import { MatchPanel } from "@/components/sessions/match-panel";
+import { AutoMatchPanel } from "@/components/sessions/auto-match-panel";
+import { SessionLeaderboard } from "@/components/sessions/session-leaderboard";
+import { ManageTabs } from "@/components/sessions/manage-tabs";
+import { SessionRealtimeWatcher } from "@/components/sessions/session-realtime-watcher";
+import { SessionActionsMenu } from "@/components/sessions/session-actions-menu";
+import { PageTitle, SectionTitle } from "@/components/app/page-title";
+import { Badge } from "@/components/ui/badge";
+import { listHostAnnouncements } from "@/lib/dal/announcements";
+import { AnnouncementList } from "@/components/sessions/announcement-list";
+import { NextIntlClientProvider } from "next-intl";
+import { getMessages } from "next-intl/server";
+import { getHostAlbum, listApprovedPhotos, listPendingPhotos } from "@/lib/dal/galleries";
+import { PhotosPanel } from "@/components/gallery/photos-panel";
+import { StartSessionButton } from "@/components/sessions/start-session-button";
+import { formatDateTime } from "@/lib/format/datetime";
+
+export const metadata: Metadata = { title: "Manage session" };
+
+export default async function ManageSessionPage({ params }: PageProps<"/sessions/[id]/manage">) {
+  const { id } = await params;
+  await requireHost(`/sessions/${id}/manage`);
+
+  // Null means RLS did not return the row -- either it does not exist or the
+  // caller does not host it. Both are a 404 here; distinguishing them would tell
+  // a stranger that a private session exists.
+  const session = await getHostSession(id);
+  if (!session) notFound();
+
+  const roster = await listRoster(id);
+  // Host-only (this page is gated by requireHost + getHostSession; the DAL
+  // is RLS-bound too). A Map cannot cross to the client, so pass a record.
+  const attributes = Object.fromEntries(await getRosterAttributes(id));
+  const courts = await listCourts(id);
+  const matches = await listMatches(id);
+  const rotationQueue = await getRotationQueue(id);
+  const leaderboard = await getSessionLeaderboard(id);
+  const announcements = await listHostAnnouncements(id);
+  // The album exists from the moment the session starts (start_session
+  // trigger); before that the Photos tab only says so.
+  const album = await getHostAlbum(id);
+  const [pendingPhotos, approvedPhotos] = album
+    ? await Promise.all([listPendingPhotos(album.id), listApprovedPhotos(album.id)])
+    : [[], []];
+  // (app) has no NextIntlClientProvider (only app/[locale] does), but the
+  // shared gallery components (UploadPanel, HoldToConfirmButton) read the
+  // "gallery" namespace. Provide just that namespace, in English to match the
+  // rest of the (app) UI.
+  const messages = await getMessages({ locale: "en" });
+  const confirmed = roster.filter((entry) => entry.status === "confirmed").length;
+  const waiting = roster.filter((entry) => entry.status === "waiting_list").length;
+  const checkedIn = roster.filter((entry) => entry.checkedInAt !== null).length;
+  const activeMatches = matches.filter((m) => m.status !== "cancelled").length;
+
+  return (
+    <div className="flex flex-col gap-4 sm:gap-6 lg:mx-auto lg:max-w-6xl">
+      <SessionRealtimeWatcher sessionId={session.id} />
+
+      {/* Wraps so the header actions drop below a long title on a phone
+          instead of squeezing it into a narrow column. */}
+      <header className="flex flex-wrap items-start justify-between gap-2">
+        <div className="flex flex-col gap-1">
+          <PageTitle description={`${formatDateTime(session.startsAt)} · ${session.location}`}>{session.title}</PageTitle>
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
+          {session.status === "scheduled" ? <StartSessionButton sessionId={session.id} /> : null}
+          <SessionActionsMenu session={session} showManageLink={false} />
+        </div>
+      </header>
+
+      {/* Sticky so confirmed/waiting/checked-in counts stay visible while
+          the host scrolls through courts/matches/roster on a phone. */}
+      <div className="sticky top-0 z-10 flex flex-wrap items-center gap-x-5 gap-y-2 rounded-2xl bg-navy px-4 py-3 text-white shadow-[0_8px_20px_-10px_oklch(28%_0.13_264/0.6)]">
+        <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide">
+          <span className="size-2 shrink-0 rounded-full bg-cork motion-safe:animate-pulse" aria-hidden="true" />
+          Live
+        </span>
+        <Stat label="confirmed" value={`${confirmed}/${session.maxParticipants}`} />
+        <Stat label="waiting" value={`${waiting}/${session.waitlistCapacity}`} />
+        {/* Checked-in is a distinct pool from registration status (courts/matches/
+            rotation read from it, not the roster) -- it gets its own cork
+            numeral so it never reads as a registration count. */}
+        <Stat label="checked in" value={String(checkedIn)} accent />
+        <Badge variant="outline" className="border-white/50 text-xs capitalize text-white sm:text-sm">
+          {session.registrationState}
+        </Badge>
+      </div>
+
+      {session.kind === "drilling" &&
+      session.coachCount !== null &&
+      session.seatsPerCoach !== null &&
+      session.status !== "completed" &&
+      session.status !== "cancelled" ? (
+        <CoachCountControl
+          sessionId={session.id}
+          coachCount={session.coachCount}
+          seatsPerCoach={session.seatsPerCoach}
+          confirmedCount={confirmed}
+          waitlistCount={waiting}
+          sessionStatus={session.status}
+        />
+      ) : null}
+
+      <AnnouncementList sessionId={id} announcements={announcements} />
+
+      <ManageTabs
+        courtCount={courts.length}
+        matchCount={activeMatches}
+        rosterCount={roster.length}
+        photosCount={pendingPhotos.length}
+        courts={<CourtPanel sessionId={session.id} courts={courts} courtCount={session.courtCount} />}
+        matches={
+          <div className="flex flex-col gap-4 sm:gap-6">
+            <AutoMatchPanel sessionId={session.id} />
+            <MatchPanel sessionId={session.id} matches={matches} courts={courts} rotationQueue={rotationQueue} />
+            <SessionLeaderboard rows={leaderboard} />
+          </div>
+        }
+        roster={<RosterTable
+            sessionId={session.id}
+            entries={roster}
+            sessionStatus={session.status}
+            sessionKind={session.kind}
+            price={session.price}
+            premiumSurchargeIdr={session.premiumSurchargeIdr}
+            attributes={attributes}
+          />}
+        photos={
+          <NextIntlClientProvider locale="en" messages={{ gallery: messages.gallery }}>
+            <PhotosPanel
+                album={album}
+                pending={pendingPhotos}
+                approved={approvedPhotos}
+                sessionStatus={session.status}
+              />
+          </NextIntlClientProvider>
+        }
+      />
+    </div>
+  );
+}
+
+function Stat({ label, value, accent = false }: { label: string; value: string; accent?: boolean }) {
+  return (
+    <span className="flex items-baseline gap-1.5">
+      <span
+        className={`font-display text-3xl font-extrabold italic leading-none tabular-nums ${accent ? "text-cork" : "text-white"}`}
+      >
+        {value}
+      </span>
+      <span className="text-sm text-white/85">{label}</span>
+    </span>
+  );
+}

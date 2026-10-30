@@ -1,8 +1,71 @@
-import { type NextRequest } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
+import createMiddleware from "next-intl/middleware";
 import { updateSession } from "@/lib/supabase/middleware";
+import { routing } from "@/i18n/routing";
+
+const handleI18nRouting = createMiddleware(routing);
+
+// Routes in the (app) group. /sessions and /sessions/[id] are public, so this
+// cannot be a plain /sessions prefix.
+//
+// Trailing slash is deliberately NOT matched (e.g. "/sessions/new/" returns
+// false here). That's safe, not an oversight: Next's own trailing-slash
+// normalisation (trailingSlash: false is the default) issues a 308 to the
+// no-slash form before any page renders, so a request for "/sessions/new/"
+// while logged out ends up back through this same function as "/sessions/new"
+// on the very next hop -- confirmed against the dev server, which returns
+// 308 -> /sessions/new -> (this guard) -> 307 -> /login. No protected content
+// is ever served on the trailing-slash path.
+export function isProtected(pathname: string): boolean {
+  if (pathname === "/dashboard" || pathname.startsWith("/dashboard/")) return true;
+  if (pathname === "/profile" || pathname.startsWith("/profile/")) return true;
+  if (pathname === "/sessions/new") return true;
+  if (/^\/sessions\/[^/]+\/manage$/.test(pathname)) return true;
+  return false;
+}
+
+// Only app/[locale]/(marketing) is localized: "/", "/sessions", "/sessions/[id]",
+// "/gallery", "/gallery/[id]", "/about", "/faq" (and their /en counterparts). (app)/(auth)/auth/api share the /sessions
+// prefix with host-only routes ("/sessions/new", "/sessions/[id]/manage"), so
+// this stays a safelist -- a missed exclusion here would let next-intl rewrite
+// a host-only route. Adding a new marketing page requires updating this too.
+function isMarketingPath(pathname: string): boolean {
+  const unprefixed = pathname === "/en" ? "/" : pathname.startsWith("/en/") ? pathname.slice(3) : pathname;
+  if (unprefixed === "/" || unprefixed === "/sessions" || unprefixed === "/gallery") return true;
+  if (unprefixed === "/about" || unprefixed === "/faq") return true;
+  // /gallery/[id] has no (app) sibling, so any single segment is an album id.
+  if (/^\/gallery\/[^/]+$/.test(unprefixed)) return true;
+  const match = /^\/sessions\/([^/]+)$/.exec(unprefixed);
+  return match !== null && match[1] !== "new";
+}
 
 export async function proxy(request: NextRequest) {
-  return await updateSession(request);
+  const { response, user } = await updateSession(request);
+
+  // Optimistic UX only. Proxy runs on every request including prefetches, so it
+  // reads the already-refreshed session and makes no extra query. Every (app)
+  // page re-checks through the DAL, and RLS is the actual enforcement --
+  // deleting this block must not make any data reachable that was not reachable before.
+  if (!user && isProtected(request.nextUrl.pathname)) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/login";
+    url.search = `?next=${encodeURIComponent(request.nextUrl.pathname + request.nextUrl.search)}`;
+
+    const redirectResponse = NextResponse.redirect(url);
+    // carry the refreshed auth cookies onto the redirect, or the next request
+    // starts from a stale session
+    for (const cookie of response.cookies.getAll()) redirectResponse.cookies.set(cookie);
+    return redirectResponse;
+  }
+
+  if (isMarketingPath(request.nextUrl.pathname)) {
+    const i18nResponse = handleI18nRouting(request);
+    // same reasoning as the redirect branch above: carry refreshed auth cookies
+    for (const cookie of response.cookies.getAll()) i18nResponse.cookies.set(cookie);
+    return i18nResponse;
+  }
+
+  return response;
 }
 
 export const config = {

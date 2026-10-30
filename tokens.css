@@ -1,0 +1,27 @@
+/* Impeccable · world: badminton court (sky-blue vinyl, white court lines, navy ink, cork-yellow action)
+ * Portable export; mirrors app/globals.css :root. See design.md.
+ */
+:root {
+  --navy:      oklch(28% 0.13 264);   /* ink, header, footer, primary */
+  --sky:       oklch(62% 0.17 248);
+  --sky-deep:  oklch(50% 0.19 258);
+  --sky-pale:  oklch(94% 0.04 235);
+  --cork:      oklch(87% 0.17 92);    /* the one action colour */
+  --background: oklch(98.5% 0.008 240);
+  --foreground: oklch(26% 0.11 265);
+  --muted-foreground: oklch(45% 0.06 258);
+  --border:    oklch(88% 0.03 240);
+  --accent-text: oklch(46% 0.17 258);
+  --ring:      oklch(55% 0.20 255);
+  --success:   oklch(58% 0.14 150);
+  --warning:   oklch(80% 0.15 85);
+  --destructive: oklch(55% 0.21 25);
+
+  --font-display: var(--font-barlow), var(--font-figtree), system-ui, sans-serif;
+  --font-sans:    var(--font-figtree), system-ui, sans-serif;
+  --font-mono:    var(--font-geist-mono), ui-monospace, monospace;
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-micro: 120ms; --dur-short: 220ms; --dur-long: 420ms;
+  --radius: 1rem;
+}

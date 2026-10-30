@@ -31,8 +31,15 @@ const FormFieldContext = React.createContext<FormFieldContextValue>(
 
 function FormField<
   TFieldValues extends FieldValues = FieldValues,
-  TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>
->({ ...props }: ControllerProps<TFieldValues, TName>) {
+  TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
+  // Deliberate local addition, not upstream shadcn/ui: mirrors the third
+  // generic on react-hook-form's own ControllerProps/Control so a schema with
+  // an input/output transform (e.g. zod .transform()) can be typed here too.
+  // Defaults to TFieldValues, so every existing single-generic form is
+  // unaffected. `npx shadcn add form` will silently drop this on a re-sync
+  // and break every transform-schema form with no obvious error -- redo it.
+  TTransformedValues = TFieldValues
+>({ ...props }: ControllerProps<TFieldValues, TName, TTransformedValues>) {
   return (
     <FormFieldContext.Provider value={{ name: props.name }}>
       <Controller {...props} />
@@ -95,7 +102,7 @@ function FormLabel({
     <Label
       data-slot="form-label"
       data-error={!!error}
-      className={cn("data-[error=true]:text-destructive", className)}
+      className={cn("data-[error=true]:text-destructive-text", className)}
       htmlFor={formItemId}
       {...props}
     />
@@ -146,7 +153,8 @@ function FormMessage({ className, ...props }: React.ComponentProps<"p">) {
     <p
       data-slot="form-message"
       id={formMessageId}
-      className={cn("text-destructive text-sm", className)}
+      role="alert"
+      className={cn("text-destructive-text text-sm", className)}
       {...props}
     >
       {body}
@@ -154,7 +162,30 @@ function FormMessage({ className, ...props }: React.ComponentProps<"p">) {
   );
 }
 
+/**
+ * Moves focus after a failed server submit: to the first field marked
+ * aria-invalid (set by FormControl) inside the same form, else to the root
+ * error element. Attach the returned ref to the root error element (give it
+ * tabIndex={-1}) and pass the current root error object.
+ */
+function useFocusFormError(rootError: unknown) {
+  const ref = React.useRef<HTMLParagraphElement>(null);
+
+  React.useEffect(() => {
+    if (!rootError) return;
+    const root = ref.current;
+    if (!root) return;
+    const firstInvalid = root
+      .closest("form")
+      ?.querySelector<HTMLElement>('[aria-invalid="true"]');
+    (firstInvalid ?? root).focus();
+  }, [rootError]);
+
+  return ref;
+}
+
 export {
+  useFocusFormError,
   useFormField,
   Form,
   FormItem,

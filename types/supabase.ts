@@ -1,19 +1,1722 @@
-// Placeholder for generated Supabase database types.
-//
-// Once the Supabase cloud project exists and the schema is defined, regenerate
-// this file with:
-//
-//   npx supabase gen types typescript --project-id <project-id> > types/supabase.ts
-//
-// or, for local dev against the CLI's local stack:
-//
-//   npx supabase gen types typescript --local > types/supabase.ts
-
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
 export type Database = {
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
-    Tables: Record<string, never>;
-    Views: Record<string, never>;
-    Functions: Record<string, never>;
-    Enums: Record<string, never>;
-  };
-};
+    Tables: {
+      announcements: {
+        Row: {
+          body: string
+          created_at: string
+          created_by: string
+          id: string
+          published_at: string | null
+          session_id: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          created_by: string
+          id?: string
+          published_at?: string | null
+          session_id?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          published_at?: string | null
+          session_id?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "announcements_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "announcements_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bump_notifications: {
+        Row: {
+          created_at: string
+          id: string
+          participant_id: string
+          sent_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          participant_id: string
+          sent_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          participant_id?: string
+          sent_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bump_notifications_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bump_notifications_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "session_games_played"
+            referencedColumns: ["participant_id"]
+          },
+        ]
+      }
+      community_about: {
+        Row: {
+          body_en: string
+          body_id: string
+          id: boolean
+          title_en: string
+          title_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          body_en: string
+          body_id: string
+          id?: boolean
+          title_en: string
+          title_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          body_en?: string
+          body_id?: string
+          id?: boolean
+          title_en?: string
+          title_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_about_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      courts: {
+        Row: {
+          court_number: number
+          created_at: string
+          id: string
+          session_id: string
+          status: Database["public"]["Enums"]["court_status"]
+          updated_at: string
+        }
+        Insert: {
+          court_number: number
+          created_at?: string
+          id?: string
+          session_id: string
+          status?: Database["public"]["Enums"]["court_status"]
+          updated_at?: string
+        }
+        Update: {
+          court_number?: number
+          created_at?: string
+          id?: string
+          session_id?: string
+          status?: Database["public"]["Enums"]["court_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "courts_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      faq_items: {
+        Row: {
+          answer_en: string
+          answer_id: string
+          created_at: string
+          id: string
+          question_en: string
+          question_id: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          answer_en: string
+          answer_id: string
+          created_at?: string
+          id?: string
+          question_en: string
+          question_id: string
+          sort_order: number
+          updated_at?: string
+        }
+        Update: {
+          answer_en?: string
+          answer_id?: string
+          created_at?: string
+          id?: string
+          question_en?: string
+          question_id?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      featured_posts: {
+        Row: {
+          caption_en: string
+          caption_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          image_path: string
+          is_visible: boolean
+          kind: Database["public"]["Enums"]["featured_post_kind"]
+          platform: Database["public"]["Enums"]["social_platform"]
+          post_url: string
+          posted_at: string
+          updated_at: string
+        }
+        Insert: {
+          caption_en: string
+          caption_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          image_path: string
+          is_visible?: boolean
+          kind: Database["public"]["Enums"]["featured_post_kind"]
+          platform: Database["public"]["Enums"]["social_platform"]
+          post_url: string
+          posted_at?: string
+          updated_at?: string
+        }
+        Update: {
+          caption_en?: string
+          caption_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          image_path?: string
+          is_visible?: boolean
+          kind?: Database["public"]["Enums"]["featured_post_kind"]
+          platform?: Database["public"]["Enums"]["social_platform"]
+          post_url?: string
+          posted_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "featured_posts_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      galleries: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          session_id: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          session_id?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          session_id?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "galleries_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "galleries_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gallery_photos: {
+        Row: {
+          caption: string | null
+          created_at: string
+          gallery_id: string
+          id: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          sort_order: number
+          status: Database["public"]["Enums"]["gallery_photo_status"]
+          storage_path: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          gallery_id: string
+          id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          sort_order?: number
+          status?: Database["public"]["Enums"]["gallery_photo_status"]
+          storage_path: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          gallery_id?: string
+          id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          sort_order?: number
+          status?: Database["public"]["Enums"]["gallery_photo_status"]
+          storage_path?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gallery_photos_gallery_id_fkey"
+            columns: ["gallery_id"]
+            isOneToOne: false
+            referencedRelation: "galleries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gallery_photos_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gallery_photos_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      guest_attributes: {
+        Row: {
+          gender: Database["public"]["Enums"]["gender"] | null
+          level: Database["public"]["Enums"]["skill_level"] | null
+          participant_id: string
+          updated_at: string
+        }
+        Insert: {
+          gender?: Database["public"]["Enums"]["gender"] | null
+          level?: Database["public"]["Enums"]["skill_level"] | null
+          participant_id: string
+          updated_at?: string
+        }
+        Update: {
+          gender?: Database["public"]["Enums"]["gender"] | null
+          level?: Database["public"]["Enums"]["skill_level"] | null
+          participant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guest_attributes_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: true
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guest_attributes_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: true
+            referencedRelation: "session_games_played"
+            referencedColumns: ["participant_id"]
+          },
+        ]
+      }
+      match_players: {
+        Row: {
+          match_id: string
+          participant_id: string
+          team: number
+        }
+        Insert: {
+          match_id: string
+          participant_id: string
+          team: number
+        }
+        Update: {
+          match_id?: string
+          participant_id?: string
+          team?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "match_players_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: false
+            referencedRelation: "matches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "match_players_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "match_players_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "session_games_played"
+            referencedColumns: ["participant_id"]
+          },
+        ]
+      }
+      matches: {
+        Row: {
+          completed_at: string | null
+          court_id: string | null
+          created_at: string
+          id: string
+          queue_position: number | null
+          session_id: string
+          started_at: string | null
+          status: Database["public"]["Enums"]["match_status"]
+          updated_at: string
+        }
+        Insert: {
+          completed_at?: string | null
+          court_id?: string | null
+          created_at?: string
+          id?: string
+          queue_position?: number | null
+          session_id: string
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["match_status"]
+          updated_at?: string
+        }
+        Update: {
+          completed_at?: string | null
+          court_id?: string | null
+          created_at?: string
+          id?: string
+          queue_position?: number | null
+          session_id?: string
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["match_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "matches_court_id_fkey"
+            columns: ["court_id"]
+            isOneToOne: false
+            referencedRelation: "courts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "matches_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      member_levels: {
+        Row: {
+          level: Database["public"]["Enums"]["skill_level"]
+          set_by: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          level: Database["public"]["Enums"]["skill_level"]
+          set_by?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          level?: Database["public"]["Enums"]["skill_level"]
+          set_by?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "member_levels_set_by_fkey"
+            columns: ["set_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "member_levels_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      membership_plans: {
+        Row: {
+          created_at: string
+          duration_days: number
+          id: string
+          is_active: boolean
+          name: string
+          price_idr: number
+          quota: number
+          refund_cutoff_hours: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          duration_days: number
+          id?: string
+          is_active?: boolean
+          name: string
+          price_idr: number
+          quota: number
+          refund_cutoff_hours?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          duration_days?: number
+          id?: string
+          is_active?: boolean
+          name?: string
+          price_idr?: number
+          quota?: number
+          refund_cutoff_hours?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      membership_usages: {
+        Row: {
+          consumed_at: string
+          id: string
+          membership_id: string
+          participant_id: string
+          refund_reason: string | null
+          refunded_at: string | null
+        }
+        Insert: {
+          consumed_at?: string
+          id?: string
+          membership_id: string
+          participant_id: string
+          refund_reason?: string | null
+          refunded_at?: string | null
+        }
+        Update: {
+          consumed_at?: string
+          id?: string
+          membership_id?: string
+          participant_id?: string
+          refund_reason?: string | null
+          refunded_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "membership_usages_membership_id_fkey"
+            columns: ["membership_id"]
+            isOneToOne: false
+            referencedRelation: "memberships"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "membership_usages_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "membership_usages_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "session_games_played"
+            referencedColumns: ["participant_id"]
+          },
+        ]
+      }
+      memberships: {
+        Row: {
+          activated_by: string | null
+          cancelled_at: string | null
+          created_at: string
+          duration_days: number
+          expires_at: string | null
+          id: string
+          payment_received_at: string | null
+          plan_id: string | null
+          price_idr: number
+          quota_total: number
+          refund_cutoff_hours: number
+          started_at: string | null
+          user_id: string
+        }
+        Insert: {
+          activated_by?: string | null
+          cancelled_at?: string | null
+          created_at?: string
+          duration_days: number
+          expires_at?: string | null
+          id?: string
+          payment_received_at?: string | null
+          plan_id?: string | null
+          price_idr: number
+          quota_total: number
+          refund_cutoff_hours?: number
+          started_at?: string | null
+          user_id: string
+        }
+        Update: {
+          activated_by?: string | null
+          cancelled_at?: string | null
+          created_at?: string
+          duration_days?: number
+          expires_at?: string | null
+          id?: string
+          payment_received_at?: string | null
+          plan_id?: string | null
+          price_idr?: number
+          quota_total?: number
+          refund_cutoff_hours?: number
+          started_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "memberships_activated_by_fkey"
+            columns: ["activated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "memberships_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "membership_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "memberships_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      participants: {
+        Row: {
+          added_by: string | null
+          bumped_at: string | null
+          cancelled_at: string | null
+          checked_in_at: string | null
+          consented_at: string | null
+          created_at: string
+          guest_name: string | null
+          guest_phone: string | null
+          id: string
+          is_premium: boolean
+          membership_id: string | null
+          no_show_at: string | null
+          paid_at: string | null
+          paid_by_user_id: string | null
+          registered_at: string
+          registered_by: string | null
+          replaced_by: string | null
+          session_id: string
+          status: Database["public"]["Enums"]["participant_status"]
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          added_by?: string | null
+          bumped_at?: string | null
+          cancelled_at?: string | null
+          checked_in_at?: string | null
+          consented_at?: string | null
+          created_at?: string
+          guest_name?: string | null
+          guest_phone?: string | null
+          id?: string
+          is_premium?: boolean
+          membership_id?: string | null
+          no_show_at?: string | null
+          paid_at?: string | null
+          paid_by_user_id?: string | null
+          registered_at?: string
+          registered_by?: string | null
+          replaced_by?: string | null
+          session_id: string
+          status: Database["public"]["Enums"]["participant_status"]
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          added_by?: string | null
+          bumped_at?: string | null
+          cancelled_at?: string | null
+          checked_in_at?: string | null
+          consented_at?: string | null
+          created_at?: string
+          guest_name?: string | null
+          guest_phone?: string | null
+          id?: string
+          is_premium?: boolean
+          membership_id?: string | null
+          no_show_at?: string | null
+          paid_at?: string | null
+          paid_by_user_id?: string | null
+          registered_at?: string
+          registered_by?: string | null
+          replaced_by?: string | null
+          session_id?: string
+          status?: Database["public"]["Enums"]["participant_status"]
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "participants_added_by_fkey"
+            columns: ["added_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "participants_membership_id_fkey"
+            columns: ["membership_id"]
+            isOneToOne: false
+            referencedRelation: "memberships"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "participants_paid_by_user_id_fkey"
+            columns: ["paid_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "participants_registered_by_fkey"
+            columns: ["registered_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "participants_replaced_by_fkey"
+            columns: ["replaced_by"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "participants_replaced_by_fkey"
+            columns: ["replaced_by"]
+            isOneToOne: false
+            referencedRelation: "session_games_played"
+            referencedColumns: ["participant_id"]
+          },
+          {
+            foreignKeyName: "participants_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "participants_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partner_inquiries: {
+        Row: {
+          created_at: string
+          email: string
+          email_sent_at: string | null
+          id: string
+          inquiry_type: Database["public"]["Enums"]["partner_inquiry_type"]
+          ip_hash: string
+          message: string
+          name: string
+          organisation: string
+          status: Database["public"]["Enums"]["partner_inquiry_status"]
+          updated_at: string
+          whatsapp: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          email_sent_at?: string | null
+          id?: string
+          inquiry_type: Database["public"]["Enums"]["partner_inquiry_type"]
+          ip_hash: string
+          message: string
+          name: string
+          organisation: string
+          status?: Database["public"]["Enums"]["partner_inquiry_status"]
+          updated_at?: string
+          whatsapp: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          email_sent_at?: string | null
+          id?: string
+          inquiry_type?: Database["public"]["Enums"]["partner_inquiry_type"]
+          ip_hash?: string
+          message?: string
+          name?: string
+          organisation?: string
+          status?: Database["public"]["Enums"]["partner_inquiry_status"]
+          updated_at?: string
+          whatsapp?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          full_name: string | null
+          id: string
+          role: Database["public"]["Enums"]["user_role"]
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          full_name?: string | null
+          id: string
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      profiles_private: {
+        Row: {
+          created_at: string
+          gender: Database["public"]["Enums"]["gender"] | null
+          phone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          gender?: Database["public"]["Enums"]["gender"] | null
+          phone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          gender?: Database["public"]["Enums"]["gender"] | null
+          phone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_private_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      session_hosts: {
+        Row: {
+          added_at: string
+          role: Database["public"]["Enums"]["session_host_role"]
+          session_id: string
+          user_id: string
+        }
+        Insert: {
+          added_at?: string
+          role?: Database["public"]["Enums"]["session_host_role"]
+          session_id: string
+          user_id: string
+        }
+        Update: {
+          added_at?: string
+          role?: Database["public"]["Enums"]["session_host_role"]
+          session_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_hosts_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_hosts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sessions: {
+        Row: {
+          coach_count: number | null
+          court_count: number
+          created_at: string
+          created_by: string | null
+          description: string | null
+          ends_at: string
+          id: string
+          kind: Database["public"]["Enums"]["session_kind"]
+          location: string
+          location_url: string | null
+          max_participants: number
+          premium_surcharge_idr: number
+          price: number | null
+          registration_state: Database["public"]["Enums"]["registration_state"]
+          seats_per_coach: number | null
+          starts_at: string
+          status: Database["public"]["Enums"]["session_status"]
+          title: string
+          updated_at: string
+          waitlist_capacity: number
+        }
+        Insert: {
+          coach_count?: number | null
+          court_count?: number
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          ends_at: string
+          id?: string
+          kind?: Database["public"]["Enums"]["session_kind"]
+          location: string
+          location_url?: string | null
+          max_participants: number
+          premium_surcharge_idr?: number
+          price?: number | null
+          registration_state?: Database["public"]["Enums"]["registration_state"]
+          seats_per_coach?: number | null
+          starts_at: string
+          status?: Database["public"]["Enums"]["session_status"]
+          title: string
+          updated_at?: string
+          waitlist_capacity?: number
+        }
+        Update: {
+          coach_count?: number | null
+          court_count?: number
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          ends_at?: string
+          id?: string
+          kind?: Database["public"]["Enums"]["session_kind"]
+          location?: string
+          location_url?: string | null
+          max_participants?: number
+          premium_surcharge_idr?: number
+          price?: number | null
+          registration_state?: Database["public"]["Enums"]["registration_state"]
+          seats_per_coach?: number | null
+          starts_at?: string
+          status?: Database["public"]["Enums"]["session_status"]
+          title?: string
+          updated_at?: string
+          waitlist_capacity?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sessions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      social_links: {
+        Row: {
+          created_at: string
+          id: string
+          is_visible: boolean
+          label: string
+          platform: Database["public"]["Enums"]["social_platform"]
+          sort_order: number
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_visible?: boolean
+          label: string
+          platform: Database["public"]["Enums"]["social_platform"]
+          sort_order: number
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_visible?: boolean
+          label?: string
+          platform?: Database["public"]["Enums"]["social_platform"]
+          sort_order?: number
+          updated_at?: string
+          url?: string
+        }
+        Relationships: []
+      }
+    }
+    Views: {
+      session_games_played: {
+        Row: {
+          games_played: number | null
+          participant_id: string | null
+          session_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "participants_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+    }
+    Functions: {
+      add_gallery_photo: {
+        Args: { p_caption: string; p_gallery_id: string; p_path: string }
+        Returns: {
+          caption: string | null
+          created_at: string
+          gallery_id: string
+          id: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          sort_order: number
+          status: Database["public"]["Enums"]["gallery_photo_status"]
+          storage_path: string
+          uploaded_by: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "gallery_photos"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      adjust_session_capacity: {
+        Args: { p_coach_count: number; p_session_id: string }
+        Returns: {
+          coach_count: number | null
+          court_count: number
+          created_at: string
+          created_by: string | null
+          description: string | null
+          ends_at: string
+          id: string
+          kind: Database["public"]["Enums"]["session_kind"]
+          location: string
+          location_url: string | null
+          max_participants: number
+          premium_surcharge_idr: number
+          price: number | null
+          registration_state: Database["public"]["Enums"]["registration_state"]
+          seats_per_coach: number | null
+          starts_at: string
+          status: Database["public"]["Enums"]["session_status"]
+          title: string
+          updated_at: string
+          waitlist_capacity: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "sessions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      admin_cancel_membership: {
+        Args: { p_membership_id: string }
+        Returns: {
+          activated_by: string | null
+          cancelled_at: string | null
+          created_at: string
+          duration_days: number
+          expires_at: string | null
+          id: string
+          payment_received_at: string | null
+          plan_id: string | null
+          price_idr: number
+          quota_total: number
+          refund_cutoff_hours: number
+          started_at: string | null
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "memberships"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      admin_grant_membership: {
+        Args: {
+          p_duration_days?: number
+          p_payment_received_at: string
+          p_plan_id: string
+          p_price_idr?: number
+          p_quota?: number
+          p_user_id: string
+        }
+        Returns: {
+          activated_by: string | null
+          cancelled_at: string | null
+          created_at: string
+          duration_days: number
+          expires_at: string | null
+          id: string
+          payment_received_at: string | null
+          plan_id: string | null
+          price_idr: number
+          quota_total: number
+          refund_cutoff_hours: number
+          started_at: string | null
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "memberships"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      all_time_leaderboard: {
+        Args: { p_limit?: number }
+        Returns: {
+          full_name: string
+          games_played: number
+          is_me: boolean
+        }[]
+      }
+      can_review_gallery: { Args: { p_gallery_id: string }; Returns: boolean }
+      can_upload_to_gallery: {
+        Args: { p_gallery_id: string }
+        Returns: boolean
+      }
+      cancel_guest_registration: {
+        Args: { p_participant_id: string }
+        Returns: undefined
+      }
+      cancel_registration: {
+        Args: { p_session_id: string }
+        Returns: undefined
+      }
+      complete_match: {
+        Args: { p_match_id: string }
+        Returns: {
+          completed_at: string | null
+          court_id: string | null
+          created_at: string
+          id: string
+          queue_position: number | null
+          session_id: string
+          started_at: string | null
+          status: Database["public"]["Enums"]["match_status"]
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "matches"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      create_match: {
+        Args: {
+          p_court_id: string
+          p_session_id: string
+          p_team1: string[]
+          p_team2: string[]
+        }
+        Returns: {
+          completed_at: string | null
+          court_id: string | null
+          created_at: string
+          id: string
+          queue_position: number | null
+          session_id: string
+          started_at: string | null
+          status: Database["public"]["Enums"]["match_status"]
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "matches"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      current_user_role: {
+        Args: never
+        Returns: Database["public"]["Enums"]["user_role"]
+      }
+      faq_create: {
+        Args: {
+          p_answer_en: string
+          p_answer_id: string
+          p_question_en: string
+          p_question_id: string
+        }
+        Returns: string
+      }
+      faq_delete: { Args: { p_id: string }; Returns: undefined }
+      faq_lock_key: { Args: never; Returns: number }
+      faq_move: {
+        Args: { p_direction: string; p_id: string }
+        Returns: undefined
+      }
+      host_add_participant: {
+        Args: {
+          p_session_id: string
+          p_status?: Database["public"]["Enums"]["participant_status"]
+          p_user_id: string
+        }
+        Returns: {
+          added_by: string | null
+          bumped_at: string | null
+          cancelled_at: string | null
+          checked_in_at: string | null
+          consented_at: string | null
+          created_at: string
+          guest_name: string | null
+          guest_phone: string | null
+          id: string
+          is_premium: boolean
+          membership_id: string | null
+          no_show_at: string | null
+          paid_at: string | null
+          paid_by_user_id: string | null
+          registered_at: string
+          registered_by: string | null
+          replaced_by: string | null
+          session_id: string
+          status: Database["public"]["Enums"]["participant_status"]
+          updated_at: string
+          user_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "participants"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      host_roster_genders: {
+        Args: { p_session_id: string }
+        Returns: {
+          gender: Database["public"]["Enums"]["gender"]
+          user_id: string
+        }[]
+      }
+      host_set_member_gender: {
+        Args: {
+          p_gender: Database["public"]["Enums"]["gender"]
+          p_user_id: string
+        }
+        Returns: undefined
+      }
+      host_set_participant_status: {
+        Args: {
+          p_participant_id: string
+          p_status: Database["public"]["Enums"]["participant_status"]
+        }
+        Returns: {
+          added_by: string | null
+          bumped_at: string | null
+          cancelled_at: string | null
+          checked_in_at: string | null
+          consented_at: string | null
+          created_at: string
+          guest_name: string | null
+          guest_phone: string | null
+          id: string
+          is_premium: boolean
+          membership_id: string | null
+          no_show_at: string | null
+          paid_at: string | null
+          paid_by_user_id: string | null
+          registered_at: string
+          registered_by: string | null
+          replaced_by: string | null
+          session_id: string
+          status: Database["public"]["Enums"]["participant_status"]
+          updated_at: string
+          user_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "participants"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      is_admin: { Args: never; Returns: boolean }
+      is_session_host: { Args: { p_session_id: string }; Returns: boolean }
+      is_session_owner: { Args: { p_session_id: string }; Returns: boolean }
+      lock_current_membership: {
+        Args: { p_user_id: string }
+        Returns: {
+          activated_by: string | null
+          cancelled_at: string | null
+          created_at: string
+          duration_days: number
+          expires_at: string | null
+          id: string
+          payment_received_at: string | null
+          plan_id: string | null
+          price_idr: number
+          quota_total: number
+          refund_cutoff_hours: number
+          started_at: string | null
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "memberships"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      member_confirm_participation: {
+        Args: { p_session_id: string }
+        Returns: {
+          added_by: string | null
+          bumped_at: string | null
+          cancelled_at: string | null
+          checked_in_at: string | null
+          consented_at: string | null
+          created_at: string
+          guest_name: string | null
+          guest_phone: string | null
+          id: string
+          is_premium: boolean
+          membership_id: string | null
+          no_show_at: string | null
+          paid_at: string | null
+          paid_by_user_id: string | null
+          registered_at: string
+          registered_by: string | null
+          replaced_by: string | null
+          session_id: string
+          status: Database["public"]["Enums"]["participant_status"]
+          updated_at: string
+          user_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "participants"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      membership_quota_left: {
+        Args: { p_membership_id: string }
+        Returns: number
+      }
+      public_community_stats: {
+        Args: never
+        Returns: {
+          active_members: number
+          matches_played: number
+          sessions_held: number
+          total_checkins: number
+        }[]
+      }
+      register_for_session: {
+        Args: { p_session_id: string }
+        Returns: Database["public"]["CompositeTypes"]["registration_result"]
+        SetofOptions: {
+          from: "*"
+          to: "registration_result"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      register_guest_for_session: {
+        Args: {
+          p_guest_name: string
+          p_guest_phone?: string
+          p_session_id: string
+        }
+        Returns: Database["public"]["CompositeTypes"]["registration_result"]
+        SetofOptions: {
+          from: "*"
+          to: "registration_result"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      review_gallery_photo: {
+        Args: { p_action: string; p_photo_id: string }
+        Returns: string
+      }
+      session_is_public: { Args: { p_session_id: string }; Returns: boolean }
+      session_lock_key: { Args: { p_session_id: string }; Returns: number }
+      social_link_create: {
+        Args: {
+          p_is_visible: boolean
+          p_label: string
+          p_platform: Database["public"]["Enums"]["social_platform"]
+          p_url: string
+        }
+        Returns: string
+      }
+      social_link_delete: { Args: { p_id: string }; Returns: undefined }
+      social_link_move: {
+        Args: { p_direction: string; p_id: string }
+        Returns: undefined
+      }
+      social_links_lock_key: { Args: never; Returns: number }
+      start_match: {
+        Args: { p_match_id: string }
+        Returns: {
+          completed_at: string | null
+          court_id: string | null
+          created_at: string
+          id: string
+          queue_position: number | null
+          session_id: string
+          started_at: string | null
+          status: Database["public"]["Enums"]["match_status"]
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "matches"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      start_session: { Args: { p_session_id: string }; Returns: undefined }
+      transfer_participation: {
+        Args: { p_participant_id: string; p_to_user_id: string }
+        Returns: {
+          added_by: string | null
+          bumped_at: string | null
+          cancelled_at: string | null
+          checked_in_at: string | null
+          consented_at: string | null
+          created_at: string
+          guest_name: string | null
+          guest_phone: string | null
+          id: string
+          is_premium: boolean
+          membership_id: string | null
+          no_show_at: string | null
+          paid_at: string | null
+          paid_by_user_id: string | null
+          registered_at: string
+          registered_by: string | null
+          replaced_by: string | null
+          session_id: string
+          status: Database["public"]["Enums"]["participant_status"]
+          updated_at: string
+          user_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "participants"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      waitlist_position_of: {
+        Args: { p_id: string; p_registered_at: string; p_session_id: string }
+        Returns: number
+      }
+    }
+    Enums: {
+      court_status: "idle" | "in_use" | "unavailable"
+      featured_post_kind: "schedule" | "match" | "video" | "other"
+      gallery_photo_status: "pending" | "approved"
+      gender: "male" | "female"
+      match_status: "scheduled" | "in_progress" | "completed" | "cancelled"
+      participant_status: "confirmed" | "waiting_list" | "cancelled"
+      partner_inquiry_status: "new" | "replied" | "closed"
+      partner_inquiry_type:
+        | "sponsorship"
+        | "event"
+        | "brand"
+        | "media"
+        | "other"
+      registration_state: "closed" | "open"
+      session_host_role: "owner" | "cohost"
+      session_kind: "open_play" | "drilling"
+      session_status: "draft" | "scheduled" | "live" | "completed" | "cancelled"
+      skill_level:
+        | "newbie"
+        | "beginner"
+        | "novice"
+        | "intermediate"
+        | "advanced"
+      social_platform: "instagram" | "tiktok" | "whatsapp" | "ayo" | "other"
+      user_role: "member" | "host" | "admin"
+    }
+    CompositeTypes: {
+      registration_result: {
+        status: Database["public"]["Enums"]["participant_status"] | null
+        waitlist_position: number | null
+      }
+    }
+  }
+}
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never) = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never) = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never) = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never) = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never) = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
+  public: {
+    Enums: {
+      court_status: ["idle", "in_use", "unavailable"],
+      featured_post_kind: ["schedule", "match", "video", "other"],
+      gallery_photo_status: ["pending", "approved"],
+      gender: ["male", "female"],
+      match_status: ["scheduled", "in_progress", "completed", "cancelled"],
+      participant_status: ["confirmed", "waiting_list", "cancelled"],
+      partner_inquiry_status: ["new", "replied", "closed"],
+      partner_inquiry_type: ["sponsorship", "event", "brand", "media", "other"],
+      registration_state: ["closed", "open"],
+      session_host_role: ["owner", "cohost"],
+      session_kind: ["open_play", "drilling"],
+      session_status: ["draft", "scheduled", "live", "completed", "cancelled"],
+      skill_level: ["newbie", "beginner", "novice", "intermediate", "advanced"],
+      social_platform: ["instagram", "tiktok", "whatsapp", "ayo", "other"],
+      user_role: ["member", "host", "admin"],
+    },
+  },
+} as const

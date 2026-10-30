@@ -1,0 +1,316 @@
+# Core schema — known follow-ups
+
+Carried out of the implementation of `2026-09-11-core-schema-rls`. Every item below was
+found by review, triaged, and deliberately left. Verdicts are from the final whole-branch review.
+
+## Must decide (product call)
+
+- **`profiles.phone` is readable by every signed-up account.** ~~`profiles_select_authenticated`
+  is `using (true)` and the participant policy exposes full rosters, so any member can walk
+  roster → profile and harvest phone numbers for the whole community.~~ **Resolved** by the
+  `profiles_private` table (migration `20260912000014_profiles_private.sql`): phone moved off
+  `profiles` into its own table with its own policy (self, admin, hosts of a session the person
+  is a non-cancelled participant in).
+
+- **`host_add_participant` composed with the `profiles_private` phone policy is broader than
+  advertised.** ~~`host_add_participant` lets a host insert an arbitrary `p_user_id` into a
+  session they host — a `draft` session works, so no other participant needs to see it — with
+  no consent check from the member being added. Once that participant row exists,
+  `profiles_private_select_self_admin_or_host` (status <> 'cancelled') grants that host the
+  member's phone.~~ **Resolved** by migration `20260914000001_participant_consent.sql`: a new
+  `participants.consented_at` column distinguishes "a row exists" from "the member knows about
+  it". `register_for_session` stamps it immediately (self-registration is consent by
+  construction); `host_add_participant` leaves it null. `profiles_private_select_self_admin_or_host`
+  now additionally requires `consented_at is not null` for the host branch. The member sees a
+  "confirm your spot" / "decline" prompt on their dashboard
+  (`components/sessions/confirm-participation-banner.tsx`, wired to the new
+  `member_confirm_participation` RPC and the existing `cancel_registration` RPC) until they act.
+  The member picker shipped alongside this fix, not before it —
+  `components/sessions/add-participant-dialog.tsx`, wired to `lib/actions/participants.ts`'s
+  `hostAddParticipant` and `searchMembers`.
+
+## Should fix soon
+
+- ~~`sessions.created_by` is `ON DELETE RESTRICT`, so `profiles_delete_admin` hits a bare FK
+  error for anyone who ever created a session. Decide: `on delete set null`, or block in UI.~~
+  **Resolved** by migration `20260924000002_session_created_by_set_null.sql`: `created_by` is
+  now nullable with `on delete set null` on the FK — deleting a profile that created a session
+  nulls the pointer instead of blocking. The session row and its history are kept. Covered by
+  `supabase/tests/023_session_created_by_set_null.test.sql`. No application code read
+  `session.created_by` (only wrote it on insert), so the nullability change needed no code
+  changes beyond regenerating `types/supabase.ts`.
+- ~~Deleting a court under an `in_progress` match nulls `court_id` and leaves the match
+  live.~~ **Already resolved** (this doc was stale) by `guard_court_delete`
+  (`20260913000001_match_scheduling.sql`): a `before delete` trigger raises `JB010` if the
+  court has a `scheduled`/`in_progress` match, mapped through `lib/errors/rpc.ts` and
+  `lib/actions/courts.ts`.
+- ~~`participants_update_host` is column-unrestricted: a host can rewrite `registered_at`
+  (waitlist order) or `added_by` (the over-capacity audit trail).~~ **Resolved** by migration
+  `20260917000004_participants_update_column_grant.sql`: `authenticated` now only holds
+  `GRANT UPDATE (checked_in_at)` on `participants` (table-level UPDATE revoked). All status
+  transitions already ran through SECURITY DEFINER RPCs (`host_set_participant_status`,
+  `host_add_participant`, `register_for_session`, `add_guest_participant`,
+  `cancel_registration`, `member_confirm_participation`), which are unaffected since they run
+  with the function owner's privileges — a plain client UPDATE can now only ever touch
+  `checked_in_at`. `supabase/tests/012_invariant_fixes.test.sql`'s F1a was updated to assert
+  the block (`throws_ok` on a direct status UPDATE, sqlstate `42501`) and to re-run its
+  trigger-defense-in-depth scenario as `postgres` instead of `authenticated`, since that
+  vector is now closed for the host role specifically; two other test fixtures
+  (`010_registration.test.sql`, `010a_registration_isolation.test.sql`) that used a direct
+  status-changing UPDATE purely to exercise trigger behavior were switched to run under
+  `postgres` for the same reason.
+- ~~Grant-surface test pins cover the positive half only; a regression re-granting EXECUTE to
+  PUBLIC would slip past. (The final review found exactly this class of bug in `is_admin`.)~~
+  **Resolved** by `supabase/tests/022_grant_surface_negatives.test.sql`: pins the negative half
+  of the grant surface across the match-scheduling and guest-participant RPCs (EXECUTE, never
+  pinned before), the full `participants` column-grant surface (only `status` had a negative
+  check, via `throws_ok` in `012`; the rest of the disallowed columns didn't), and the two
+  `profiles_private` privilege types `013_profiles_private.test.sql` didn't cover (anon UPDATE,
+  anon DELETE). 28 assertions, all catalog-privilege checks (`has_function_privilege` /
+  `has_column_privilege` / `has_table_privilege`) needing no fixtures or role switching. Ran
+  clean against current migrations on first pass — no actual grant regression found, just closed
+  the coverage gap.
+- ~~`ARRIVAL_SPREAD_THRESHOLD_MS=50` in the race script is tuned to one machine. Make it an env
+  override BEFORE wiring the script into CI, or it will flake and get disabled.~~ **Resolved** by
+  `scripts/test-concurrent-registration.sh` line 28: now `ARRIVAL_SPREAD_THRESHOLD_MS="${ARRIVAL_SPREAD_THRESHOLD_MS:-50}"`,
+  same `${VAR:-default}` idiom the script already used for `DB_URL`. Verified against the local
+  stack: default run passed unchanged (barrier spread 2-3ms, well under 50ms); a
+  `ARRIVAL_SPREAD_THRESHOLD_MS=1` override correctly failed on the barrier-spread assertion
+  specifically ("barrier spread 1ms >= 1ms"), proving the override is actually read; a follow-up
+  default run passed again. No CI workflow exists yet in this repo — this just makes the
+  threshold override-able ahead of that.
+- ~~A demoted participant keeps their original `registered_at`, so they rejoin the queue ahead
+  of people who have waited longer.~~ **Resolved** by migration
+  `20260917000003_demotion_queue_fairness.sql`: `host_set_participant_status` now re-stamps
+  `registered_at` to `now()` whenever the transition lands on `waiting_list` from any other
+  status, so a demoted participant re-enters at the back of the real waitlist instead of
+  keeping their original registration time. Covered by
+  `supabase/tests/018_demotion_queue_fairness.test.sql`, which proves both the stamp itself
+  and that it actually changes promotion order (a participant who was waiting before the
+  demotion gets promoted first on the next freed seat).
+
+## Fine to leave
+
+- `JB003` is overloaded (already-registered / nothing-to-cancel / not-found) and `JB004`
+  conflates 401 with 403. Split them when the first Server Actions map errors to form messages.
+- `guard_match_player`'s message says "not checked in" when the real cause is a hidden row.
+  Still open; the function now also raises `JB017` (player already in an active match), so a
+  caller sees two different causes behind one trigger.
+- Galleries and photos are anon-readable via `using (true)`, matching the public-gallery intent.
+- `JB006` also rejects SERIALIZABLE, which would in fact be safe. Fails closed; nothing takes it.
+- Migration 0011 has no `create publication` fallback, so it would fail on a non-Supabase
+  Postgres. Unreachable on every path this project uses, and it fails loudly rather than silently.
+- `waitlist_position_of` and `session_lock_key` appear in generated types as callable RPCs
+  despite being revoked from both roles — calling one returns 42501.
+- `010:518` ("cancel_registration clears checked_in_at") now passes even if the RPC's manual
+  clearing were deleted, because the 0012 trigger does it. Invariant still proven by 012 F1a.
+
+## From Task 10 (host session creation and roster management)
+
+- Resend and React Email: the `send-email` edge function and its secrets are deployed to the
+  hosted project (2026-10-23), but the Auth Send Email hook is not enabled in the dashboard,
+  so email confirmation still works only locally through Inbucket. Must be wired before the
+  first real user.
+- Google OAuth ships disabled and has never been exercised end to end.
+- No password reset flow exists.
+- ~~No admin UI: roles are changed by seed or by a service-role script.~~ **Resolved**:
+  `/admin` (`app/(app)/admin/page.tsx`, gated by the new `requireAdmin`) lists every member
+  and lets an admin change roles via `lib/actions/admin.ts`'s `setUserRole`, enforced by the
+  existing `profiles_update_self_or_admin` policy and `guard_profile_role_change` trigger — no
+  schema change needed. An admin cannot change their own role (avoids a self-lockout with no
+  UI path back); there is still no protection against demoting the *last* admin via someone
+  else's account, which was judged out of scope for a first pass.
+- ~~`host_add_participant` has no UI; it needs a member picker.~~ **Resolved** together with
+  the consent fix above — see that entry.
+- No E2E coverage — signup, login, registration and override flows are verified by hand only.
+  The auto-match panel (below) is in the same state: browser-verified by hand on 2026-10-26.
+
+## From the gallery work
+
+- **Orphan Storage files cleanup script.** An upload that succeeds but whose RPC fails, or
+  a reject whose Storage remove fails, leaves a file with no row. Harmless (unguessable
+  paths) but unreclaimed; write a script that lists bucket objects with no
+  `gallery_photos.storage_path`.
+- **Reorder UI.** `gallery_photos.sort_order` is append-order only; no drag-to-reorder yet
+  (migration-free).
+- **Member-created albums are not a small follow-up.** Today only admins create unlinked
+  albums. Letting members create them needs new RLS, an ownership model for albums, and
+  moderation rules for who approves photos there.
+- **Types regen prints CLI noise to stdout.** `supabase gen types typescript` emits
+  "connecting", MaxListeners warnings and an upgrade notice into the output; strip them
+  before writing `types/supabase.ts`.
+- **Hosted-deploy checks for the gallery.** Confirm the `gallery` bucket exists (migration
+  3); confirm `postgres` can create policies on `storage.objects`; set
+  `NEXT_PUBLIC_SUPABASE_URL` at build time, because `next.config.ts` derives
+  `remotePatterns` from its host.
+- **Approve-vs-reject contention** is only covered structurally in pgTAP (single
+  connection); no concurrent script exercises it.
+- **Marketing pages all render dynamically.** The `(marketing)` layout calls
+  `getCurrentUser()`, which reads cookies, so every marketing page (including `/gallery`
+  and `/sessions`) is dynamic. The `revalidate` exports and ISR comments on those pages
+  overstate what happens. Fix: move the auth-aware header button into a client island
+  so the layout stops reading cookies.
+- **Unbounded orphan Storage objects per uploader.** The 20-pending cap counts
+  `gallery_photos` rows, not Storage objects. An eligible uploader can keep uploading
+  files without calling `add_gallery_photo` for the whole 7-day window. Each is capped
+  at 5 MB by the bucket, but their number is not. The orphan cleanup script above
+  reclaims them; a per-user object quota would prevent them.
+- **Owner can delete their approved photo's file.** `gallery_delete` on `storage.objects`
+  lets the object owner delete regardless of the row's status, so a member can remove
+  the file behind an approved photo through the Storage API. The row stays and the
+  public tile breaks. Fix: make the owner branch require no approved row at that path.
+- **next/image optimizer keeps derived copies.** Rejected or deleted photos stay
+  reachable as optimized `/_next/image` responses until the cache TTL runs out, even
+  after the Storage object is gone. Shorten `images.minimumCacheTTL` for the gallery or
+  purge on reject/delete if that matters.
+- **Verify the jpeg fallback on a real iPhone.** WebKit cannot encode webp from a canvas;
+  the upload helper falls back to jpeg (`.jpg` path, `image/jpeg`). Only covered by unit
+  tests with a stubbed encoder; confirm a real iOS Safari upload end to end.
+
+## From the About/FAQ work
+
+- The seeded `community_about` text is a placeholder. An admin must replace it (EN and ID) before launch.
+- Sitemap, robots and community stats shipped (`app/sitemap.ts`, `app/robots.ts`, `public_community_stats()`).
+- `/history` is not in `isProtected` in `proxy.ts`; it is guarded only by the page-level DAL check.
+- `STATS_MIN_SESSIONS` (10) is a code constant, not an admin setting.
+- `scripts/test-concurrent-faq-order.sh` has no `faq_delete` racer: removing the advisory lock from `faq_delete` turns nothing red. Its `EXIT:$?` line under `set -e` never shows a nonzero value, so it cannot report a failing exit code.
+- The DB `btrim` check only strips space, tab, CR and LF. NBSP and other Unicode-only whitespace pass it, while zod `trim()` is wider than the DB. A value that is blank to zod but Unicode-whitespace-only is accepted if it bypasses the form.
+- A malformed `NEXT_PUBLIC_SITE_URL` makes `new URL()` throw in `app/layout.tsx`, contrary to the "never breaks the build" comment there.
+- `revalidate = 60` on `/about` and `/faq` is inert while the marketing layout reads cookies (the pages render dynamically).
+- `proxy.ts` `isMarketingPath` is a manual safelist: a new marketing page 404s unprefixed until added. `/about` and `/faq` were added in Task 4.
+- Admin FAQ move/delete buttons repeat the same labels on every card, with no `aria-label` naming the question (`HoldToConfirmButton` has no `aria-label` prop).
+- The admin server `fieldErrors` path is not exercised end to end, and hold-to-delete was only verified with a synthetic pointer event.
+- `community_about.updated_by` is client-supplied: the update policy does not tie it to `auth.uid()`, so an admin can attribute an edit to another profile.
+- `faq_lock_key()` keeps the default PUBLIC `EXECUTE`. It is an immutable constant and harmless; `030_about_faq_grant_surface_negatives.test.sql` pins that state deliberately so a change is conscious.
+- Mutation check (Task 7) confirmed the pins bite: dropping the `faq_move` revoke, adding `sort_order` to the `faq_items` column grant, and dropping `is_admin()` from either update policy each turn at least one pgTAP assertion red.
+
+## From skill levels and auto-match (phases 1-3)
+
+- **Confirm returns `ok: true` for a non-host.** `confirmSuggestions` has no host check of its
+  own; the `create_match` RPC rejects with `JB007`, so a non-host gets a per-match "You do not
+  have permission" inside a successful result rather than a top-level `not_authorized` like
+  `generateSuggestions`. Nothing leaks and nothing is created (verified in the browser). Make
+  the shapes consistent if a client ever branches on `ok`.
+- **The format Select trigger is 36px high on mobile**, not the `h-11` the panel asks for; the
+  shadcn default size appears to win. Other touch targets in the panel are 44px.
+- **`--warning-foreground` is near-black in dark mode**, so `badge.tsx`'s
+  `text-warning-foreground` on `bg-warning/20` is likely unreadable there. The panel's warning
+  text uses `text-warning-foreground dark:text-warning` instead; the badge was not touched.
+- **A suggestion rejected for "court taken" can only be discarded and regenerated**, not moved
+  to another free court. Deliberately left: discard and regenerate recovers, and host control
+  (rule 3) is intact.
+- **Matcher DAL and actions have no automated tests.** The pool filter, name resolution and the
+  named-busy message live in `lib/matcher/pool.ts` and are unit-tested; the Supabase queries
+  around them (busy lookup, court and history queries) are covered only by the manual browser
+  run.
+- **`scripts/test-concurrent-create-match.sh` proves the `create_match` race, not the guard's
+  own lock.** Removing only the row lock in `guard_match_player` leaves the script green,
+  because the ordered lock in `create_match` already serialises those callers. The guard's
+  lock matters only for a `match_players` insert that bypasses `create_match`; no racer covers
+  that path.
+- **The admin sees a 404 on the manage page of a session they are not a host of.** Seed data
+  makes the admin a cohost only on Wednesday League Night. This matches `getHostSession`, but
+  it differs from CLAUDE.md §4 ("Admin: everything a Host can do"). Decide whether that is
+  intended.
+
+## From the premium membership work
+
+- **Accepted risk: a session cancel racing `start_session` can deadlock (40P01).** `cancelSession`
+  (`lib/actions/sessions.ts`) cancels with a direct `update sessions set status = 'cancelled'`.
+  That takes the sessions row lock first, then the `sessions_refund_usages` trigger
+  (`20261023000005_premium_refunds.sql`) takes the session advisory lock. `start_session`
+  takes the advisory lock first, then the row lock (`for update`). If both run on the same session,
+  Postgres aborts one with 40P01. The abort is clean and the action can be retried. The trade was
+  deliberate: the old order let `start_session` (holding the row) deadlock against any concurrent
+  registration (holding the advisory lock and waiting for its FK `key share` on the row). Fix
+  later with a `cancel_session` RPC that takes the advisory lock first.
+  Since `20261023000007_premium_review_fixes.sql` the trigger also fires on `completed`, so
+  `closeSession` (a direct `update sessions set status = 'completed'`) joins the same edge: a close
+  racing a start of the same session can abort with 40P01. Same fix later (a `close_session` RPC).
+- **Resolved (Ruling 6, `20261023000007_premium_review_fixes.sql`): a waitlister refunded at session start can still be promoted and play uncharged.**
+  `refund_usages_on_session_change` refunds premium waitlisters when the session goes live.
+  But `promote_from_waitlist` still runs while the session is live (premium first), so a refunded
+  premium waitlister can be promoted to confirmed and play with no quota charged. Owner call:
+  re-consume a unit on promotion while live, or drop `is_premium` on the row after the start refund.
+  Chosen: the live (and completed) sweep sets `is_premium = false, membership_id = null` on the
+  refunded waitlist rows, so a promoted row is honestly non-premium. Revisit if the owner prefers
+  re-consuming a unit on promotion while live.
+
+## From the drilling sessions work
+
+- **Close and cancel RPCs that take the advisory lock first.** Premium Ruling 5 (see the
+  premium section above) now also applies to drilling session cancel: `cancelSession` and
+  `closeSession` still update `sessions` directly, so the row lock comes before the advisory
+  lock in the refund trigger. A `cancel_session` / `close_session` RPC would fix the order.
+- **Transfer audit view.** If hosts ask who handed seats to whom, add a view over
+  `participants.replaced_by` and `paid_by_user_id`. Nothing reads it today.
+- The replacement keeps `registered_at = clock_timestamp()`, so a non-premium replacement is
+  the first bump target. Product decision: it could copy the old row's `registered_at`.
+- Member-facing error messages for `JB020`-`JB026` are all the generic `invalid_state` text;
+  context is given only by the UI.
+- Seed users use non-RFC UUIDs, so `z.uuid()` actions (including `transferSeat`) fail on seed
+  data.
+- `scripts/test-concurrent-drilling.sh` scenario C asserts end state only. The advisory-lock line alone is
+  not detected by scenario A, because row locks also serialise it.
+- Raising capacity with gapped court numbers leaves the extra court rows above `court_count`
+  in place (locked by a test).
+- `JB023` is also raised when the session is not `scheduled`/`live`, even for hosts.
+- **Open: one quota unit can back two premium seats (register, transfer, register, cancel,
+  register).** After a hand-off, `register_for_session` skips `lock_current_membership` while the
+  old row still has `replaced_by` set, so the re-registration is non-premium. But the revive
+  clears `replaced_by` (a host un-cancel does too). If the member then cancels from confirmed
+  (no refund, because the row is not premium) and registers again, the guard no longer fires,
+  the row turns premium, and the re-point UPDATE takes over the live usage that funds the
+  replacement. A later refund-eligible exit (waitlist cancel, host cancel, the waitlist sweep)
+  refunds that unit while the replacement keeps a premium seat. Fix: stop keying the guard on
+  `replaced_by`; treat a live usage on a non-premium row as forfeited or funding and never
+  re-point it, or check for an active row with `paid_by_user_id = <member>`. Add a pgTAP case
+  for the full sequence.
+- **Open: the live/completed waitlist sweep refunds the unit that funds a replacement.** A
+  member who re-registers after a hand-off on a full session lands on the waitlist as
+  non-premium; when the session goes live or completes, the sweep in `20261023000007` refunds
+  every live usage on a waitlisted row regardless of `is_premium`. Restricting that sweep to
+  `is_premium` rows would close it, but would also turn forfeited usages into non-refunds, so
+  it needs a product ruling.
+- A host un-cancel of a handed-over row clears `replaced_by` and `paid_by_user_id` and can put
+  the session one over capacity (host override; nothing enforces confirmed <= max).
+- `transfer_participation` and `adjust_session_capacity` authorize after taking the advisory
+  lock, so any authenticated user can queue on a session's lock; checking `is_session_host`
+  first (as `host_add_participant` does) would avoid it. `adjust_session_capacity` also locks the
+  session row before the advisory-lock-first cancel/start paths (same class as the first item).
+- A host can transfer a checked-in player who is in a scheduled or in-progress match; there is
+  no `JB017`-style guard (host override).
+- `adjust_session_capacity` and `updateSession` do not revalidate the public `/sessions/[id]`
+  page that shows `maxParticipants`.
+
+## Process note
+
+The "delete the code, the suite still passes" gap was found **five** separate times across this
+work (Tasks 7, 8, 9, 10, and the final review). That is systematic, not coincidence. Before
+trusting 158/158 as a regression net, consider a mutation-style pass: delete each policy,
+guard, and trigger in turn and confirm something actually goes red.
+
+**The pgTAP suite does not prove race-safety.** Every file runs single-connection in one
+transaction, so the advisory lock is never contended — the suite cannot distinguish the shipped
+code from the same code with every lock line deleted. `scripts/test-concurrent-registration.sh`
+is the only artefact proving the property this entire schema exists to guarantee. Keep it alive.
+`scripts/test-concurrent-create-match.sh` does the same for double-booking a player across
+matches (20 rounds of crossed-order overlapping lineups); a mutation check confirmed it fails
+on a deadlock and on removing both locks.
+
+## Deploy checklist
+
+- **Pending migrations on the hosted project.** 31 migrations were pushed on 2026-10-23; the
+  repo now has 37. The skill-level, gender, guest-attribute, match-stats and match-guard
+  migrations (`20261026000001` through `20261027000002`, plus possibly
+  `20261023000001_public_community_stats`) are almost certainly not on the hosted project and
+  must be pushed before the app code that uses them goes live. Not confirmed:
+  `supabase migration list` fails locally on the `send_email` hook config error.
+- ~~`supabase/migrations/20260910050037_initial_schema.sql` was removed on this branch, and its
+  timestamp precedes every surviving migration. Harmless for a fresh local reset. But if any
+  remote/hosted Supabase project ever recorded that migration as applied, `supabase db push`
+  will report a missing local migration (the remote's migration history table references a
+  filename that no longer exists locally) — reconcile with `supabase migration repair` (or
+  equivalent) before pushing to any such project, rather than assuming a clean push.~~
+  **Resolved** (2026-10-23): the hosted project has no `20260910050037` entry, so no repair is
+  needed.

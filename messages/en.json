@@ -1,0 +1,249 @@
+{
+  "nav": {
+    "brand": "Jakbar Twogether",
+    "sessions": "Sessions",
+    "gallery": "Gallery",
+    "dashboard": "Dashboard",
+    "login": "Log in",
+    "about": "About",
+    "faq": "FAQ",
+    "partner": "Partner"
+  },
+  "footer": {
+    "tagline": "Badminton, run properly.",
+    "copyright": "© {year}",
+    "partner": "Partner with us",
+    "socials": "Follow us"
+  },
+  "home": {
+    "kicker": "West Jakarta · badminton community",
+    "title": "Court time, sorted before you show up.",
+    "subtitle": "Registration, waitlist, check-in, and rotation for Jakbar Twogether sessions — no more counting names in a WhatsApp thread.",
+    "ctaBrowse": "See upcoming sessions",
+    "ctaJoin": "Join the community",
+    "runningTitle": "What’s running",
+    "runningBody": "Every session — open registration, waitlist status, courts — lives on one page.",
+    "runningLink": "Browse upcoming sessions →",
+    "stats": {
+      "title": "Community so far",
+      "sessionsHeld": "Sessions held",
+      "matchesPlayed": "Matches played",
+      "totalCheckins": "Check-ins",
+      "activeMembers": "Active members (last 90 days)"
+    },
+    "featuredTitle": "From our socials",
+    "featuredBody": "Fresh schedules, match highlights and videos from the community.",
+    "socialsTitle": "Follow our socials",
+    "socialsBody": "Find Jakbar Twogether wherever you already hang out.",
+    "partnerCtaTitle": "Brand or event organiser? Partner with us",
+    "partnerCtaBody": "Sponsorships, events, brand activations and media features: tell us what you have in mind.",
+    "partnerCtaButton": "Become a partner"
+  },
+  "sessionsList": {
+    "title": "Upcoming sessions",
+    "subtitle": "Open registration, waitlist status, and courts — all in one place.",
+    "empty": "No sessions scheduled right now.",
+    "hostedTitle": "Sessions you’re hosting",
+    "metaTitle": "Upcoming sessions — Jakbar Twogether",
+    "metaDescription": "Badminton sessions open for registration in West Jakarta."
+  },
+  "sessionCard": {
+    "meta": "{spots} spots · {waitlist} waitlist · {courts} courts"
+  },
+  "badge": {
+    "open": "Registration open",
+    "closed": "Registration closed"
+  },
+  "sessionDetail": {
+    "courts": "Courts",
+    "capacity": "Capacity",
+    "waitlist": "Waitlist",
+    "notFound": "Session not found"
+  },
+  "register": {
+    "loginToRegister": "Log in to register",
+    "confirmed": "Confirmed",
+    "waitlistPosition": "Waitlist #{position}",
+    "cancel": "Cancel registration",
+    "registrationClosed": "Registration is not open for this session.",
+    "register": "Register",
+    "toastRegistered": "You are in.",
+    "toastWaitlisted": "Added to the waitlist at #{position}.",
+    "toastCancelled": "Registration cancelled"
+  },
+  "participants": {
+    "loginToView": "Log in to see who's registered.",
+    "empty": "Nobody has registered yet.",
+    "registered": "Registered",
+    "confirmedBadge": "Confirmed",
+    "waitlistBadge": "Waitlist",
+    "unnamed": "Unnamed player"
+  },
+  "languageSwitcher": {
+    "id": "ID",
+    "en": "EN"
+  },
+  "announcements": {
+    "title": "Announcements"
+  },
+  "gallery": {
+    "metaTitle": "Gallery — Jakbar Twogether",
+    "metaDescription": "Photos from Jakbar Twogether open-play badminton sessions in West Jakarta.",
+    "tagline": "Open play, in photos.",
+    "inventory": "{albums, plural, one {# album} other {# albums}} · {photos, plural, one {# photo} other {# photos}}",
+    "empty": "No albums yet. Photos from our sessions will show up here once they're shared.",
+    "albumPhotoCount": "{count, plural, one {# photo} other {# photos}}",
+    "albumMetaTitle": "{album} — Gallery — Jakbar Twogether",
+    "albumNotFound": "Album not found",
+    "back": "All albums",
+    "noPhotos": "No photos yet",
+    "noPhotosBody": "Photos from this album will appear here once they're approved.",
+    "openPhoto": "Open photo {current} of {total}",
+    "position": "{current} / {total}",
+    "close": "Close",
+    "previous": "Previous photo",
+    "next": "Next photo",
+    "defaultAlt": "Photo from {album}",
+    "uploadTitle": "Add your photos",
+    "uploadHint": "JPEG, PNG or WebP. Large photos are resized before upload.",
+    "uploadReviewHint": "A host reviews them before they appear in the gallery.",
+    "uploadAutoApprovedHint": "Photos you add appear right away.",
+    "choosePhotos": "Choose photos",
+    "dropHint": "or drop them here",
+    "fileInvalidType": "Only JPEG, PNG or WebP. HEIC photos need to be exported as JPEG first.",
+    "fileEmpty": "This file is empty.",
+    "fileTooLarge": "This photo is still larger than 5 MB after resizing.",
+    "fileOriginalTooLarge": "This file is larger than 40 MB.",
+    "fileReadFailed": "This photo couldn't be read. Try another file.",
+    "fileEncodeFailed": "This browser can't prepare photos for upload. Try a different browser.",
+    "fileUploadFailed": "Upload failed. Check your connection and try again.",
+    "fileSaveFailed": "The photo uploaded but couldn't be added. Try again.",
+    "fileProgress": "Uploading {name}",
+    "stage": {
+      "queued": "Waiting",
+      "resizing": "Preparing",
+      "uploading": "Uploading",
+      "saving": "Saving"
+    },
+    "retry": "Retry",
+    "dismiss": "Dismiss",
+    "dismissFile": "Dismiss {name}",
+    "myPhotos": "Your photos",
+    "myPhotoAlt": "Your photo",
+    "pending": "Pending",
+    "deletePhoto": "Delete",
+    "deleteFailed": "Couldn't delete the photo. Try again.",
+    "holdHint": "Press and hold to confirm",
+    "holdRemaining": "Keep holding, {seconds, plural, one {# second} other {# seconds}} left",
+    "holdCancelled": "Released early. Nothing changed.",
+    "error": {
+      "uploadNotEligible": "You can't add photos to this album.",
+      "uploadWindowClosed": "The window for adding photos to this session has closed.",
+      "uploadCapReached": "You have 20 photos waiting for approval. Wait for a host to review them.",
+      "invalidUpload": "That photo couldn't be added. Try again.",
+      "notAuthorized": "You don't have permission to do that.",
+      "invalidState": "This has already changed. Reload and try again.",
+      "notAuthenticated": "Log in again to continue."
+    }
+  },
+  "about": {
+    "metaTitle": "About — Jakbar Twogether",
+    "metaDescription": "Who we are, where we play and how to join Jakbar Twogether, a badminton community in West Jakarta.",
+    "ctaTitle": "Ready to play?",
+    "ctaBody": "Create a free account to register for open play sessions.",
+    "ctaButton": "Sign up",
+    "empty": "The about page is not available yet. Please check back soon."
+  },
+  "faq": {
+    "title": "Frequently asked questions",
+    "empty": "No questions have been published yet.",
+    "metaTitle": "FAQ — Jakbar Twogether",
+    "metaDescription": "Answers to common questions about joining and playing at Jakbar Twogether open play sessions."
+  },
+  "errors": {
+    "notFound": {
+      "title": "Page not found",
+      "body": "The page you are looking for does not exist or has moved.",
+      "home": "Back to home"
+    },
+    "generic": {
+      "title": "Something went wrong",
+      "body": "We could not load this page. Try again, and if it keeps happening, come back in a few minutes.",
+      "offline": "Check your connection.",
+      "retry": "Try again"
+    }
+  },
+  "socials": {
+    "follow": "Follow",
+    "join": "Join",
+    "visit": "Visit",
+    "kinds": {
+      "schedule": "Schedule",
+      "match": "Match",
+      "video": "Video",
+      "other": "Post"
+    }
+  },
+  "partner": {
+    "metaTitle": "Partner with us — Jakbar Twogether",
+    "metaDescription": "Sponsor, brand or media? Partner with Jakbar Twogether and reach an active badminton community in West Jakarta.",
+    "heroTitle": "Partner with us",
+    "heroSubtitle": "An active badminton community in West Jakarta. Tell us your idea and we will reply by email or WhatsApp.",
+    "offersTitle": "Ways to partner",
+    "offers": {
+      "sponsorship": {
+        "title": "Sponsorship",
+        "body": "Back our weekly sessions with shuttlecocks, prizes or equipment."
+      },
+      "event": {
+        "title": "Joint events",
+        "body": "Small tournaments, fun matches or special sessions with our community."
+      },
+      "brand": {
+        "title": "Brand partnerships",
+        "body": "Products or services for badminton players, from apparel to drinks."
+      },
+      "media": {
+        "title": "Media",
+        "body": "Coverage, content or interviews about our badminton community."
+      }
+    },
+    "formTitle": "Send a message",
+    "formIntro": "Fill in this form and we will get back to you soon.",
+    "name": "Name",
+    "organisation": "Organisation or brand",
+    "email": "Email",
+    "whatsapp": "WhatsApp number",
+    "whatsappHint": "Example: 0812-3456-7890",
+    "inquiryType": "Type of partnership",
+    "inquiryTypePlaceholder": "Choose a type",
+    "types": {
+      "sponsorship": "Sponsorship",
+      "event": "Joint event",
+      "brand": "Brand",
+      "media": "Media",
+      "other": "Other"
+    },
+    "message": "Message",
+    "submit": "Send",
+    "submitting": "Sending…",
+    "successTitle": "Thank you!",
+    "successBody": "We have received your message. We will contact you by email or WhatsApp.",
+    "rateLimited": "Too many messages from this network. Please try again in an hour.",
+    "genericError": "Your message was not sent. Please try again shortly.",
+    "directTitle": "Or reach us directly",
+    "directBody": "Prefer to chat? We are right here.",
+    "errors": {
+      "name": "Name is required.",
+      "nameLong": "Name must be 100 characters or fewer.",
+      "organisation": "Organisation or brand is required.",
+      "organisationLong": "Must be 120 characters or fewer.",
+      "email": "Enter a valid email address.",
+      "whatsapp": "Enter a valid WhatsApp number, e.g. 0812-3456-7890.",
+      "inquiryType": "Choose a type of partnership.",
+      "messageShort": "Message must be at least 10 characters.",
+      "messageLong": "Message must be 4000 characters or fewer.",
+      "spam": "This message could not be sent."
+    }
+  }
+}
