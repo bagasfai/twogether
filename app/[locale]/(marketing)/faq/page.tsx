@@ -41,13 +41,13 @@ export default async function FaqPage({ params }: PageProps<"/[locale]/faq">) {
               {items.map((item) => (
                 <details
                   key={item.id}
-                  className="group rounded-2xl border-2 border-border bg-card transition-colors duration-[var(--dur-short)] open:border-navy"
+                  className="disclosure group rounded-2xl border-2 border-border bg-card transition-colors duration-[var(--dur-short)] open:border-navy"
                 >
                   <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 rounded-2xl px-5 py-3 font-display text-xl font-bold leading-tight outline-none focus-visible:ring-[3px] focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
                     {item.question}
                     <span
                       aria-hidden="true"
-                      className="flex size-8 shrink-0 items-center justify-center rounded-full bg-sky-pale text-navy transition-transform group-open:rotate-180 motion-reduce:transition-none"
+                      className="flex size-8 shrink-0 items-center justify-center rounded-full bg-sky-pale text-navy transition-transform duration-[var(--dur-short)] ease-[var(--ease-out)] group-open:rotate-180 motion-reduce:transition-none"
                     >
                       <ChevronDown className="size-4" />
                     </span>
