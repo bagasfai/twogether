@@ -199,7 +199,7 @@ export function SessionForm({
               )}
             />
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="grid grid-cols-1 items-start gap-4 sm:grid-cols-2">
               <FormField
                 control={form.control}
                 name="startsAt"
@@ -257,7 +257,7 @@ export function SessionForm({
             />
 
             {isDrilling ? (
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 items-start gap-4">
                 <FormField
                   control={form.control}
                   name="coachCount"
@@ -304,7 +304,7 @@ export function SessionForm({
               </div>
             ) : null}
 
-            <div className={showCourts ? "grid grid-cols-3 gap-4" : "grid grid-cols-2 gap-4"}>
+            <div className={showCourts ? "grid grid-cols-3 items-start gap-4" : "grid grid-cols-2 items-start gap-4"}>
               {showCourts ? (
               <FormField
                 control={form.control}
@@ -401,7 +401,7 @@ export function SessionForm({
               />
             ) : null}
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 items-start gap-4">
               <FormField
                 control={form.control}
                 name="registrationState"
