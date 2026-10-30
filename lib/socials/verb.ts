@@ -6,6 +6,7 @@ export function socialVerbKey(platform: SocialPlatform): SocialVerbKey {
   switch (platform) {
     case "instagram":
     case "tiktok":
+    case "threads":
       return "follow";
     case "whatsapp":
     case "ayo":
