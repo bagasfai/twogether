@@ -52,3 +52,11 @@ export function parseReportRange(
   if (from.data > to.data) return { ok: false, reason: "order" };
   return { ok: true, range: { from: from.data, to: to.data } };
 }
+
+// RPCs return up to REPORT_ROW_CAP + 1 rows; the extra row only signals overflow.
+export function applyRowCap<T>(rows: T[]): { rows: T[]; truncated: boolean } {
+  if (rows.length > REPORT_ROW_CAP) {
+    return { rows: rows.slice(0, REPORT_ROW_CAP), truncated: true };
+  }
+  return { rows, truncated: false };
+}
