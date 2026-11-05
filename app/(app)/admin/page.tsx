@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import Link from "next/link";
+import { ChevronRight } from "lucide-react";
 import { PageTitle } from "@/components/app/page-title";
 import { AdminSection } from "@/components/admin/admin-section";
 import { requireAdmin } from "@/lib/dal/user";
@@ -49,6 +51,19 @@ export default async function AdminPage() {
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-4">
       <PageTitle className="mb-2">Admin</PageTitle>
+
+      <Link
+        href="/admin/reports"
+        className="flex min-h-12 items-center justify-between gap-3 rounded-2xl border-2 border-border bg-card px-5 py-4 outline-none transition-colors duration-[var(--dur-short)] hover:border-navy focus-visible:ring-[3px] focus-visible:ring-ring"
+      >
+        <span className="flex min-w-0 flex-col gap-1">
+          <span className="font-display text-2xl font-bold uppercase italic leading-none tracking-tight">Reports</span>
+          <span className="text-sm text-muted-foreground">
+            Attendance, revenue, members and hosts for a date range, with CSV download.
+          </span>
+        </span>
+        <ChevronRight aria-hidden="true" className="size-5 shrink-0 text-navy" />
+      </Link>
 
       <AdminSection
         title="Members"
