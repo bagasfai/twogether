@@ -12,7 +12,7 @@ type RawParam = string | string[] | undefined;
 
 // Arrays take the first value; "" is treated as missing (the schema treats it
 // as invalid, which would reject a form submitted with an empty field).
-const first = (v: RawParam): string | undefined => {
+export const first = (v: RawParam): string | undefined => {
   const s = Array.isArray(v) ? v[0] : v;
   return s === "" ? undefined : s;
 };
