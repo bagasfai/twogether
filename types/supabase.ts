@@ -1472,6 +1472,63 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      report_attendance: {
+        Args: { p_from?: string; p_to?: string }
+        Returns: {
+          attendance_rate: number
+          attended_count: number
+          cancelled_count: number
+          full_name: string
+          last_attended_at: string
+          member_id: string
+          no_show_count: number
+          registered_count: number
+        }[]
+      }
+      report_hosts: {
+        Args: { p_from?: string; p_to?: string }
+        Returns: {
+          avg_fill_rate: number
+          cancelled_sessions: number
+          completed_sessions: number
+          full_name: string
+          host_id: string
+          participant_cancellations: number
+          peak_waitlist: number
+          sessions_hosted: number
+        }[]
+      }
+      report_members: {
+        Args: { p_from?: string; p_to?: string }
+        Returns: {
+          attended_count: number
+          expires_at: string
+          full_name: string
+          has_active_membership: boolean
+          member_id: string
+          plan_price_idr: number
+          quota_left: number
+          quota_total: number
+          quota_used: number
+          started_at: string
+        }[]
+      }
+      report_revenue: {
+        Args: { p_from?: string; p_to?: string }
+        Returns: {
+          cash_collected: number
+          confirmed_count: number
+          covered_count: number
+          label: string
+          occurred_at: string
+          outstanding: number
+          paid_count: number
+          price: number
+          ref_id: string
+          row_kind: string
+          unpaid_count: number
+        }[]
+      }
       review_gallery_photo: {
         Args: { p_action: string; p_photo_id: string }
         Returns: string
@@ -1575,7 +1632,13 @@ export type Database = {
         | "novice"
         | "intermediate"
         | "advanced"
-      social_platform: "instagram" | "tiktok" | "threads" | "whatsapp" | "ayo" | "other"
+      social_platform:
+        | "instagram"
+        | "tiktok"
+        | "threads"
+        | "whatsapp"
+        | "ayo"
+        | "other"
       user_role: "member" | "host" | "admin"
     }
     CompositeTypes: {
@@ -1715,7 +1778,14 @@ export const Constants = {
       session_kind: ["open_play", "drilling"],
       session_status: ["draft", "scheduled", "live", "completed", "cancelled"],
       skill_level: ["newbie", "beginner", "novice", "intermediate", "advanced"],
-      social_platform: ["instagram", "tiktok", "threads", "whatsapp", "ayo", "other"],
+      social_platform: [
+        "instagram",
+        "tiktok",
+        "threads",
+        "whatsapp",
+        "ayo",
+        "other",
+      ],
       user_role: ["member", "host", "admin"],
     },
   },
