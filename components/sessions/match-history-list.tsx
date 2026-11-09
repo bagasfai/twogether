@@ -13,7 +13,7 @@ export function MatchHistoryList({ matches }: { matches: MatchEntry[] }) {
   return (
     <ol className="flex flex-col gap-3">
       {matches.map((match, index) => (
-        <li key={match.id} className="rounded-2xl border bg-card p-4 text-sm shadow-[0_6px_20px_-12px_oklch(28%_0.13_264/0.35)]">
+        <li key={match.id} className="rounded-2xl border bg-card p-4 text-sm shadow-card">
           <div className="flex flex-wrap items-center gap-x-3 text-muted-foreground">
             <span className="font-display text-xl font-extrabold uppercase italic leading-none text-foreground">Match {index + 1}</span>
             <span>{match.courtNumber !== null ? `Court ${match.courtNumber}` : "—"}</span>

@@ -49,7 +49,7 @@ export default async function Home() {
               <Button
                 asChild
                 size="lg"
-                className="bg-cork text-navy shadow-[0_6px_16px_-6px_oklch(28%_0.13_264/0.6)] hover:bg-cork/90 focus-visible:ring-white"
+                className="bg-cork text-navy shadow-bar hover:bg-cork/90 focus-visible:ring-white"
               >
                 <Link href="/sessions">{t("ctaBrowse")}</Link>
               </Button>
@@ -81,7 +81,7 @@ export default async function Home() {
               height={640}
               priority
               sizes="(min-width: 768px) 400px, 90vw"
-              className="aspect-square w-full rotate-3 rounded-[2rem] border-4 border-white object-cover shadow-[0_24px_48px_-16px_oklch(20%_0.13_264/0.7)]"
+              className="aspect-square w-full rotate-3 rounded-[2rem] border-4 border-white object-cover shadow-float"
             />
             <p className="absolute -bottom-4 left-4 z-10 -rotate-2 rounded-full bg-cork px-4 py-1.5 text-sm font-bold text-navy shadow-md">
               {t("kicker")}

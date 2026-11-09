@@ -20,7 +20,7 @@ export function AuthShell({ children }: { children: ReactNode }) {
           alt="Jakbar Twogether"
           width={112}
           height={112}
-          className="size-28 -rotate-3 rounded-3xl border-4 border-white object-cover shadow-[0_16px_32px_-12px_oklch(20%_0.13_264/0.7)]"
+          className="size-28 -rotate-3 rounded-3xl border-4 border-white object-cover shadow-float"
         />
       </Link>
       {children}

@@ -83,7 +83,7 @@ export default async function ManageSessionPage({ params }: PageProps<"/sessions
 
       {/* Sticky so confirmed/waiting/checked-in counts stay visible while
           the host scrolls through courts/matches/roster on a phone. */}
-      <div className="sticky top-0 z-10 flex flex-wrap items-center gap-x-5 gap-y-2 rounded-2xl bg-navy px-4 py-3 text-white shadow-[0_8px_20px_-10px_oklch(28%_0.13_264/0.6)]">
+      <div className="sticky top-0 z-10 flex flex-wrap items-center gap-x-5 gap-y-2 rounded-2xl bg-navy px-4 py-3 text-white shadow-bar">
         <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide">
           <span className="size-2 shrink-0 rounded-full bg-cork motion-safe:animate-pulse" aria-hidden="true" />
           Live

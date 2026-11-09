@@ -46,7 +46,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
           <div className="flex items-center gap-4">
             <Link
               href="/dashboard"
-              className="flex items-center gap-3 whitespace-nowrap rounded-full outline-none focus-visible:ring-[3px] focus-visible:ring-white"
+              className="flex items-center gap-3 whitespace-nowrap rounded-full outline-none focus-visible:ring-[3px] focus-visible:ring-white max-md:min-h-11"
             >
               <Image
                 src="/brand/jakbar-twogether.jpeg"

@@ -42,7 +42,7 @@ export function LoginForm({ next }: { next?: string }) {
   );
 
   return (
-    <Card className="w-full max-w-sm rounded-3xl border-0 shadow-[0_24px_48px_-16px_oklch(20%_0.13_264/0.6)]">
+    <Card className="w-full max-w-sm rounded-3xl border-0 shadow-float">
       <CardHeader>
         <CardTitle className="text-4xl font-extrabold uppercase italic"><h1>Log in</h1></CardTitle>
         <CardDescription>Welcome back to Jakbar Twogether.</CardDescription>

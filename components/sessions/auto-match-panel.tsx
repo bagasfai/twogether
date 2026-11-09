@@ -201,7 +201,7 @@ export function AutoMatchPanel({ sessionId }: { sessionId: string }) {
                 </div>
               </div>
               {warningsByIndex[i].map((w) => (
-                <p key={w} className="text-sm text-warning-foreground dark:text-warning">
+                <p key={w} className="text-sm text-warning-foreground">
                   {w}
                 </p>
               ))}

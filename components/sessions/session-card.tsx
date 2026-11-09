@@ -20,7 +20,13 @@ function dateParts(iso: string, locale: string) {
 // A court ticket: the date stub on the left, the session on the right. The
 // whole ticket is one link (stretched ::after). Open sessions are drawn solid
 // (navy stub, cork chip); closed ones are dashed and muted.
-export function SessionCard({ session }: { session: PublicSession }) {
+export function SessionCard({
+  session,
+  headingLevel: Heading = "h3",
+}: {
+  session: PublicSession;
+  headingLevel?: "h2" | "h3";
+}) {
   const t = useTranslations();
   const locale = useLocale();
   const open = session.registrationState === "open";
@@ -29,7 +35,7 @@ export function SessionCard({ session }: { session: PublicSession }) {
   return (
     <article
       className={cn(
-        "group relative flex overflow-hidden rounded-2xl bg-card shadow-[0_8px_24px_-12px_oklch(28%_0.13_264/0.35)] transition-[transform,box-shadow] duration-[var(--dur-short)] ease-[var(--ease-out)] hover:-translate-y-0.5 hover:shadow-[0_14px_28px_-12px_oklch(28%_0.13_264/0.45)] focus-within:ring-[3px] focus-within:ring-ring motion-reduce:transition-none motion-reduce:hover:translate-y-0",
+        "group relative flex overflow-hidden rounded-2xl bg-card shadow-ticket transition-[transform,box-shadow] duration-[var(--dur-short)] ease-[var(--ease-out)] hover:-translate-y-0.5 hover:shadow-ticket-hover focus-within:ring-[3px] focus-within:ring-ring motion-reduce:transition-none motion-reduce:hover:translate-y-0",
         open ? "border-2 border-navy" : "border-2 border-dashed border-input",
       )}
     >
@@ -57,14 +63,14 @@ export function SessionCard({ session }: { session: PublicSession }) {
         >
           {open ? t("badge.open") : t("badge.closed")}
         </span>
-        <h3 className="font-display text-2xl font-bold leading-tight tracking-tight [overflow-wrap:anywhere]">
+        <Heading className="font-display text-2xl font-bold leading-tight tracking-tight [overflow-wrap:anywhere]">
           <Link
             href={`/sessions/${session.id}`}
             className="outline-none after:absolute after:inset-0 after:content-[''] group-hover:text-accent-text"
           >
             {session.title}
           </Link>
-        </h3>
+        </Heading>
         <p className="text-sm text-muted-foreground [overflow-wrap:anywhere]">
           {formatTime(session.startsAt, locale)} – {formatTime(session.endsAt, locale)} · {session.location}
         </p>
