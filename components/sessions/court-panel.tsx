@@ -107,7 +107,9 @@ export function CourtPanel({
                       key={status}
                       size="sm"
                       variant="outline"
-                      className="h-11 sm:h-8"
+                      // the outline button is white-filled; without this it
+                      // inherits the in-use card's text-white and goes blank
+                      className={cn("h-11 sm:h-8", court.status === "in_use" && "text-navy")}
                       disabled={pending}
                       onClick={() => changeStatus(court.id, status)}
                     >
