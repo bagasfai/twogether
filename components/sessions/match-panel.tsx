@@ -19,7 +19,8 @@ function waitLabel(entry: RotationEntry): string {
   const since = entry.lastPlayedAt ?? entry.checkedInAt;
   const minutes = Math.max(0, Math.round((Date.now() - new Date(since).getTime()) / 60000));
   if (minutes < 1) return entry.lastPlayedAt ? "Last played just now" : "Just checked in";
-  return entry.lastPlayedAt ? `Last played ${minutes}m ago` : `Waiting ${minutes}m`;
+  const span = minutes < 60 ? `${minutes}m` : minutes < 1440 ? `${Math.floor(minutes / 60)}h` : `${Math.floor(minutes / 1440)}d`;
+  return entry.lastPlayedAt ? `Last played ${span} ago` : `Waiting ${span}`;
 }
 
 const STATUS_LABEL: Record<MatchStatus, string> = {
@@ -172,7 +173,7 @@ export function MatchPanel({
       <Button
         type="button"
         size="sm"
-        variant={formOpen ? "outline" : "default"}
+        variant="outline"
         className="h-11 w-full sm:w-auto sm:self-start"
         aria-expanded={formOpen}
         aria-controls="new-match-form"

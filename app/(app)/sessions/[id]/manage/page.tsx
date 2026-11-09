@@ -64,6 +64,13 @@ export default async function ManageSessionPage({ params }: PageProps<"/sessions
   const waiting = roster.filter((entry) => entry.status === "waiting_list").length;
   const checkedIn = roster.filter((entry) => entry.checkedInAt !== null).length;
   const openMatches = matches.filter((m) => m.status === "scheduled" || m.status === "in_progress").length;
+  const busyParticipantIds = [
+    ...new Set(
+      matches
+        .filter((m) => m.status === "scheduled" || m.status === "in_progress")
+        .flatMap((m) => [...m.team1, ...m.team2].map((p) => p.participantId)),
+    ),
+  ];
   const courtsInUse = courts.filter((c) => c.status === "in_use").length;
 
   return (
@@ -86,7 +93,7 @@ export default async function ManageSessionPage({ params }: PageProps<"/sessions
         <div className="flex items-center justify-between gap-3 sm:contents">
           <SessionRealtimeWatcher sessionId={session.id} sessionStatus={session.status} />
           <Badge variant="outline" className="border-white/50 text-xs capitalize text-white sm:order-last sm:text-sm">
-            {session.registrationState}
+            Registration {session.registrationState}
           </Badge>
         </div>
         <div className="grid grid-cols-5 gap-2 sm:flex sm:items-baseline sm:gap-x-5">
@@ -127,8 +134,8 @@ export default async function ManageSessionPage({ params }: PageProps<"/sessions
         courts={<CourtPanel sessionId={session.id} courts={courts} courtCount={session.courtCount} matches={matches} />}
         matches={
           <div className="flex flex-col gap-4 sm:gap-6">
-            <AutoMatchPanel sessionId={session.id} />
             <MatchPanel sessionId={session.id} matches={matches} courts={courts} rotationQueue={rotationQueue} />
+            <AutoMatchPanel sessionId={session.id} />
             <SessionLeaderboard rows={leaderboard} />
           </div>
         }
@@ -140,6 +147,7 @@ export default async function ManageSessionPage({ params }: PageProps<"/sessions
             price={session.price}
             premiumSurchargeIdr={session.premiumSurchargeIdr}
             attributes={attributes}
+            busyParticipantIds={busyParticipantIds}
           />}
         photos={
           <NextIntlClientProvider locale="en" messages={{ gallery: messages.gallery }}>

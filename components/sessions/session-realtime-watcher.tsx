@@ -156,7 +156,7 @@ export function SessionRealtimeWatcher({
           ? "Connecting"
           : showLive
             ? "Live"
-            : "Synced"}
+            : "Connected"}
     </span>
   );
 }

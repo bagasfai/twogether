@@ -53,6 +53,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
                 alt=""
                 width={36}
                 height={36}
+                priority
                 className="size-9 rounded-full border-2 border-white object-cover"
               />
               <span className="font-display text-xl font-extrabold uppercase italic tracking-tight">

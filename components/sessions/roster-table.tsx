@@ -59,11 +59,11 @@ function OwedLine({
 }) {
   const payerId = payerUserId(entry);
   const differentPayer = payerId !== null && payerId !== entry.userId;
+  const owed = entry.status === "confirmed" ? amountOwed(pricing, entry) : 0;
+  if (owed === 0 && !differentPayer) return null;
   return (
     <div className="flex flex-col gap-0.5 text-xs">
-      {entry.status === "confirmed" ? (
-        <span className="tabular-nums">{rupiah(amountOwed(pricing, entry))}</span>
-      ) : null}
+      {owed > 0 ? <span className="tabular-nums">{rupiah(owed)}</span> : null}
       {differentPayer ? (
         <span className="text-muted-foreground">paid by {entry.paidByName ?? "another member"}</span>
       ) : null}
@@ -71,15 +71,17 @@ function OwedLine({
   );
 }
 
-function cancelCopy(entry: Entry) {
+function cancelCopy(entry: Entry, inMatch: boolean) {
   const name = entry.fullName ?? "this player";
-  return {
-    title: `Cancel ${name}?`,
-    description:
-      entry.status === "confirmed"
-        ? "Their seat opens up and the first person on the waitlist is confirmed automatically."
-        : "They are removed from the waitlist.",
-  };
+  const notes: string[] = [];
+  if (inMatch) notes.push(`${name} is in a scheduled or in-progress match. Check that match first.`);
+  else if (entry.checkedInAt) notes.push(`${name} is already checked in.`);
+  notes.push(
+    entry.status === "confirmed"
+      ? "Their seat opens up and the first person on the waitlist is confirmed automatically."
+      : "They are removed from the waitlist.",
+  );
+  return { title: `Cancel ${name}?`, description: notes.join(" ") };
 }
 
 function StatusBadge({ status }: { status: ParticipantStatus }) {
@@ -115,6 +117,7 @@ function PremiumBadges({ isPremium, bumpedAt }: { isPremium: boolean; bumpedAt: 
 
 type Actions = {
   pending: boolean;
+  busyIds: Set<string>;
   sessionId: string;
   sessionKind: SessionKind;
   sessionStatus: Database["public"]["Enums"]["session_status"];
@@ -163,6 +166,7 @@ function RowActions({ entry, actions, card }: { entry: Entry; actions: Actions; 
   const { pending, sessionId, sessionKind, sessionStatus, change, toggleCheckedIn, togglePaid, toggleNoShow } = actions;
   const size = card ? "h-11" : "";
   const confirmed = entry.status === "confirmed";
+  const inMatch = actions.busyIds.has(entry.id);
 
   return (
     <div className={cn("flex flex-col gap-2", !card && "items-end")}>
@@ -237,7 +241,7 @@ function RowActions({ entry, actions, card }: { entry: Entry; actions: Actions; 
         {entry.status !== "cancelled" ? (
           <ConfirmActionButton
             label="Cancel player"
-            {...cancelCopy(entry)}
+            {...cancelCopy(entry, inMatch)}
             confirmLabel="Cancel player"
             disabled={pending}
             className={cn(size, "text-destructive-text", card && "flex-1 basis-32")}
@@ -257,6 +261,7 @@ export function RosterTable({
   sessionKind,
   price,
   premiumSurchargeIdr,
+  busyParticipantIds,
 }: {
   sessionId: string;
   entries: Entry[];
@@ -268,6 +273,8 @@ export function RosterTable({
   // server/client boundary). Supplied only by the host manage page.
   attributes: Record<string, PlayerAttributes>;
   sessionStatus: Database["public"]["Enums"]["session_status"];
+  /** participants in a scheduled or in-progress match */
+  busyParticipantIds: string[];
 }) {
   const [pending, startTransition] = useTransition();
   const [query, setQuery] = useState("");
@@ -283,6 +290,7 @@ export function RosterTable({
 
   const actions: Actions = {
     pending,
+    busyIds: new Set(busyParticipantIds),
     sessionId,
     sessionKind,
     sessionStatus,
@@ -295,9 +303,13 @@ export function RosterTable({
   };
 
   const needle = query.trim().toLowerCase();
-  const visible = entries.filter(
-    (entry) => matchesFilter(entry, filter) && (needle === "" || (entry.fullName ?? "").toLowerCase().includes(needle)),
-  );
+  // Who still needs attention comes first: confirmed and not yet in, then the
+  // waitlist, then checked in, then cancelled. Array.sort is stable.
+  const rank = (entry: Entry) =>
+    entry.status === "cancelled" ? 3 : entry.checkedInAt ? 2 : entry.status === "waiting_list" ? 1 : 0;
+  const visible = entries
+    .filter((entry) => matchesFilter(entry, filter) && (needle === "" || (entry.fullName ?? "").toLowerCase().includes(needle)))
+    .sort((a, b) => rank(a) - rank(b));
   const countFor = (id: Filter) => entries.filter((entry) => matchesFilter(entry, id)).length;
 
   return (
@@ -383,9 +395,6 @@ export function RosterTable({
               <GuestBadge isGuest={entry.isGuest} />
               <ConsentBadge addedBy={entry.addedBy} consentedAt={entry.consentedAt} />
             </div>
-            <p className="text-xs text-muted-foreground">
-              Registered {formatDateTime(entry.registeredAt)}
-            </p>
             <OwedLine entry={entry} pricing={pricing} />
             <RowActions entry={entry} actions={actions} card />
             <details className="group">

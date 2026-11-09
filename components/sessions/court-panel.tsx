@@ -122,20 +122,36 @@ export function CourtPanel({
               <div className="grid grid-cols-3 gap-2 sm:flex sm:w-auto">
                 {(["idle", "in_use", "unavailable"] as const)
                   .filter((status) => status !== court.status)
-                  .map((status) => (
-                    <Button
-                      key={status}
-                      size="sm"
-                      variant="outline"
-                      // the outline button is white-filled; without this it
-                      // inherits the in-use card's text-white and goes blank
-                      className={cn("h-11 sm:h-8", court.status === "in_use" && "text-navy")}
-                      disabled={pending}
-                      onClick={() => changeStatus(court.id, status)}
-                    >
-                      {STATUS_LABEL[status]}
-                    </Button>
-                  ))}
+                  .map((status) => {
+                    const label = `Set ${STATUS_LABEL[status].toLowerCase()}`;
+                    // the outline button is white-filled; without this it
+                    // inherits the in-use card's text-white and goes blank
+                    const buttonClass = cn("h-11 sm:h-8", court.status === "in_use" && "text-navy");
+                    return current && status !== "in_use" ? (
+                      <ConfirmActionButton
+                        key={status}
+                        label={label}
+                        variant="outline"
+                        title={`${label} on ${courtLabel(court.courtNumber)}?`}
+                        description={`A match is ${current.status === "in_progress" ? "in progress" : "scheduled"} on this court. Finish or cancel it first unless the court really cannot be used.`}
+                        confirmLabel={label}
+                        disabled={pending}
+                        className={buttonClass}
+                        onConfirm={() => changeStatus(court.id, status)}
+                      />
+                    ) : (
+                      <Button
+                        key={status}
+                        size="sm"
+                        variant="outline"
+                        className={buttonClass}
+                        disabled={pending}
+                        onClick={() => changeStatus(court.id, status)}
+                      >
+                        {label}
+                      </Button>
+                    );
+                  })}
                 <ConfirmActionButton
                   label="Delete"
                   title={`Delete ${courtLabel(court.courtNumber)}?`}

@@ -33,7 +33,7 @@ export default async function DashboardPage() {
         {registrations.length === 0 ? (
           <p className="text-sm text-muted-foreground">
             Nothing yet.{" "}
-            <Link href="/sessions" className="font-semibold text-accent-text underline-offset-4 hover:underline">
+            <Link href="/sessions" className="inline-flex min-h-11 items-center font-semibold text-accent-text underline underline-offset-4">
               Browse sessions
             </Link>
             .
@@ -44,7 +44,7 @@ export default async function DashboardPage() {
               <Card key={row.id}>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Link href={`/sessions/${row.sessionId}`}>{row.title}</Link>
+                    <Link href={`/sessions/${row.sessionId}`} className="inline-flex min-h-11 items-center">{row.title}</Link>
                     {row.status === "confirmed" ? (
                       <Badge variant="success">Confirmed</Badge>
                     ) : (
@@ -94,7 +94,7 @@ export default async function DashboardPage() {
                 <CardHeader>
                   <div className="flex items-start justify-between gap-2">
                     <CardTitle>
-                      <Link href={`/sessions/${session.id}/manage`} className="underline-offset-4 hover:underline">{session.title}</Link>
+                      <Link href={`/sessions/${session.id}/manage`} className="inline-flex min-h-11 items-center underline-offset-4 hover:underline">{session.title}</Link>
                     </CardTitle>
                     <SessionActionsMenu session={session} />
                   </div>

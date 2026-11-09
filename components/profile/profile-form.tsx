@@ -44,7 +44,7 @@ export function ProfileForm({ defaultValues }: { defaultValues: ProfileFormValue
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Your profile</CardTitle>
+        <CardTitle role="heading" aria-level={1}>Your profile</CardTitle>
         <CardDescription>How you appear to hosts and other players.</CardDescription>
       </CardHeader>
       <Form {...form}>

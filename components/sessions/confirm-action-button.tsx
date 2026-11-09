@@ -10,6 +10,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 
 export function ConfirmActionButton({
@@ -37,10 +38,12 @@ export function ConfirmActionButton({
 
   return (
     <>
-      <Button type="button" size={size} variant={variant} disabled={disabled} className={className} onClick={() => setOpen(true)}>
-        {label}
-      </Button>
       <Dialog open={open} onOpenChange={setOpen}>
+        <DialogTrigger asChild>
+          <Button type="button" size={size} variant={variant} disabled={disabled} className={className}>
+            {label}
+          </Button>
+        </DialogTrigger>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{title}</DialogTitle>
