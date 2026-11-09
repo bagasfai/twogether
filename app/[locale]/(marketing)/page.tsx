@@ -19,7 +19,7 @@ import { shouldShowStats } from "@/lib/community-stats";
 // Matches the sibling (marketing)/sessions/page.tsx revalidate window.
 export const revalidate = 60;
 
-const NEXT_SESSIONS = 3;
+const NEXT_SESSIONS = 2;
 
 export default async function Home() {
   const [t, tAbout, tAnnouncements, locale, announcements, stats, sessions, featuredPosts, socialLinks] = await Promise.all([
@@ -33,15 +33,20 @@ export default async function Home() {
     listLatestFeaturedPosts(),
     listVisibleSocialLinks(),
   ]);
-  const nextSessions = sessions.slice(0, NEXT_SESSIONS);
+  const featured = sessions[0] ?? null;
+  const moreSessions = sessions.slice(1, 1 + NEXT_SESSIONS);
+  const featuredOpen = featured?.registrationState === "open";
+  const featuredDate = featured
+    ? new Intl.DateTimeFormat(locale, { day: "numeric", month: "short", timeZone: "Asia/Jakarta" }).format(new Date(featured.startsAt))
+    : "";
 
   return (
     <>
       <section className="court-field relative isolate overflow-hidden text-white">
         <CourtLines className="absolute inset-0 -z-10 size-full text-white/20" />
-        <div className="mx-auto grid w-full max-w-5xl items-center gap-10 px-6 py-12 md:grid-cols-[1.25fr_1fr] md:py-20">
-          <div className="flex flex-col gap-6">
-            <h1 className="font-display text-[clamp(3rem,9vw,6rem)] font-extrabold uppercase italic leading-[0.9] tracking-tight text-balance">
+        <div className="mx-auto grid w-full max-w-5xl items-center gap-10 px-6 py-8 md:grid-cols-[1.25fr_1fr] md:py-20">
+          <div className="flex flex-col gap-5 md:gap-6">
+            <h1 className="font-display text-[clamp(2.75rem,8vw,5rem)] font-extrabold uppercase italic leading-[0.9] tracking-tight text-balance">
               {t("title")}
             </h1>
             <p className="max-w-[42ch] text-lg text-white">{t("subtitle")}</p>
@@ -51,7 +56,11 @@ export default async function Home() {
                 size="lg"
                 className="bg-cork text-navy shadow-bar hover:bg-cork/90 focus-visible:ring-white"
               >
-                <Link href="/sessions">{t("ctaBrowse")}</Link>
+                {featured && featuredOpen ? (
+                  <Link href={`/sessions/${featured.id}`}>{t("ctaRegister", { date: featuredDate })}</Link>
+                ) : (
+                  <Link href="/sessions">{t("ctaBrowse")}</Link>
+                )}
               </Button>
               {/* /signup lives outside app/[locale] -- plain Link, no locale prefix */}
               <Button
@@ -74,15 +83,21 @@ export default async function Home() {
               className="shuttle-drift absolute -bottom-6 -right-4 z-10 w-12 sm:w-14"
               style={{ ["--shuttle-from" as string]: "40deg", ["--shuttle-to" as string]: "24deg", ["--shuttle-delay" as string]: "260ms" }}
             />
-            <Image
-              src="/brand/jakbar-twogether.jpeg"
-              alt="Jakbar Twogether"
-              width={640}
-              height={640}
-              priority
-              sizes="(min-width: 768px) 400px, 90vw"
-              className="aspect-square w-full rotate-3 rounded-[2rem] border-4 border-white object-cover shadow-float"
-            />
+            {featured ? (
+              <div className="shadow-float rounded-2xl text-foreground">
+                <SessionCard session={featured} headingLevel="h2" />
+              </div>
+            ) : (
+              <Image
+                src="/brand/jakbar-twogether.jpeg"
+                alt="Jakbar Twogether"
+                width={640}
+                height={640}
+                priority
+                sizes="(min-width: 768px) 400px, 90vw"
+                className="aspect-square w-full rotate-3 rounded-[2rem] border-4 border-white object-cover shadow-float"
+              />
+            )}
             <p className="absolute -bottom-4 left-4 z-10 -rotate-2 rounded-full bg-cork px-4 py-1.5 text-sm font-bold text-navy shadow-md">
               {t("kicker")}
             </p>
@@ -90,24 +105,67 @@ export default async function Home() {
         </div>
       </section>
 
-      <section className="py-16">
-        <div className="mx-auto flex max-w-5xl flex-col gap-6 px-6">
-          <div className="flex flex-col gap-2">
+      {sessions.length === 0 ? (
+        <section className="py-16">
+          <div className="mx-auto flex max-w-5xl flex-col gap-3 px-6">
             <h2 className="font-display text-4xl font-extrabold uppercase italic leading-none tracking-tight sm:text-5xl">
               {t("runningTitle")}
             </h2>
-            <p className="max-w-[52ch] text-base text-muted-foreground">{t("runningBody")}</p>
+            <p className="max-w-[52ch] rounded-2xl border-2 border-dashed border-input p-5 text-base text-muted-foreground">
+              {t("runningEmpty")}
+            </p>
           </div>
-          {nextSessions.length > 0 ? (
-            <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-1">
-              {nextSessions.map((session) => (
+        </section>
+      ) : null}
+
+      {moreSessions.length > 0 ? (
+        <section className="py-16">
+          <div className="mx-auto flex max-w-5xl flex-col gap-6 px-6">
+            <div className="flex flex-col gap-2">
+              <h2 className="font-display text-4xl font-extrabold uppercase italic leading-none tracking-tight sm:text-5xl">
+                {t("runningTitle")}
+              </h2>
+              <p className="max-w-[52ch] text-base text-muted-foreground">{t("runningBody")}</p>
+            </div>
+            <div className="grid gap-5 md:grid-cols-2">
+              {moreSessions.map((session) => (
                 <SessionCard key={session.id} session={session} />
               ))}
             </div>
-          ) : null}
-          <Button asChild variant="outline" size="lg" className="w-fit border-2 border-navy">
-            <Link href="/sessions">{t("runningLink")}</Link>
-          </Button>
+            <Button asChild variant="outline" size="lg" className="w-fit border-2 border-navy">
+              <Link href="/sessions">{t("runningLink")}</Link>
+            </Button>
+          </div>
+        </section>
+      ) : null}
+
+      <section className="bg-sky-pale py-16">
+        <div className="mx-auto flex max-w-5xl flex-col gap-8 px-6">
+          <div className="flex flex-col gap-2">
+            <h2 className="font-display text-4xl font-extrabold uppercase italic leading-none tracking-tight sm:text-5xl">
+              {t("howTitle")}
+            </h2>
+            <p className="max-w-[52ch] text-base">{t("howBody")}</p>
+          </div>
+          <ol className="grid gap-6 md:grid-cols-3 md:gap-0">
+            {([1, 2, 3] as const).map((n) => (
+              <li
+                key={n}
+                className="flex gap-4 border-navy/25 md:flex-col md:gap-3 md:px-6 md:first:pl-0 md:last:pr-0 md:[&:not(:first-child)]:border-l-2 md:[&:not(:first-child)]:border-dashed"
+              >
+                <span aria-hidden="true" className="font-display text-6xl font-extrabold italic leading-none text-sky-deep tabular-nums">
+                  {n}
+                </span>
+                <div className="flex flex-col gap-1">
+                  <h3 className="font-display text-2xl font-bold leading-tight">{t(`step${n}Title`)}</h3>
+                  <p className="text-base">{t(`step${n}Body`)}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
+          <Link href="/faq" className="inline-flex min-h-11 w-fit items-center font-semibold text-accent-text underline underline-offset-4">
+            {t("faqLink")}
+          </Link>
         </div>
       </section>
 
@@ -116,12 +174,12 @@ export default async function Home() {
       <FeaturedPostsCarousel posts={featuredPosts} locale={locale} />
 
       {announcements.length > 0 ? (
-        <section className="px-6 py-16">
-          <div className="mx-auto flex max-w-5xl flex-col gap-6">
+        <section className="py-16">
+          <div className="mx-auto flex max-w-5xl flex-col gap-6 px-6">
             <h2 className="font-display text-4xl font-extrabold uppercase italic leading-none tracking-tight sm:text-5xl">
               {tAnnouncements("title")}
             </h2>
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className={`grid gap-4 ${announcements.length > 1 ? "md:grid-cols-2" : ""}`}>
               {announcements.map((announcement) => (
                 <div
                   key={announcement.id}
@@ -138,8 +196,6 @@ export default async function Home() {
 
       <SocialLinksSection links={socialLinks} title={t("socialsTitle")} body={t("socialsBody")} />
 
-      <PartnerCta />
-
       <section className="relative isolate overflow-hidden bg-cork py-14 text-navy">
         <CourtLines className="absolute inset-0 -z-10 size-full text-navy/10" />
         <div className="mx-auto flex max-w-5xl flex-col items-start gap-4 px-6">
@@ -152,6 +208,8 @@ export default async function Home() {
           </Button>
         </div>
       </section>
+
+      <PartnerCta />
     </>
   );
 }
