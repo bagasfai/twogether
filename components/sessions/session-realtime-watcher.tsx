@@ -1,14 +1,19 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { debounce } from "@/lib/realtime/debounce";
+import type { Database } from "@/types/supabase";
 
 const DEBOUNCE_MS = 300;
+const CHANNEL_COUNT = 4;
 
-// Invisible. Subscribes to Postgres changes for this session's dashboard
+type Link = "connecting" | "live" | "offline";
+type SessionStatus = Database["public"]["Enums"]["session_status"];
+
+// Renders the scoreboard's connection pill. Subscribes to Postgres changes for this session's dashboard
 // tables and debounce-refreshes the server component on any change, so the
 // host manage page stays live across multiple hosts/devices without a
 // manual reload. See docs/superpowers/specs/2026-09-13-live-session-dashboard-design.md
@@ -32,14 +37,45 @@ const DEBOUNCE_MS = 300;
 // "invalid column for filter <col>" (the check finds an empty column list
 // for anon and rejects any filter name). Awaiting the session and calling
 // `realtime.setAuth()` before the first `.subscribe()` fixes this.
-export function SessionRealtimeWatcher({ sessionId }: { sessionId: string }) {
+export function SessionRealtimeWatcher({
+  sessionId,
+  sessionStatus,
+}: {
+  sessionId: string;
+  sessionStatus: SessionStatus;
+}) {
   const router = useRouter();
+  const [link, setLink] = useState<Link>("connecting");
 
   useEffect(() => {
     let cancelled = false;
     const supabase = createClient();
     const refresh = debounce(() => router.refresh(), DEBOUNCE_MS);
     let channels: RealtimeChannel[] = [];
+    const states = new Map<string, string>();
+    let wasOffline = false;
+
+    const report = (name: string, state: string) => {
+      if (cancelled) return;
+      states.set(name, state);
+      const values = [...states.values()];
+      if (values.some((v) => v === "CHANNEL_ERROR" || v === "TIMED_OUT" || v === "CLOSED")) {
+        wasOffline = true;
+        setLink("offline");
+      } else if (values.length === CHANNEL_COUNT && values.every((v) => v === "SUBSCRIBED")) {
+        setLink("live");
+        if (wasOffline) {
+          wasOffline = false;
+          refresh();
+        }
+      }
+    };
+    const subscribeTo = (name: string) => (state: string) => report(name, state);
+    const goOffline = () => {
+      wasOffline = true;
+      setLink("offline");
+    };
+    window.addEventListener("offline", goOffline);
 
     async function subscribe() {
       const {
@@ -59,7 +95,7 @@ export function SessionRealtimeWatcher({ sessionId }: { sessionId: string }) {
             { event: "*", schema: "public", table: "sessions", filter: `id=eq.${sessionId}` },
             refresh,
           )
-          .subscribe(),
+          .subscribe(subscribeTo("sessions")),
         supabase
           .channel(`session:${sessionId}:dashboard:participants`)
           .on(
@@ -67,7 +103,7 @@ export function SessionRealtimeWatcher({ sessionId }: { sessionId: string }) {
             { event: "*", schema: "public", table: "participants", filter: `session_id=eq.${sessionId}` },
             refresh,
           )
-          .subscribe(),
+          .subscribe(subscribeTo("participants")),
         supabase
           .channel(`session:${sessionId}:dashboard:courts`)
           .on(
@@ -75,7 +111,7 @@ export function SessionRealtimeWatcher({ sessionId }: { sessionId: string }) {
             { event: "*", schema: "public", table: "courts", filter: `session_id=eq.${sessionId}` },
             refresh,
           )
-          .subscribe(),
+          .subscribe(subscribeTo("courts")),
         supabase
           .channel(`session:${sessionId}:dashboard:matches`)
           .on(
@@ -83,16 +119,18 @@ export function SessionRealtimeWatcher({ sessionId }: { sessionId: string }) {
             { event: "*", schema: "public", table: "matches", filter: `session_id=eq.${sessionId}` },
             refresh,
           )
-          .subscribe(),
+          .subscribe(subscribeTo("matches")),
       ];
     }
 
     subscribe().catch((error: unknown) => {
       console.error("[session-realtime] failed to subscribe", error);
+      goOffline();
     });
 
     return () => {
       cancelled = true;
+      window.removeEventListener("offline", goOffline);
       refresh.cancel();
       for (const channel of channels) {
         supabase.removeChannel(channel);
@@ -100,5 +138,25 @@ export function SessionRealtimeWatcher({ sessionId }: { sessionId: string }) {
     };
   }, [sessionId, router]);
 
-  return null;
+  const showLive = link === "live" && sessionStatus === "live";
+
+  return (
+    <span role="status" className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide">
+      <span
+        className={
+          link === "offline"
+            ? "size-2 shrink-0 rounded-full border border-white bg-transparent"
+            : "size-2 shrink-0 rounded-full bg-cork motion-safe:animate-pulse"
+        }
+        aria-hidden="true"
+      />
+      {link === "offline"
+        ? "Offline: reconnecting"
+        : link === "connecting"
+          ? "Connecting"
+          : showLive
+            ? "Live"
+            : "Synced"}
+    </span>
+  );
 }

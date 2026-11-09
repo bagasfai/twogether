@@ -63,12 +63,11 @@ export default async function ManageSessionPage({ params }: PageProps<"/sessions
   const confirmed = roster.filter((entry) => entry.status === "confirmed").length;
   const waiting = roster.filter((entry) => entry.status === "waiting_list").length;
   const checkedIn = roster.filter((entry) => entry.checkedInAt !== null).length;
-  const activeMatches = matches.filter((m) => m.status !== "cancelled").length;
+  const openMatches = matches.filter((m) => m.status === "scheduled" || m.status === "in_progress").length;
+  const courtsInUse = courts.filter((c) => c.status === "in_use").length;
 
   return (
     <div className="flex flex-col gap-4 sm:gap-6 lg:mx-auto lg:max-w-6xl">
-      <SessionRealtimeWatcher sessionId={session.id} />
-
       {/* Wraps so the header actions drop below a long title on a phone
           instead of squeezing it into a narrow column. */}
       <header className="flex flex-wrap items-start justify-between gap-2">
@@ -83,20 +82,23 @@ export default async function ManageSessionPage({ params }: PageProps<"/sessions
 
       {/* Sticky so confirmed/waiting/checked-in counts stay visible while
           the host scrolls through courts/matches/roster on a phone. */}
-      <div className="sticky top-0 z-10 flex flex-wrap items-center gap-x-5 gap-y-2 rounded-2xl bg-navy px-4 py-3 text-white shadow-bar">
-        <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide">
-          <span className="size-2 shrink-0 rounded-full bg-cork motion-safe:animate-pulse" aria-hidden="true" />
-          Live
-        </span>
-        <Stat label="confirmed" value={`${confirmed}/${session.maxParticipants}`} />
-        <Stat label="waiting" value={`${waiting}/${session.waitlistCapacity}`} />
-        {/* Checked-in is a distinct pool from registration status (courts/matches/
-            rotation read from it, not the roster) -- it gets its own cork
-            numeral so it never reads as a registration count. */}
-        <Stat label="checked in" value={String(checkedIn)} accent />
-        <Badge variant="outline" className="border-white/50 text-xs capitalize text-white sm:text-sm">
-          {session.registrationState}
-        </Badge>
+      <div className="sticky top-0 z-10 flex flex-col gap-2 rounded-2xl bg-navy px-4 py-3 text-white shadow-bar sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-5">
+        <div className="flex items-center justify-between gap-3 sm:contents">
+          <SessionRealtimeWatcher sessionId={session.id} sessionStatus={session.status} />
+          <Badge variant="outline" className="border-white/50 text-xs capitalize text-white sm:order-last sm:text-sm">
+            {session.registrationState}
+          </Badge>
+        </div>
+        <div className="grid grid-cols-5 gap-2 sm:flex sm:items-baseline sm:gap-x-5">
+          <Stat label="confirmed" value={`${confirmed}/${session.maxParticipants}`} />
+          <Stat label="waiting" value={`${waiting}/${session.waitlistCapacity}`} />
+          {/* Checked-in is a distinct pool from registration status (courts/matches/
+              rotation read from it, not the roster) -- it gets its own cork
+              numeral so it never reads as a registration count. */}
+          <Stat label="checked in" value={String(checkedIn)} accent />
+          <Stat label="courts" value={`${courtsInUse}/${courts.length}`} />
+          <Stat label="ready" value={String(rotationQueue.length)} />
+        </div>
       </div>
 
       {session.kind === "drilling" &&
@@ -117,11 +119,12 @@ export default async function ManageSessionPage({ params }: PageProps<"/sessions
       <AnnouncementList sessionId={id} announcements={announcements} />
 
       <ManageTabs
+        courtsInUse={courtsInUse}
         courtCount={courts.length}
-        matchCount={activeMatches}
+        matchCount={openMatches}
         rosterCount={roster.length}
         photosCount={pendingPhotos.length}
-        courts={<CourtPanel sessionId={session.id} courts={courts} courtCount={session.courtCount} />}
+        courts={<CourtPanel sessionId={session.id} courts={courts} courtCount={session.courtCount} matches={matches} />}
         matches={
           <div className="flex flex-col gap-4 sm:gap-6">
             <AutoMatchPanel sessionId={session.id} />
@@ -155,13 +158,13 @@ export default async function ManageSessionPage({ params }: PageProps<"/sessions
 
 function Stat({ label, value, accent = false }: { label: string; value: string; accent?: boolean }) {
   return (
-    <span className="flex items-baseline gap-1.5">
+    <span className="flex flex-col gap-0.5 sm:flex-row sm:items-baseline sm:gap-1.5">
       <span
-        className={`font-display text-3xl font-extrabold italic leading-none tabular-nums ${accent ? "text-cork" : "text-white"}`}
+        className={`font-display text-2xl font-extrabold italic leading-none tabular-nums sm:text-3xl ${accent ? "text-cork" : "text-white"}`}
       >
         {value}
       </span>
-      <span className="text-sm text-white/85">{label}</span>
+      <span className="text-xs text-white/85 sm:text-sm">{label}</span>
     </span>
   );
 }
