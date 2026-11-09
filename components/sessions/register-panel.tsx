@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { AddGuestDialog } from "@/components/sessions/add-guest-dialog";
 import { ReplaceSeatDialog } from "@/components/sessions/replace-seat-dialog";
 import { cancelGuestRegistration, cancelRegistration, registerForSession } from "@/lib/actions/registration";
+import { notifyRosterChanged } from "@/lib/sessions/roster-changed";
 // Type-only: erased at compile time, so this never pulls the `server-only`
 // guard from lib/dal/participants.ts into the client bundle.
 import type { MyGuestRegistration, MyRegistration } from "@/lib/dal/participants";
@@ -141,6 +142,7 @@ export function RegisterPanel({
       const result = await cancelGuestRegistration(guestId, sessionId);
       if (result.ok) {
         setState({ ...state, guests: guests.filter((guest) => guest.id !== guestId) });
+        notifyRosterChanged(sessionId);
         toast.success(t("toastCancelled"));
       } else {
         toast.error(result.message);
@@ -169,6 +171,7 @@ export function RegisterPanel({
     ) : null;
 
   const refetchRegistration = () => {
+    notifyRosterChanged(sessionId);
     fetch(`/api/sessions/${sessionId}/my-registration`)
       .then((response) => response.json())
       .then((body: unknown) => {
@@ -182,16 +185,7 @@ export function RegisterPanel({
   const bringGuest = registrationOpen ? (
     <AddGuestDialog
       sessionId={sessionId}
-      onRegistered={() => {
-        fetch(`/api/sessions/${sessionId}/my-registration`)
-          .then((response) => response.json())
-          .then((body: unknown) => {
-            if (isMyRegistrationResponse(body)) {
-              setState({ kind: "ready", registration: body.registration, guests: body.guests });
-            }
-          })
-          .catch(() => {});
-      }}
+      onRegistered={refetchRegistration}
     />
   ) : null;
 
@@ -224,6 +218,7 @@ export function RegisterPanel({
                 const result = await cancelRegistration(sessionId);
                 if (result.ok) {
                   setState({ ...state, registration: null });
+                  notifyRosterChanged(sessionId);
                   toast.success(t("toastCancelled"));
                 } else {
                   toast.error(result.message);
