@@ -44,7 +44,7 @@ export default async function Home() {
     <>
       <section className="court-field relative isolate overflow-hidden text-white">
         <CourtLines className="absolute inset-0 -z-10 size-full text-white/20" />
-        <div className="mx-auto grid w-full max-w-5xl items-center gap-10 px-6 py-8 md:grid-cols-[1.25fr_1fr] md:py-20">
+        <div className="mx-auto grid w-full max-w-5xl items-center gap-10 px-6 py-8 md:grid-cols-[1fr_1fr] md:py-16">
           <div className="flex flex-col gap-5 md:gap-6">
             <h1 className="font-display text-[clamp(2.75rem,8vw,5rem)] font-extrabold uppercase italic leading-[0.9] tracking-tight text-balance">
               {t("title")}
@@ -72,6 +72,7 @@ export default async function Home() {
                 <NextLink href="/signup">{t("ctaJoin")}</NextLink>
               </Button>
             </div>
+            <p className="text-sm font-semibold text-white">{t("kicker")}</p>
           </div>
 
           <div className="relative mx-auto w-full max-w-sm md:max-w-none">
@@ -85,7 +86,7 @@ export default async function Home() {
             />
             {featured ? (
               <div className="shadow-float rounded-2xl text-foreground">
-                <SessionCard session={featured} headingLevel="h2" />
+                <SessionCard session={featured} headingLevel="h2" large />
               </div>
             ) : (
               <Image
@@ -98,9 +99,6 @@ export default async function Home() {
                 className="aspect-square w-full rotate-3 rounded-[2rem] border-4 border-white object-cover shadow-float"
               />
             )}
-            <p className="absolute -bottom-4 left-4 z-10 -rotate-2 rounded-full bg-cork px-4 py-1.5 text-sm font-bold text-navy shadow-md">
-              {t("kicker")}
-            </p>
           </div>
         </div>
       </section>
@@ -204,7 +202,7 @@ export default async function Home() {
           </h2>
           <p className="max-w-[52ch] text-base">{tAbout("ctaBody")}</p>
           <Button asChild size="lg">
-            <NextLink href="/signup">{t("ctaJoin")}</NextLink>
+            <NextLink href="/signup">{t("ctaCreateAccount")}</NextLink>
           </Button>
         </div>
       </section>

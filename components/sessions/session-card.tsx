@@ -23,9 +23,11 @@ function dateParts(iso: string, locale: string) {
 export function SessionCard({
   session,
   headingLevel: Heading = "h3",
+  large = false,
 }: {
   session: PublicSession;
   headingLevel?: "h2" | "h3";
+  large?: boolean;
 }) {
   const t = useTranslations();
   const locale = useLocale();
@@ -42,11 +44,12 @@ export function SessionCard({
       <div
         className={cn(
           "flex w-20 shrink-0 flex-col items-center justify-center gap-0.5 px-2 py-4 text-center sm:w-28",
+          large && "md:w-36 md:py-8",
           open ? "bg-navy text-white" : "bg-muted text-muted-foreground",
         )}
       >
         <span className="text-xs font-semibold uppercase tracking-wide">{weekday}</span>
-        <span className="font-display text-5xl font-extrabold italic leading-none tabular-nums sm:text-6xl">{day}</span>
+        <span className={cn("font-display text-5xl font-extrabold italic leading-none tabular-nums sm:text-6xl", large && "md:text-8xl")}>{day}</span>
         <span className="text-xs font-semibold uppercase tracking-wide">{month}</span>
       </div>
       {/* ticket perforation */}
@@ -54,7 +57,7 @@ export function SessionCard({
         <span className="absolute -left-2.5 -top-2.5 size-5 rounded-full bg-background" />
         <span className="absolute -bottom-2.5 -left-2.5 size-5 rounded-full bg-background" />
       </div>
-      <div className="flex min-w-0 flex-1 flex-col gap-2 p-4 sm:p-5">
+      <div className={cn("flex min-w-0 flex-1 flex-col gap-2 p-4 sm:p-5", large && "md:justify-center md:gap-3 md:p-7")}>
         <span
           className={cn(
             "w-fit rounded-full px-2.5 py-0.5 text-xs font-semibold",
@@ -63,7 +66,7 @@ export function SessionCard({
         >
           {open ? t("badge.open") : t("badge.closed")}
         </span>
-        <Heading className="font-display text-2xl font-bold leading-tight tracking-tight [overflow-wrap:anywhere]">
+        <Heading className={cn("font-display text-2xl font-bold leading-tight tracking-tight [overflow-wrap:anywhere]", large && "md:text-4xl")}>
           <Link
             href={`/sessions/${session.id}`}
             className="outline-none after:absolute after:inset-0 after:content-[''] group-hover:text-accent-text"
