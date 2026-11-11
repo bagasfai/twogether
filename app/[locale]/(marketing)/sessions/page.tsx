@@ -30,7 +30,7 @@ export default async function SessionsPage() {
         ) : (
           <div className="flex flex-col gap-5">
             {sessions.map((session) => (
-              <SessionCard key={session.id} session={session} />
+              <SessionCard key={session.id} session={session} headingLevel="h2" />
             ))}
           </div>
         )}

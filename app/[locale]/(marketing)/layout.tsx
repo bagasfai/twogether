@@ -35,7 +35,7 @@ export default async function MarketingLayout({
         <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-6 gap-y-2 px-6 py-3">
           <Link
             href="/"
-            className="mr-auto flex items-center gap-3 whitespace-nowrap rounded-full outline-none focus-visible:ring-[3px] focus-visible:ring-white sm:mr-0"
+            className="mr-auto flex items-center gap-3 whitespace-nowrap rounded-full outline-none focus-visible:ring-[3px] focus-visible:ring-white max-md:min-h-11 sm:mr-0"
           >
             <Image
               src="/brand/jakbar-twogether.jpeg"

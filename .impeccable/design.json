@@ -1,0 +1,321 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-09T08:22:13Z",
+  "title": "Design System: Jakbar Twogether",
+  "extensions": {
+    "colorMeta": {
+      "navy": {
+        "role": "primary",
+        "displayName": "Court Navy",
+        "canonical": "oklch(28% 0.13 264)",
+        "tonalRamp": [
+          "oklch(15% 0.083 264)",
+          "oklch(25% 0.095 264)",
+          "oklch(35% 0.130 264)",
+          "oklch(45% 0.130 264)",
+          "oklch(55% 0.130 264)",
+          "oklch(70% 0.130 264)",
+          "oklch(85% 0.095 264)",
+          "oklch(95% 0.083 264)"
+        ]
+      },
+      "sky-deep": {
+        "role": "primary",
+        "displayName": "Deep Vinyl",
+        "canonical": "oklch(50% 0.19 258)",
+        "tonalRamp": [
+          "oklch(15% 0.121 258)",
+          "oklch(25% 0.138 258)",
+          "oklch(35% 0.190 258)",
+          "oklch(45% 0.190 258)",
+          "oklch(55% 0.190 258)",
+          "oklch(70% 0.190 258)",
+          "oklch(85% 0.138 258)",
+          "oklch(95% 0.121 258)"
+        ]
+      },
+      "sky": {
+        "role": "primary",
+        "displayName": "Vinyl Sky",
+        "canonical": "oklch(62% 0.17 248)",
+        "tonalRamp": [
+          "oklch(15% 0.108 248)",
+          "oklch(25% 0.124 248)",
+          "oklch(35% 0.170 248)",
+          "oklch(45% 0.170 248)",
+          "oklch(55% 0.170 248)",
+          "oklch(70% 0.170 248)",
+          "oklch(85% 0.124 248)",
+          "oklch(95% 0.108 248)"
+        ]
+      },
+      "cork": {
+        "role": "secondary",
+        "displayName": "Cork Yellow",
+        "canonical": "oklch(87% 0.17 92)",
+        "tonalRamp": [
+          "oklch(15% 0.108 92)",
+          "oklch(25% 0.124 92)",
+          "oklch(35% 0.170 92)",
+          "oklch(45% 0.170 92)",
+          "oklch(55% 0.170 92)",
+          "oklch(70% 0.170 92)",
+          "oklch(85% 0.124 92)",
+          "oklch(95% 0.108 92)"
+        ]
+      },
+      "sky-pale": {
+        "role": "neutral",
+        "displayName": "Pale Sky",
+        "canonical": "oklch(94% 0.04 235)",
+        "tonalRamp": [
+          "oklch(15% 0.025 235)",
+          "oklch(25% 0.029 235)",
+          "oklch(35% 0.040 235)",
+          "oklch(45% 0.040 235)",
+          "oklch(55% 0.040 235)",
+          "oklch(70% 0.040 235)",
+          "oklch(85% 0.029 235)",
+          "oklch(95% 0.025 235)"
+        ]
+      },
+      "court-white": {
+        "role": "neutral",
+        "displayName": "Court White",
+        "canonical": "oklch(98.5% 0.008 240)",
+        "tonalRamp": [
+          "oklch(15% 0.010 240)",
+          "oklch(25% 0.010 240)",
+          "oklch(35% 0.010 240)",
+          "oklch(45% 0.010 240)",
+          "oklch(55% 0.010 240)",
+          "oklch(70% 0.010 240)",
+          "oklch(85% 0.010 240)",
+          "oklch(95% 0.010 240)"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Court Ink",
+        "canonical": "oklch(26% 0.11 265)",
+        "tonalRamp": [
+          "oklch(15% 0.070 265)",
+          "oklch(25% 0.080 265)",
+          "oklch(35% 0.110 265)",
+          "oklch(45% 0.110 265)",
+          "oklch(55% 0.110 265)",
+          "oklch(70% 0.110 265)",
+          "oklch(85% 0.080 265)",
+          "oklch(95% 0.070 265)"
+        ]
+      },
+      "destructive": {
+        "role": "semantic",
+        "displayName": "Destructive",
+        "canonical": "oklch(55% 0.21 25)",
+        "tonalRamp": [
+          "oklch(15% 0.134 25)",
+          "oklch(25% 0.153 25)",
+          "oklch(35% 0.210 25)",
+          "oklch(45% 0.210 25)",
+          "oklch(55% 0.210 25)",
+          "oklch(70% 0.210 25)",
+          "oklch(85% 0.153 25)",
+          "oklch(95% 0.134 25)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Hero headlines and ticket day numerals."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Marketing section titles."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Card, ticket and console page titles."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Running text, 65ch max."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Chips, badges, scoreboard captions."
+      }
+    },
+    "shadows": [
+      {
+        "name": "card",
+        "value": "0 6px 20px -12px oklch(28% 0.13 264 / 0.35)",
+        "purpose": "Default cards and list items."
+      },
+      {
+        "name": "ticket",
+        "value": "0 8px 24px -12px oklch(28% 0.13 264 / 0.35)",
+        "purpose": "Session and album cards at rest."
+      },
+      {
+        "name": "ticket-hover",
+        "value": "0 14px 28px -12px oklch(28% 0.13 264 / 0.45)",
+        "purpose": "Ticket hover lift."
+      },
+      {
+        "name": "bar",
+        "value": "0 8px 20px -10px oklch(28% 0.13 264 / 0.6)",
+        "purpose": "Sticky scoreboard, bottom tab bar, cork CTA."
+      },
+      {
+        "name": "float",
+        "value": "0 24px 48px -16px oklch(20% 0.13 264 / 0.65)",
+        "purpose": "Hero ticket, logo sticker, auth cards."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-out",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Default easing for entrances and hovers."
+      },
+      {
+        "name": "dur-micro",
+        "value": "120ms",
+        "purpose": "Colour changes."
+      },
+      {
+        "name": "dur-short",
+        "value": "220ms",
+        "purpose": "Lifts, disclosures."
+      },
+      {
+        "name": "dur-long",
+        "value": "420ms",
+        "purpose": "The shuttlecock drift on the landing hero."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Default action in the app and on pale fields.",
+      "html": "<button class=\"ds-btn-primary\">Save</button>",
+      "css": ".ds-btn-primary{background:var(--navy,oklch(28% 0.13 264));color:oklch(98.5% 0.008 240);border:0;border-radius:9999px;height:36px;padding:0 16px;font:500 14px Figtree,system-ui,sans-serif;cursor:pointer;transition:background-color 120ms ease-out}.ds-btn-primary:hover{background:oklch(28% 0.13 264 / .9)}.ds-btn-primary:focus-visible{outline:3px solid oklch(55% 0.2 255 / .5);outline-offset:2px}"
+    },
+    {
+      "name": "Cork Action Button",
+      "kind": "button",
+      "refersTo": "button-action",
+      "description": "The single call to action in a view; navy text on cork.",
+      "html": "<button class=\"ds-btn-action\">Daftar sesi 10 Nov</button>",
+      "css": ".ds-btn-action{background:oklch(87% 0.17 92);color:oklch(28% 0.13 264);border:0;border-radius:9999px;height:40px;padding:0 24px;font:600 14px Figtree,system-ui,sans-serif;box-shadow:0 8px 20px -10px oklch(28% 0.13 264 / .6);cursor:pointer}.ds-btn-action:hover{background:oklch(87% 0.17 92 / .9)}.ds-btn-action:focus-visible{outline:3px solid oklch(28% 0.13 264);outline-offset:2px}"
+    },
+    {
+      "name": "Outline Button",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "Secondary action, with a navy 2px border.",
+      "html": "<button class=\"ds-btn-outline\">Lihat semua sesi</button>",
+      "css": ".ds-btn-outline{background:#fff;color:oklch(26% 0.11 265);border:2px solid oklch(28% 0.13 264);border-radius:9999px;height:40px;padding:0 24px;font:500 14px Figtree,system-ui,sans-serif;cursor:pointer}.ds-btn-outline:hover{background:oklch(93% 0.05 235)}.ds-btn-outline:focus-visible{outline:3px solid oklch(55% 0.2 255 / .5);outline-offset:2px}"
+    },
+    {
+      "name": "Session Ticket",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Court ticket: navy date stub, perforation, open chip.",
+      "html": "<article class=\"ds-ticket\"><div class=\"ds-stub\"><small>SEL</small><b>10</b><small>NOV</small></div><div class=\"ds-body\"><span class=\"ds-chip\">Pendaftaran dibuka</span><h3>Sunday Casual Rally</h3><p>10.01 – 12.01 · GOR Cengkareng</p></div></article>",
+      "css": ".ds-ticket{display:flex;overflow:hidden;border:2px solid oklch(28% 0.13 264);border-radius:16px;background:#fff;box-shadow:0 8px 24px -12px oklch(28% 0.13 264 / .35);font-family:Figtree,system-ui,sans-serif;color:oklch(26% 0.11 265);max-width:420px}.ds-stub{display:flex;flex-direction:column;align-items:center;justify-content:center;width:96px;padding:16px 8px;background:oklch(28% 0.13 264);color:#fff}.ds-stub small{font-weight:600;font-size:12px;letter-spacing:.04em}.ds-stub b{font:800 italic 56px/1 'Barlow Condensed',Figtree,sans-serif}.ds-body{padding:16px 20px;display:flex;flex-direction:column;gap:8px}.ds-chip{width:fit-content;background:oklch(87% 0.17 92);color:oklch(28% 0.13 264);border-radius:9999px;padding:2px 10px;font-size:12px;font-weight:600}.ds-body h3{margin:0;font:700 24px/1.15 'Barlow Condensed',Figtree,sans-serif}.ds-body p{margin:0;font-size:14px;color:oklch(45% 0.06 258)}"
+    },
+    {
+      "name": "Scoreboard Strip",
+      "kind": "custom",
+      "refersTo": "card",
+      "description": "Console strip: connection pill and display numerals; checked-in is cork.",
+      "html": "<div class=\"ds-strip\"><span class=\"ds-pill\">Live</span><span><b>12/12</b> confirmed</span><span><b class=\"ds-cork\">10</b> checked in</span><span><b>1/4</b> courts</span><span><b>2</b> ready</span></div>",
+      "css": ".ds-strip{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 20px;background:oklch(28% 0.13 264);color:#fff;border-radius:16px;padding:12px 16px;box-shadow:0 8px 20px -10px oklch(28% 0.13 264 / .6);font:14px Figtree,system-ui,sans-serif}.ds-strip b{font:800 italic 30px/1 'Barlow Condensed',Figtree,sans-serif}.ds-cork{color:oklch(87% 0.17 92)}.ds-pill{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.04em}"
+    },
+    {
+      "name": "Filter Chip",
+      "kind": "chip",
+      "refersTo": "button-outline",
+      "description": "Roster filter: navy when selected.",
+      "html": "<button class=\"ds-fchip ds-on\">All 12</button> <button class=\"ds-fchip\">Not checked in 2</button>",
+      "css": ".ds-fchip{min-height:44px;border-radius:9999px;border:2px solid oklch(88% 0.03 240);background:#fff;color:oklch(28% 0.13 264);padding:0 12px;font:600 14px Figtree,system-ui,sans-serif;cursor:pointer}.ds-fchip:hover{background:oklch(94% 0.04 235)}.ds-on{background:oklch(28% 0.13 264);border-color:oklch(28% 0.13 264);color:#fff}.ds-fchip:focus-visible{outline:3px solid oklch(55% 0.2 255 / .5);outline-offset:2px}"
+    },
+    {
+      "name": "Search Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Roster search, 44px on phones, 16px text.",
+      "html": "<input class=\"ds-input\" type=\"search\" placeholder=\"Find a player\" aria-label=\"Find a player\">",
+      "css": ".ds-input{width:100%;box-sizing:border-box;height:44px;border:1px solid oklch(62% 0.06 250);border-radius:14px;background:#fff;color:oklch(26% 0.11 265);padding:0 12px;font:16px Figtree,system-ui,sans-serif}.ds-input:focus-visible{outline:3px solid oklch(55% 0.2 255 / .5);border-color:oklch(55% 0.2 255)}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Court Line",
+    "overview": "The badminton court is the page. White lines on sky-blue vinyl are the ground, and everything is drawn the way a court is marked: the active thing is solid, the inactive thing is dashed, and exactly one colour, cork yellow, says \"do this\". The palette is sampled from the club's own logo.\n\nThe marketing site speaks loudly with italic condensed jersey type, a tilted sticker logo and perforated session tickets. The signed-in console keeps the same world but works quietly: the court shows up as state, and the hosts' numbers read like a scoreboard. Light only, because it is used outdoors in daylight.",
+    "keyCharacteristics": [
+      "Chunky and confident: large rounded surfaces, 2px borders, one obvious primary action per view.",
+      "Solid means active, dashed means inactive or closed.",
+      "Cork yellow is the only action colour and always carries navy text.",
+      "Numerals are display type, tabular, and read like a scoreboard.",
+      "Text on sky is white; it is never grey."
+    ],
+    "rules": [
+      {
+        "name": "The One Action Rule",
+        "body": "Cork yellow means the next action. If two things on a screen are cork, one of them is wrong.",
+        "section": "colors"
+      },
+      {
+        "name": "The Solid-Dashed Rule",
+        "body": "Active, open and in use are solid. Closed, idle-but-unavailable and inactive are dashed or muted. Never use colour alone to say it.",
+        "section": "colors"
+      },
+      {
+        "name": "The Scoreboard Numeral Rule",
+        "body": "Any number read at a glance is display type with tabular figures, never body text.",
+        "section": "typography"
+      },
+      {
+        "name": "The Navy Shadow Rule",
+        "body": "Shadows are always tinted navy and defined once as theme tokens. Do not write shadow values inline.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do use cork yellow once per view, for the next action, with navy text.",
+      "Do keep every touch target at least 44px on phones and keep focus rings visible.",
+      "Do draw state with fill, border style and text together: solid for active, dashed for inactive.",
+      "Do use the shadow tokens and OKLCH colour tokens; add a token before writing a one-off value.",
+      "Do keep motion to one authored moment (the shuttlecock drift) plus small hover lifts, and remove them under prefers-reduced-motion. Fades may stay.",
+      "Do make Bahasa Indonesia and English layouts survive the longer string."
+    ],
+    "donts": [
+      "Don't add a dark theme or dark: classes: the product is used in daylight and ships light only.",
+      "Don't use grey text on sky or navy fields; use white or a tint of the field.",
+      "Don't invent testimonials, member counts or photos. Show real data or nothing.",
+      "Don't put an eyebrow label above a heading or use gradient text.",
+      "Don't fire a destructive action on one tap, or place it in the same row as the primary action without a confirm.",
+      "Don't use hard offset shadows or black shadows."
+    ]
+  }
+}

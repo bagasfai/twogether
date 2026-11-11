@@ -26,7 +26,7 @@ export default async function HistoryPage() {
         {registrations.length === 0 ? (
           <p className="text-sm text-muted-foreground">
             No past sessions yet.{" "}
-            <Link href="/sessions" className="font-medium text-accent-text hover:underline">
+            <Link href="/sessions" className="inline-flex min-h-11 items-center font-medium text-accent-text underline underline-offset-4">
               Browse sessions
             </Link>
             .
@@ -37,7 +37,7 @@ export default async function HistoryPage() {
               <Card key={row.id}>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Link href={`/sessions/${row.sessionId}`}>{row.title}</Link>
+                    <Link href={`/sessions/${row.sessionId}`} className="inline-flex min-h-11 items-center">{row.title}</Link>
                     {row.status === "confirmed" ? (
                       <Badge variant="success">Confirmed</Badge>
                     ) : (

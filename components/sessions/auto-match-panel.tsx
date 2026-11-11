@@ -168,7 +168,7 @@ export function AutoMatchPanel({ sessionId }: { sessionId: string }) {
             </SelectContent>
           </Select>
         </div>
-        <Button className="h-11" disabled={pending} onClick={generate}>
+        <Button variant="outline" className="h-11" disabled={pending} onClick={generate}>
           {generated ? "Regenerate" : "Generate"}
         </Button>
       </div>
@@ -201,7 +201,7 @@ export function AutoMatchPanel({ sessionId }: { sessionId: string }) {
                 </div>
               </div>
               {warningsByIndex[i].map((w) => (
-                <p key={w} className="text-sm text-warning-foreground dark:text-warning">
+                <p key={w} className="text-sm text-warning-foreground">
                   {w}
                 </p>
               ))}

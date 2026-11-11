@@ -24,4 +24,10 @@
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --dur-micro: 120ms; --dur-short: 220ms; --dur-long: 420ms;
   --radius: 1rem;
+
+  --shadow-card: 0 6px 20px -12px oklch(28% 0.13 264 / 0.35);
+  --shadow-ticket: 0 8px 24px -12px oklch(28% 0.13 264 / 0.35);
+  --shadow-ticket-hover: 0 14px 28px -12px oklch(28% 0.13 264 / 0.45);
+  --shadow-bar: 0 8px 20px -10px oklch(28% 0.13 264 / 0.6);
+  --shadow-float: 0 24px 48px -16px oklch(20% 0.13 264 / 0.65);
 }

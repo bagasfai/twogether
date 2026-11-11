@@ -17,7 +17,7 @@ export function AlbumCard({ album, eager = false }: { album: PublicAlbum; eager?
     // reduced motion the lift is dropped and nothing is transitioned.
     <Link
       href={`/gallery/${album.id}`}
-      className="group flex min-w-0 flex-col overflow-hidden rounded-2xl border-2 border-border bg-card shadow-[0_8px_24px_-14px_oklch(28%_0.13_264/0.4)] outline-none transition-[transform,border-color] duration-[var(--dur-short)] ease-[var(--ease-out)] hover:-translate-y-0.5 hover:border-navy focus-visible:ring-[3px] focus-visible:ring-ring motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+      className="group flex min-w-0 flex-col overflow-hidden rounded-2xl border-2 border-border bg-card shadow-ticket outline-none transition-[transform,border-color] duration-[var(--dur-short)] ease-[var(--ease-out)] hover:-translate-y-0.5 hover:border-navy focus-visible:ring-[3px] focus-visible:ring-ring motion-reduce:transition-none motion-reduce:hover:translate-y-0"
     >
       <div className="relative aspect-[4/3] bg-muted">
         {album.coverPath ? (

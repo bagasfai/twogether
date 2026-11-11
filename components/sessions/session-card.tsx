@@ -20,7 +20,15 @@ function dateParts(iso: string, locale: string) {
 // A court ticket: the date stub on the left, the session on the right. The
 // whole ticket is one link (stretched ::after). Open sessions are drawn solid
 // (navy stub, cork chip); closed ones are dashed and muted.
-export function SessionCard({ session }: { session: PublicSession }) {
+export function SessionCard({
+  session,
+  headingLevel: Heading = "h3",
+  large = false,
+}: {
+  session: PublicSession;
+  headingLevel?: "h2" | "h3";
+  large?: boolean;
+}) {
   const t = useTranslations();
   const locale = useLocale();
   const open = session.registrationState === "open";
@@ -29,18 +37,19 @@ export function SessionCard({ session }: { session: PublicSession }) {
   return (
     <article
       className={cn(
-        "group relative flex overflow-hidden rounded-2xl bg-card shadow-[0_8px_24px_-12px_oklch(28%_0.13_264/0.35)] transition-[transform,box-shadow] duration-[var(--dur-short)] ease-[var(--ease-out)] hover:-translate-y-0.5 hover:shadow-[0_14px_28px_-12px_oklch(28%_0.13_264/0.45)] focus-within:ring-[3px] focus-within:ring-ring motion-reduce:transition-none motion-reduce:hover:translate-y-0",
+        "group relative flex overflow-hidden rounded-2xl bg-card shadow-ticket transition-[transform,box-shadow] duration-[var(--dur-short)] ease-[var(--ease-out)] hover:-translate-y-0.5 hover:shadow-ticket-hover focus-within:ring-[3px] focus-within:ring-ring motion-reduce:transition-none motion-reduce:hover:translate-y-0",
         open ? "border-2 border-navy" : "border-2 border-dashed border-input",
       )}
     >
       <div
         className={cn(
           "flex w-20 shrink-0 flex-col items-center justify-center gap-0.5 px-2 py-4 text-center sm:w-28",
+          large && "md:w-36 md:py-8",
           open ? "bg-navy text-white" : "bg-muted text-muted-foreground",
         )}
       >
         <span className="text-xs font-semibold uppercase tracking-wide">{weekday}</span>
-        <span className="font-display text-5xl font-extrabold italic leading-none tabular-nums sm:text-6xl">{day}</span>
+        <span className={cn("font-display text-5xl font-extrabold italic leading-none tabular-nums sm:text-6xl", large && "md:text-8xl")}>{day}</span>
         <span className="text-xs font-semibold uppercase tracking-wide">{month}</span>
       </div>
       {/* ticket perforation */}
@@ -48,7 +57,7 @@ export function SessionCard({ session }: { session: PublicSession }) {
         <span className="absolute -left-2.5 -top-2.5 size-5 rounded-full bg-background" />
         <span className="absolute -bottom-2.5 -left-2.5 size-5 rounded-full bg-background" />
       </div>
-      <div className="flex min-w-0 flex-1 flex-col gap-2 p-4 sm:p-5">
+      <div className={cn("flex min-w-0 flex-1 flex-col gap-2 p-4 sm:p-5", large && "md:justify-center md:gap-3 md:p-7")}>
         <span
           className={cn(
             "w-fit rounded-full px-2.5 py-0.5 text-xs font-semibold",
@@ -57,14 +66,14 @@ export function SessionCard({ session }: { session: PublicSession }) {
         >
           {open ? t("badge.open") : t("badge.closed")}
         </span>
-        <h3 className="font-display text-2xl font-bold leading-tight tracking-tight [overflow-wrap:anywhere]">
+        <Heading className={cn("font-display text-2xl font-bold leading-tight tracking-tight [overflow-wrap:anywhere]", large && "md:text-4xl")}>
           <Link
             href={`/sessions/${session.id}`}
             className="outline-none after:absolute after:inset-0 after:content-[''] group-hover:text-accent-text"
           >
             {session.title}
           </Link>
-        </h3>
+        </Heading>
         <p className="text-sm text-muted-foreground [overflow-wrap:anywhere]">
           {formatTime(session.startsAt, locale)} – {formatTime(session.endsAt, locale)} · {session.location}
         </p>

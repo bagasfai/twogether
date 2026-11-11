@@ -4,9 +4,8 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-@custom-variant dark (&:is(.dark *));
-
 :root {
+  color-scheme: light;
   --radius: 1rem;
   /* Sky-blue court palette, sampled from public/brand/jakbar-twogether.jpeg */
   --navy: oklch(28% 0.13 264);
@@ -61,44 +60,6 @@
   --dur-long: 420ms;
 }
 
-.dark {
-  --background: oklch(18% 0.06 265);
-  --foreground: oklch(95% 0.012 240);
-  --card: oklch(22% 0.07 265);
-  --card-foreground: oklch(95% 0.012 240);
-  --popover: oklch(22% 0.07 265);
-  --popover-foreground: oklch(95% 0.012 240);
-  --primary: oklch(95% 0.012 240);
-  --primary-foreground: oklch(22% 0.08 265);
-  --secondary: oklch(28% 0.07 265);
-  --secondary-foreground: oklch(95% 0.012 240);
-  --muted: oklch(28% 0.07 265);
-  --muted-foreground: oklch(72% 0.04 250);
-  --accent: oklch(32% 0.09 262);
-  --accent-foreground: oklch(95% 0.012 240);
-  --destructive: oklch(66% 0.19 25);
-  --border: oklch(95% 0.012 240 / 14%);
-  --input: oklch(95% 0.012 240 / 18%);
-  --ring: oklch(72% 0.15 245);
-  --success: oklch(66% 0.13 150);
-  --success-foreground: oklch(18% 0.06 265);
-  --warning: oklch(84% 0.15 88);
-  --warning-foreground: oklch(18% 0.06 265);
-  --chart-1: oklch(72% 0.15 245);
-  --chart-2: oklch(66% 0.13 150);
-  --chart-3: oklch(84% 0.15 88);
-  --chart-4: oklch(66% 0.19 25);
-  --chart-5: oklch(72% 0.04 250);
-  --sidebar: oklch(22% 0.07 265);
-  --sidebar-foreground: oklch(95% 0.012 240);
-  --sidebar-primary: oklch(72% 0.15 245);
-  --sidebar-primary-foreground: oklch(18% 0.06 265);
-  --sidebar-accent: oklch(28% 0.07 265);
-  --sidebar-accent-foreground: oklch(95% 0.012 240);
-  --sidebar-border: oklch(95% 0.012 240 / 14%);
-  --sidebar-ring: oklch(72% 0.15 245);
-}
-
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -141,6 +102,11 @@
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
+  --shadow-card: 0 6px 20px -12px oklch(28% 0.13 264 / 0.35);
+  --shadow-ticket: 0 8px 24px -12px oklch(28% 0.13 264 / 0.35);
+  --shadow-ticket-hover: 0 14px 28px -12px oklch(28% 0.13 264 / 0.45);
+  --shadow-bar: 0 8px 20px -10px oklch(28% 0.13 264 / 0.6);
+  --shadow-float: 0 24px 48px -16px oklch(20% 0.13 264 / 0.65);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -182,12 +148,13 @@
   }
 }
 
-/* Court-vinyl field used by marketing heroes: light sun flare to deep sky. */
+/* Court-vinyl field used by marketing heroes: a soft sun flare that stays dark
+   enough for white text (every stop is at least 4.5:1 against #fff). */
 .court-field {
   background-color: var(--sky-deep);
   background-image:
-    radial-gradient(60rem 28rem at 88% -8%, oklch(78% 0.12 238 / 0.9), transparent 70%),
-    linear-gradient(165deg, oklch(57% 0.18 252) 0%, var(--sky-deep) 100%);
+    radial-gradient(60rem 28rem at 88% -8%, oklch(56% 0.17 246 / 0.9), transparent 70%),
+    linear-gradient(165deg, oklch(54% 0.18 252) 0%, var(--sky-deep) 100%);
 }
 
 /* One authored moment: the shuttlecocks drift in once on load. */
@@ -228,6 +195,14 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .shuttle-drift {
+    animation: none;
+  }
+  .disclosure::details-content {
+    transition:
+      opacity var(--dur-short) linear,
+      content-visibility var(--dur-short) allow-discrete;
+  }
   *,
   *::before,
   *::after {

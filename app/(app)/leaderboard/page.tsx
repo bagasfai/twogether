@@ -16,7 +16,7 @@ export default async function LeaderboardPage() {
       {rows.length === 0 ? (
         <p className="text-sm text-muted-foreground">No completed games yet.</p>
       ) : (
-        <div className="rounded-2xl border bg-card p-2 shadow-[0_6px_20px_-12px_oklch(28%_0.13_264/0.35)]">
+        <div className="rounded-2xl border bg-card p-2 shadow-card">
         <Table>
           <TableHeader>
             <TableRow>

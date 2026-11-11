@@ -21,6 +21,8 @@ export function isProtected(pathname: string): boolean {
   if (pathname === "/profile" || pathname.startsWith("/profile/")) return true;
   if (pathname === "/sessions/new") return true;
   if (/^\/sessions\/[^/]+\/manage$/.test(pathname)) return true;
+  // /admin was previously unlisted; the report pages and CSV export live here.
+  if (pathname === "/admin" || pathname.startsWith("/admin/")) return true;
   return false;
 }
 

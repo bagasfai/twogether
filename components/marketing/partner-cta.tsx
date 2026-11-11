@@ -5,17 +5,13 @@ import { Button } from "@/components/ui/button";
 export async function PartnerCta() {
   const t = await getTranslations("home");
   return (
-    <section className="bg-navy py-14 text-white">
-      <div className="mx-auto flex max-w-5xl flex-col items-start gap-4 px-6">
-        <h2 className="font-display text-4xl font-extrabold uppercase italic leading-none tracking-tight text-balance sm:text-5xl">
-          {t("partnerCtaTitle")}
-        </h2>
-        <p className="max-w-[52ch] text-base">{t("partnerCtaBody")}</p>
-        <Button
-          asChild
-          size="lg"
-          className="bg-cork text-navy hover:bg-cork/90 focus-visible:ring-white"
-        >
+    <section className="border-t-2 border-border py-10">
+      <div className="mx-auto flex max-w-5xl flex-col gap-4 px-6 md:flex-row md:items-center md:justify-between md:gap-8">
+        <div className="flex max-w-[60ch] flex-col gap-1">
+          <h2 className="font-display text-2xl font-bold leading-tight text-balance">{t("partnerCtaTitle")}</h2>
+          <p className="text-base text-muted-foreground">{t("partnerCtaBody")}</p>
+        </div>
+        <Button asChild variant="outline" size="lg" className="w-fit shrink-0 border-2 border-navy">
           <Link href="/partner">{t("partnerCtaButton")}</Link>
         </Button>
       </div>

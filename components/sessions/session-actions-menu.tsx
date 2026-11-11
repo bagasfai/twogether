@@ -105,7 +105,7 @@ export function SessionActionsMenu({
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button size="sm" variant="outline">
+          <Button size="sm" variant="outline" className="h-11 md:h-9">
             Actions
           </Button>
         </DropdownMenuTrigger>

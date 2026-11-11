@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
+import { onRosterChanged } from "@/lib/sessions/roster-changed";
 import type { PublicRosterEntry } from "@/lib/dal/participants";
 import type { Database } from "@/types/supabase";
 
@@ -45,26 +46,33 @@ export function RegisteredParticipants({ sessionId }: { sessionId: string }) {
   useEffect(() => {
     let cancelled = false;
 
-    fetch(`/api/sessions/${sessionId}/participants`)
-      .then(async (response) => {
-        if (cancelled) return;
-        if (response.status === 401) {
-          setState({ kind: "anonymous" });
-          return;
-        }
-        const body: unknown = await response.json();
-        if (!isParticipantsResponse(body) || !body.participants) {
-          setState({ kind: "ready", entries: [] });
-          return;
-        }
-        setState({ kind: "ready", entries: body.participants });
-      })
-      .catch(() => {
-        if (!cancelled) setState({ kind: "ready", entries: [] });
-      });
+    const load = () =>
+      fetch(`/api/sessions/${sessionId}/participants`)
+        .then(async (response) => {
+          if (cancelled) return;
+          if (response.status === 401) {
+            setState({ kind: "anonymous" });
+            return;
+          }
+          const body: unknown = await response.json();
+          if (cancelled) return;
+          if (!isParticipantsResponse(body) || !body.participants) {
+            setState({ kind: "ready", entries: [] });
+            return;
+          }
+          setState({ kind: "ready", entries: body.participants });
+        })
+        .catch(() => {
+          if (!cancelled) setState({ kind: "ready", entries: [] });
+        });
+
+    load();
+    // refetch without flashing the skeleton -- the old list stays until the new one lands
+    const unsubscribe = onRosterChanged(sessionId, load);
 
     return () => {
       cancelled = true;
+      unsubscribe();
     };
   }, [sessionId]);
 
