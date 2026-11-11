@@ -59,7 +59,13 @@ export function AvatarUploader({ userId, name, initialUrl }: AvatarUploaderProps
         return;
       }
 
-      const result = await setAvatar({ ext: encoded.ext, version: Date.now() });
+      let result;
+      try {
+        result = await setAvatar({ ext: encoded.ext, version: Date.now() });
+      } catch {
+        toast.error("Couldn't save your photo. Try again.");
+        return;
+      }
       if (!result.ok) {
         toast.error(result.message);
         return;
@@ -117,7 +123,7 @@ export function AvatarUploader({ userId, name, initialUrl }: AvatarUploaderProps
         </Button>
         {url ? (
           <Button type="button" variant="ghost" disabled={busy} onClick={onRemove}>
-            Remove photo
+            {pending ? "Removing…" : "Remove photo"}
           </Button>
         ) : null}
       </div>

@@ -42,6 +42,9 @@ describe("isAllowedAvatarSrc", () => {
     ["javascript url", "javascript:alert(1)"],
     ["malformed", "not a url"],
     ["empty", ""],
+    ["userinfo host trick", "https://lh3.googleusercontent.com@evil.example/"],
+    ["path traversal out of the prefix", `${BASE}/storage/v1/object/public/avatars/../../x`],
+    ["different port on our origin", "https://x.supabase.co:8443/storage/v1/object/public/avatars/u1/avatar.webp"],
   ])("rejects %s", (_label, src) => {
     expect(isAllowedAvatarSrc(src)).toBe(false);
   });

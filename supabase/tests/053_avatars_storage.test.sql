@@ -6,12 +6,13 @@
 -- storage.allow_delete_query = 'true'; it is set below.
 
 begin;
-select plan(22);
+select plan(27);
 
 insert into auth.users (id, email) values
   ('11111111-5353-5353-5353-535353535353', 'a-053@test.local'),
   ('22222222-5353-5353-5353-535353535353', 'b-053@test.local'),
-  ('33333333-5353-5353-5353-535353535353', 'admin-053@test.local');
+  ('33333333-5353-5353-5353-535353535353', 'admin-053@test.local'),
+  ('abcdefab-5353-5353-5353-535353535353', 'c-053@test.local');
 
 update public.profiles set role = 'admin'
  where id = '33333333-5353-5353-5353-535353535353';
@@ -120,12 +121,43 @@ select throws_ok(
 
 select throws_ok(
   $$ insert into storage.objects (bucket_id, name, owner, owner_id)
-     values ('avatars', '22222222-5353-5353-5353-535353535353/avatar.png',
+     values ('avatars', '22222222-5353-5353-5353-535353535353/avatar.webp',
              '11111111-5353-5353-5353-535353535353', '11111111-5353-5353-5353-535353535353') $$,
   '42501',
   null,
   'writing into another user''s folder is denied'
 );
+
+select throws_ok(
+  $$ insert into storage.objects (bucket_id, name, owner, owner_id)
+     values ('avatars', '11111111-5353-5353-5353-535353535353/avatar.webp/x',
+             '11111111-5353-5353-5353-535353535353', '11111111-5353-5353-5353-535353535353') $$,
+  '42501',
+  null,
+  'a path nested below avatar.webp is denied'
+);
+
+select throws_ok(
+  $$ insert into storage.objects (bucket_id, name, owner, owner_id)
+     values ('avatars', '11111111-5353-5353-5353-535353535353/avatar.webpx',
+             '11111111-5353-5353-5353-535353535353', '11111111-5353-5353-5353-535353535353') $$,
+  '42501',
+  null,
+  'a filename that only starts with avatar.webp is denied'
+);
+
+set local request.jwt.claims = '{"sub":"abcdefab-5353-5353-5353-535353535353","role":"authenticated"}';
+
+select throws_ok(
+  $$ insert into storage.objects (bucket_id, name, owner, owner_id)
+     values ('avatars', 'ABCDEFAB-5353-5353-5353-535353535353/avatar.webp',
+             'abcdefab-5353-5353-5353-535353535353', 'abcdefab-5353-5353-5353-535353535353') $$,
+  '42501',
+  null,
+  'an upper-case copy of the own folder is denied'
+);
+
+set local request.jwt.claims = '{"sub":"11111111-5353-5353-5353-535353535353","role":"authenticated"}';
 
 -- ======== UPDATE (upsert overwrite) ========
 
@@ -147,6 +179,24 @@ select results_eq(
      select count(*)::int from u $$,
   $$ values (0) $$,
   'a user cannot overwrite another user''s avatar'
+);
+
+select throws_ok(
+  $$ update storage.objects set name = '22222222-5353-5353-5353-535353535353/avatar.jpg'
+      where bucket_id = 'avatars'
+        and name = '11111111-5353-5353-5353-535353535353/avatar.jpg' $$,
+  '42501',
+  null,
+  'renaming an own object into another user''s folder is denied'
+);
+
+select throws_ok(
+  $$ update storage.objects set name = '11111111-5353-5353-5353-535353535353/x.png'
+      where bucket_id = 'avatars'
+        and name = '11111111-5353-5353-5353-535353535353/avatar.jpg' $$,
+  '42501',
+  null,
+  'renaming an own object to a disallowed filename is denied'
 );
 
 -- ======== SELECT ========

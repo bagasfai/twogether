@@ -26,7 +26,7 @@ function isPublicRosterEntry(value: unknown): value is PublicRosterEntry {
     (PARTICIPANT_STATUSES as readonly string[]).includes(row.status) &&
     typeof row.registeredAt === "string" &&
     (row.fullName === null || typeof row.fullName === "string") &&
-    (row.avatarUrl === null || typeof row.avatarUrl === "string")
+    (row.avatarUrl == null || typeof row.avatarUrl === "string")
   );
 }
 

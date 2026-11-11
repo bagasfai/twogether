@@ -1,6 +1,7 @@
 "use client";
 
 import { UserAvatar } from "@/components/ui/user-avatar";
+import { TeamNames } from "@/components/sessions/team-names";
 import { useMemo, useState, useTransition } from "react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -37,20 +38,6 @@ const STATUS_VARIANT: Record<MatchStatus, "default" | "secondary" | "outline" | 
   completed: "secondary",
   cancelled: "outline",
 };
-
-function TeamNames({ players }: { players: MatchEntry["team1"] }) {
-  return (
-    <span className="inline-flex flex-wrap items-center gap-x-1.5 gap-y-1 align-middle">
-      {players.map((p, i) => (
-        <span key={p.participantId} className="inline-flex items-center gap-1.5">
-          {i > 0 ? <span>&amp;</span> : null}
-          <UserAvatar name={p.fullName} id={p.participantId} src={p.avatarUrl} size="sm" />
-          <span>{p.fullName ?? "Unnamed player"}</span>
-        </span>
-      ))}
-    </span>
-  );
-}
 
 export function MatchPanel({
   sessionId,

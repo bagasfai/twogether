@@ -46,7 +46,6 @@ export async function updateProfile(input: ProfileInput): Promise<ActionResult<n
 }
 
 const AVATAR_BUCKET = "avatars";
-const AVATAR_URL_MARKER = `/storage/v1/object/public/${AVATAR_BUCKET}/`;
 
 export async function setAvatar(
   input: z.input<typeof setAvatarSchema>,
@@ -78,14 +77,13 @@ export async function removeAvatar(): Promise<ActionResult<null>> {
   if (!user) return fail("not_authenticated");
 
   const supabase = await createClient();
-  const { data: row } = await supabase.from("profiles").select("avatar_url").eq("id", user.id).maybeSingle();
-
-  if (row?.avatar_url?.includes(AVATAR_URL_MARKER)) {
-    try {
-      await supabase.storage
-        .from(AVATAR_BUCKET)
-        .remove([avatarObjectPath(user.id, "webp"), avatarObjectPath(user.id, "jpg")]);
-    } catch {}
+  try {
+    const { error: removeError } = await supabase.storage
+      .from(AVATAR_BUCKET)
+      .remove([avatarObjectPath(user.id, "webp"), avatarObjectPath(user.id, "jpg")]);
+    if (removeError) return fail("unknown", "Could not remove your photo.");
+  } catch {
+    return fail("unknown", "Could not remove your photo.");
   }
 
   const { error } = await supabase.from("profiles").update({ avatar_url: null }).eq("id", user.id);

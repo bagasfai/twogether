@@ -88,8 +88,10 @@ describe("UserAvatar", () => {
   });
 
   it("falls back to name for color when id is missing", () => {
-    const a = html({ name: "Ada" });
-    expect(a).toMatch(/bg-[\w-]+/);
+    const cls = (s: string) => s.match(/bg-[\w-]+/)?.[0];
+    const first = cls(html({ name: "Ada" }));
+    expect(first).toBeTruthy();
+    expect(cls(html({ name: "Ada" }))).toBe(first);
   });
 });
 

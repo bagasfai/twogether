@@ -8,7 +8,7 @@ import { avatarColorIndex, getInitials } from "@/lib/avatar/initials";
 import { cn } from "@/lib/utils";
 
 const SIZES = {
-  xs: { px: 20, text: "text-[9px]" },
+  xs: { px: 20, text: "text-[10px]" },
   sm: { px: 28, text: "text-xs" },
   md: { px: 40, text: "text-sm" },
   lg: { px: 96, text: "text-3xl" },
