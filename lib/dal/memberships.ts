@@ -21,6 +21,7 @@ export type AdminMembershipRow = {
   id: string;
   userId: string;
   memberName: string | null;
+  memberAvatarUrl: string | null;
   planName: string | null;
   quotaTotal: number;
   quotaUsed: number;
@@ -84,7 +85,7 @@ export async function listMembershipsForAdmin(): Promise<AdminMembershipRow[]> {
   const { data, error } = await supabase
     .from("memberships")
     .select(
-      "id, user_id, quota_total, started_at, expires_at, cancelled_at, created_at, member:profiles!memberships_user_id_fkey(full_name), plan:membership_plans(name), usages:membership_usages(refunded_at)",
+      "id, user_id, quota_total, started_at, expires_at, cancelled_at, created_at, member:profiles!memberships_user_id_fkey(full_name, avatar_url), plan:membership_plans(name), usages:membership_usages(refunded_at)",
     )
     .order("created_at", { ascending: false });
   if (error) throw error;
@@ -96,6 +97,7 @@ export async function listMembershipsForAdmin(): Promise<AdminMembershipRow[]> {
       id: m.id,
       userId: m.user_id,
       memberName: m.member?.full_name ?? null,
+      memberAvatarUrl: m.member?.avatar_url ?? null,
       planName: m.plan?.name ?? null,
       quotaTotal: m.quota_total,
       quotaUsed,

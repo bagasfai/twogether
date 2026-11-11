@@ -1,5 +1,6 @@
 "use client";
 
+import { UserAvatar } from "@/components/ui/user-avatar";
 import { useMemo, useState, useTransition } from "react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -38,7 +39,17 @@ const STATUS_VARIANT: Record<MatchStatus, "default" | "secondary" | "outline" | 
 };
 
 function TeamNames({ players }: { players: MatchEntry["team1"] }) {
-  return <span>{players.map((p) => p.fullName ?? "Unnamed player").join(" & ")}</span>;
+  return (
+    <span className="inline-flex flex-wrap items-center gap-x-1.5 gap-y-1 align-middle">
+      {players.map((p, i) => (
+        <span key={p.participantId} className="inline-flex items-center gap-1.5">
+          {i > 0 ? <span>&amp;</span> : null}
+          <UserAvatar name={p.fullName} id={p.participantId} src={p.avatarUrl} size="sm" />
+          <span>{p.fullName ?? "Unnamed player"}</span>
+        </span>
+      ))}
+    </span>
+  );
 }
 
 export function MatchPanel({
@@ -207,6 +218,7 @@ export function MatchPanel({
             <ul className="flex flex-col gap-1">
               {rotationQueue.map((p, index) => (
                 <li key={p.participantId} className="flex min-h-11 items-center gap-2 rounded-md px-2">
+                  <UserAvatar name={p.fullName} id={p.participantId} src={p.avatarUrl} size="sm" />
                   <span className="min-w-0 flex-1 text-sm [overflow-wrap:anywhere]">
                     <span className="text-muted-foreground">#{index + 1}</span> {p.fullName ?? "Unnamed player"}
                     <span className="block text-xs text-muted-foreground">{waitLabel(p)}</span>

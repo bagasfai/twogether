@@ -3,6 +3,7 @@
 import { useTransition } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { HoldToConfirmButton } from "@/components/gallery/hold-to-confirm-button";
 import { cancelMembership } from "@/lib/actions/memberships";
@@ -54,7 +55,12 @@ export function MembershipsTable({ memberships }: { memberships: AdminMembership
       <TableBody>
         {memberships.map((m) => (
           <TableRow key={m.id}>
-            <TableCell>{m.memberName ?? "Unnamed player"}</TableCell>
+            <TableCell>
+              <span className="flex min-w-0 items-center gap-2">
+                <UserAvatar name={m.memberName} src={m.memberAvatarUrl} size="sm" />
+                <span className="truncate">{m.memberName ?? "Unnamed player"}</span>
+              </span>
+            </TableCell>
             <TableCell>{m.planName ?? "-"}</TableCell>
             <TableCell>
               {m.quotaUsed} / {m.quotaTotal}

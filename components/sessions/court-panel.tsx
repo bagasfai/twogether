@@ -1,5 +1,6 @@
 "use client";
 
+import { UserAvatar } from "@/components/ui/user-avatar";
 import { useTransition } from "react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -31,8 +32,18 @@ const STATUS_VARIANT: Record<CourtStatus, "default" | "secondary" | "outline"> =
   unavailable: "outline",
 };
 
-function teamNames(players: MatchEntry["team1"]) {
-  return players.map((p) => p.fullName ?? "Unnamed player").join(" & ");
+function TeamNames({ players }: { players: MatchEntry["team1"] }) {
+  return (
+    <span className="inline-flex flex-wrap items-center gap-x-1.5 gap-y-1 align-middle">
+      {players.map((p, i) => (
+        <span key={p.participantId} className="inline-flex items-center gap-1.5">
+          {i > 0 ? <span>&amp;</span> : null}
+          <UserAvatar name={p.fullName} id={p.participantId} src={p.avatarUrl} size="sm" />
+          <span>{p.fullName ?? "Unnamed player"}</span>
+        </span>
+      ))}
+    </span>
+  );
 }
 
 export function CourtPanel({
@@ -115,7 +126,7 @@ export function CourtPanel({
                 {current ? (
                   <p className="text-sm [overflow-wrap:anywhere]">
                     <span className="font-semibold">{current.status === "in_progress" ? "Playing" : "Next"}:</span>{" "}
-                    {teamNames(current.team1)} vs {teamNames(current.team2)}
+                    <TeamNames players={current.team1} /> vs <TeamNames players={current.team2} />
                   </p>
                 ) : null}
               </div>

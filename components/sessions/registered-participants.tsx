@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import { onRosterChanged } from "@/lib/sessions/roster-changed";
 import type { PublicRosterEntry } from "@/lib/dal/participants";
 import type { Database } from "@/types/supabase";
@@ -24,7 +25,8 @@ function isPublicRosterEntry(value: unknown): value is PublicRosterEntry {
     typeof row.status === "string" &&
     (PARTICIPANT_STATUSES as readonly string[]).includes(row.status) &&
     typeof row.registeredAt === "string" &&
-    (row.fullName === null || typeof row.fullName === "string")
+    (row.fullName === null || typeof row.fullName === "string") &&
+    (row.avatarUrl === null || typeof row.avatarUrl === "string")
   );
 }
 
@@ -99,13 +101,19 @@ export function RegisteredParticipants({ sessionId }: { sessionId: string }) {
       <ul className="flex flex-col gap-2">
         {confirmed.map((entry, index) => (
           <li key={index} className="flex items-center justify-between rounded-lg border p-3">
-            <span className="text-sm font-medium">{entry.fullName ?? t("unnamed")}</span>
+            <span className="flex min-w-0 items-center gap-2">
+              <UserAvatar name={entry.fullName} src={entry.avatarUrl} size="sm" />
+              <span className="truncate text-sm font-medium">{entry.fullName ?? t("unnamed")}</span>
+            </span>
             <Badge variant="success">{t("confirmedBadge")}</Badge>
           </li>
         ))}
         {waitlisted.map((entry, index) => (
           <li key={confirmed.length + index} className="flex items-center justify-between rounded-lg border p-3">
-            <span className="text-sm font-medium">{entry.fullName ?? t("unnamed")}</span>
+            <span className="flex min-w-0 items-center gap-2">
+              <UserAvatar name={entry.fullName} src={entry.avatarUrl} size="sm" />
+              <span className="truncate text-sm font-medium">{entry.fullName ?? t("unnamed")}</span>
+            </span>
             <Badge variant="warning">{t("waitlistBadge")}</Badge>
           </li>
         ))}

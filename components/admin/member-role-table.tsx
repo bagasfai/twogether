@@ -1,5 +1,6 @@
 "use client";
 
+import { UserAvatar } from "@/components/ui/user-avatar";
 import { useTransition } from "react";
 import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -39,7 +40,12 @@ export function MemberRoleTable({ members, currentUserId }: { members: MemberRow
       <TableBody>
         {members.map((member) => (
           <TableRow key={member.id}>
-            <TableCell>{member.fullName ?? "Unnamed player"}</TableCell>
+            <TableCell>
+              <span className="flex items-center gap-2">
+                <UserAvatar name={member.fullName} id={member.id} src={member.avatarUrl} size="sm" />
+                <span>{member.fullName ?? "Unnamed player"}</span>
+              </span>
+            </TableCell>
             <TableCell>{formatDate(member.createdAt)}</TableCell>
             <TableCell className="text-right">
               {member.id === currentUserId ? (

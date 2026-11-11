@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { PageTitle, SectionTitle } from "@/components/app/page-title";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import { getAllTimeLeaderboard } from "@/lib/dal/stats";
 import { requireUser } from "@/lib/dal/user";
 
@@ -30,8 +31,13 @@ export default async function LeaderboardPage() {
               <TableRow key={index} className={row.isMe ? "bg-sky-pale font-semibold" : undefined}>
                 <TableCell className="font-display text-xl font-extrabold italic tabular-nums">{row.rank}</TableCell>
                 <TableCell>
-                  {row.name}
-                  {row.isMe ? " (you)" : ""}
+                  <span className="flex items-center gap-2">
+                    <UserAvatar name={row.name} src={row.avatarUrl} size="sm" />
+                    <span>
+                      {row.name}
+                      {row.isMe ? " (you)" : ""}
+                    </span>
+                  </span>
                 </TableCell>
                 <TableCell className="text-right tabular-nums">{row.gamesPlayed}</TableCell>
               </TableRow>

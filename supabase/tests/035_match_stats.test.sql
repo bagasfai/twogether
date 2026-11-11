@@ -136,8 +136,8 @@ select is(
 select is(
   (select proargnames::text from pg_proc
     where proname = 'all_time_leaderboard' and pronamespace = 'public'::regnamespace),
-  '{p_limit,full_name,games_played,is_me}',
-  'leaderboard function returns only name, count and is_me'
+  '{p_limit,full_name,avatar_url,games_played,is_me}',
+  'leaderboard function returns only name, avatar_url, count and is_me'
 );
 
 set local request.jwt.claims = '{"sub":"11111111-1111-1111-1111-111111111112","role":"authenticated"}';

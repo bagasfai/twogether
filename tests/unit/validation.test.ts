@@ -93,13 +93,13 @@ describe("idempotence (parse(parse(x)) === parse(x))", () => {
   });
 
   it("profileSchema round-trips with all optional fields blank", () => {
-    const input = { fullName: "Bagas", phone: "", avatarUrl: "" };
+    const input = { fullName: "Bagas", phone: "" };
     const once = profileSchema.parse(input);
     expect(profileSchema.parse(once)).toEqual(once);
   });
 
   it("profileSchema round-trips with all optional fields filled", () => {
-    const input = { fullName: "Bagas", phone: "+62 812 3456 7890", avatarUrl: "https://example.com/a.png" };
+    const input = { fullName: "Bagas", phone: "+62 812 3456 7890" };
     const once = profileSchema.parse(input);
     expect(profileSchema.parse(once)).toEqual(once);
   });
@@ -134,8 +134,8 @@ describe("idempotence (parse(parse(x)) === parse(x))", () => {
 });
 
 describe("profileSchema", () => {
-  it("accepts a profile with no phone and no avatar", () => {
-    const result = profileSchema.safeParse({ fullName: "Bagas", phone: "", avatarUrl: "" });
+  it("accepts a profile with no phone", () => {
+    const result = profileSchema.safeParse({ fullName: "Bagas", phone: "" });
     expect(result.success).toBe(true);
     if (result.success) expect(result.data.phone).toBeNull();
   });
@@ -144,7 +144,6 @@ describe("profileSchema", () => {
     const result = profileSchema.safeParse({
       fullName: "Bagas",
       phone: "+62 812 3456 7890",
-      avatarUrl: "",
     });
     expect(result.success).toBe(true);
   });
@@ -153,18 +152,18 @@ describe("profileSchema", () => {
     const result = profileSchema.safeParse({
       fullName: "Bagas",
       phone: "call me",
-      avatarUrl: "",
     });
     expect(result.success).toBe(false);
   });
 
-  it("rejects an avatar value that is not a URL", () => {
+  it("drops an avatarUrl key from the parsed output", () => {
     const result = profileSchema.safeParse({
       fullName: "Bagas",
       phone: "",
-      avatarUrl: "not-a-url",
+      avatarUrl: "https://example.com/a.png",
     });
-    expect(result.success).toBe(false);
+    expect(result.success).toBe(true);
+    if (result.success) expect("avatarUrl" in result.data).toBe(false);
   });
 });
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { UserAvatar } from "@/components/ui/user-avatar";
 import { useId, useState, useTransition } from "react";
 import { Check, Ellipsis, Search } from "lucide-react";
 import { toast } from "sonner";
@@ -36,6 +37,7 @@ type Entry = {
   addedBy: string | null;
   consentedAt: string | null;
   fullName: string | null;
+  avatarUrl: string | null;
   isGuest: boolean;
   userId: string | null;
   isPremium: boolean;
@@ -386,7 +388,15 @@ export function RosterTable({
             )}
           >
             <div className="flex items-start justify-between gap-2">
-              <span className="min-w-0 text-base font-semibold [overflow-wrap:anywhere]">{entry.fullName ?? "Unnamed player"}</span>
+              <span className="flex min-w-0 items-center gap-2">
+                <UserAvatar
+                  name={entry.fullName}
+                  id={entry.isGuest ? undefined : (entry.userId ?? undefined)}
+                  src={entry.isGuest ? null : entry.avatarUrl}
+                  size="sm"
+                />
+                <span className="min-w-0 text-base font-semibold [overflow-wrap:anywhere]">{entry.fullName ?? "Unnamed player"}</span>
+              </span>
               <StatusBadge status={entry.status} />
             </div>
             <div className="flex flex-wrap items-center gap-1.5">
@@ -428,7 +438,15 @@ export function RosterTable({
           {visible.map((entry) => (
             <TableRow key={entry.id} className={entry.checkedInAt ? "bg-accent/5" : undefined}>
               <TableCell className="whitespace-normal">
-                <div className="mb-1 font-medium">{entry.fullName ?? "Unnamed player"}</div>
+                <div className="mb-1 flex items-center gap-2 font-medium">
+                  <UserAvatar
+                    name={entry.fullName}
+                    id={entry.isGuest ? undefined : (entry.userId ?? undefined)}
+                    src={entry.isGuest ? null : entry.avatarUrl}
+                    size="sm"
+                  />
+                  <span className="min-w-0">{entry.fullName ?? "Unnamed player"}</span>
+                </div>
                 <PlayerAttributesEditor
                   compact
                   participantId={entry.id}

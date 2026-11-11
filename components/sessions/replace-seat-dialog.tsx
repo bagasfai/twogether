@@ -1,5 +1,6 @@
 "use client";
 
+import { UserAvatar } from "@/components/ui/user-avatar";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -176,7 +177,10 @@ export function ReplaceSeatDialog({
                       selected?.id === member.id ? "bg-accent/15 font-medium" : "hover:bg-muted"
                     }`}
                   >
-                    {member.fullName ?? "Unnamed player"}
+                    <span className="flex items-center gap-2">
+                      <UserAvatar name={member.fullName} id={member.id} src={member.avatarUrl} size="sm" />
+                      <span className="min-w-0">{member.fullName ?? "Unnamed player"}</span>
+                    </span>
                   </button>
                 </li>
               ))}

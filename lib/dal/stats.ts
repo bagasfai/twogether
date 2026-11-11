@@ -8,12 +8,14 @@ export type SessionLeaderboardRow = {
   participantId: string;
   name: string;
   isGuest: boolean;
+  avatarUrl: string | null;
   gamesPlayed: number;
   rank: number;
 };
 
 export type AllTimeLeaderboardRow = {
   name: string;
+  avatarUrl: string | null;
   gamesPlayed: number;
   isMe: boolean;
   rank: number;
@@ -41,7 +43,7 @@ export async function getSessionLeaderboard(
   const ids = counts.flatMap((c) => (c.participant_id ? [c.participant_id] : []));
   const { data: people, error: peopleError } = await supabase
     .from("participants")
-    .select("id, guest_name, profiles!participants_user_id_fkey(full_name)")
+    .select("id, guest_name, profiles!participants_user_id_fkey(full_name, avatar_url)")
     .in("id", ids);
   if (peopleError) throw peopleError;
 
@@ -56,6 +58,7 @@ export async function getSessionLeaderboard(
         participantId: c.participant_id,
         name: isGuest ? displayName(person.guest_name) : displayName(person.profiles?.full_name ?? null),
         isGuest,
+        avatarUrl: isGuest ? null : (person.profiles?.avatar_url ?? null),
         gamesPlayed: c.games_played ?? 0,
       },
     ];
@@ -66,7 +69,7 @@ export async function getSessionLeaderboard(
 }
 
 // Any signed-in member. The RPC is security definer and returns only a display
-// name, a count and is_me; guests are excluded in SQL.
+// name, avatar url, a count and is_me; guests are excluded in SQL.
 export async function getAllTimeLeaderboard(limit = 50): Promise<AllTimeLeaderboardRow[]> {
   const user = await getCurrentUser();
   if (!user) return [];
@@ -78,6 +81,7 @@ export async function getAllTimeLeaderboard(limit = 50): Promise<AllTimeLeaderbo
   return assignRanks(
     (data ?? []).map((row) => ({
       name: row.full_name,
+      avatarUrl: row.avatar_url ?? null,
       gamesPlayed: row.games_played,
       isMe: row.is_me,
     })),

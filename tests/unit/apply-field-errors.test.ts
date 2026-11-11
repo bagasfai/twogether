@@ -14,7 +14,7 @@ function makeForm(values: Record<string, unknown>) {
 
 describe("applyFieldErrors", () => {
   it("sets the first message on a field the form owns", () => {
-    const { form, setError } = makeForm({ fullName: "", phone: "", avatarUrl: "" });
+    const { form, setError } = makeForm({ fullName: "", phone: "" });
 
     applyFieldErrors(form, { fullName: ["Enter your name", "Name is too long"] });
 

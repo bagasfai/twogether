@@ -1,5 +1,6 @@
 "use client";
 
+import { UserAvatar } from "@/components/ui/user-avatar";
 import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
@@ -154,7 +155,10 @@ export function RegisterPanel({
       <ul className="flex flex-col gap-1.5">
         {guests.map((guest) => (
           <li key={guest.id} className="flex flex-wrap items-center gap-2 text-sm">
-            <span className="font-medium">{guest.guestName}</span>
+            <span className="flex items-center gap-2">
+              <UserAvatar name={guest.guestName} size="sm" />
+              <span className="font-medium">{guest.guestName}</span>
+            </span>
             {guest.status === "confirmed" ? (
               <Badge variant="success">{t("confirmed")}</Badge>
             ) : (

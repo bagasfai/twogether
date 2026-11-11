@@ -26,6 +26,18 @@ describe("light theme contrast", () => {
     expect(ratio(fg, bg)).toBeGreaterThanOrEqual(4.5);
   });
 
+  const avatarPairs: [string, string][] = [
+    ["primary-foreground", "primary"],
+    ["primary-foreground", "sky-deep"],
+    ["success-foreground", "success-text"],
+    ["primary-foreground", "destructive-text"],
+    ["primary-foreground", "muted-foreground"],
+    ["foreground", "cork"],
+  ];
+  it.each(avatarPairs)("avatar %s on %s >= 4.5", (fg, bg) => {
+    expect(ratio(fg, bg)).toBeGreaterThanOrEqual(4.5);
+  });
+
   it("success-text on success badge tint >= 4.5", () => {
     const bg = toRgb(root["background"]);
     const tint = blend(toRgb(root["success"]), bg, 0.15);

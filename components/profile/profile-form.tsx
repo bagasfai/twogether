@@ -102,19 +102,6 @@ export function ProfileForm({ defaultValues }: { defaultValues: ProfileFormValue
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="avatarUrl"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Avatar URL</FormLabel>
-                  <FormControl>
-                    <Input type="url" {...field} value={field.value ?? ""} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
             {form.formState.errors.root ? (
               <p ref={rootErrorRef} role="alert" tabIndex={-1} className="text-sm text-destructive-text outline-none">{form.formState.errors.root.message}</p>
             ) : null}

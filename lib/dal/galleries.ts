@@ -35,6 +35,7 @@ export type GalleryPhotoRow = {
   caption: string | null;
   status: PhotoStatus;
   uploaderName: string | null;
+  uploaderAvatarUrl: string | null;
   createdAt: string;
 };
 
@@ -163,7 +164,7 @@ export async function getPublicInventory(): Promise<{ albums: number; photos: nu
 }
 
 const PHOTO_COLUMNS =
-  "id, gallery_id, storage_path, caption, status, created_at, uploader:profiles!gallery_photos_uploaded_by_fkey(full_name)";
+  "id, gallery_id, storage_path, caption, status, created_at, uploader:profiles!gallery_photos_uploaded_by_fkey(full_name, avatar_url)";
 
 type PhotoQueryRow = {
   id: string;
@@ -172,7 +173,7 @@ type PhotoQueryRow = {
   caption: string | null;
   status: PhotoStatus;
   created_at: string;
-  uploader: { full_name: string | null } | null;
+  uploader: { full_name: string | null; avatar_url: string | null } | null;
 };
 
 function toPhotoRow(row: PhotoQueryRow): GalleryPhotoRow {
@@ -183,6 +184,7 @@ function toPhotoRow(row: PhotoQueryRow): GalleryPhotoRow {
     caption: row.caption,
     status: row.status,
     uploaderName: row.uploader?.full_name ?? null,
+    uploaderAvatarUrl: row.uploader?.avatar_url ?? null,
     createdAt: row.created_at,
   };
 }

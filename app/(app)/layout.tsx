@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import Image from "next/image";
 import Link from "next/link";
 import { House } from "lucide-react";
@@ -61,6 +62,13 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
               </span>
             </Link>
             <div className="ml-auto flex min-w-0 items-center gap-3 text-sm">
+              <UserAvatar
+                name={user.fullName ?? user.email}
+                id={user.id}
+                src={user.avatarUrl}
+                size="sm"
+                decorative={false}
+              />
               <span className="hidden truncate text-white/85 sm:inline">
                 {user.fullName ?? user.email}
               </span>

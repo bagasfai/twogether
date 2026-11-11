@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { profileSchema } from "@/lib/validation/profile";
 
-const validProfile = { fullName: "Bagas", phone: "", avatarUrl: "" };
+const validProfile = { fullName: "Bagas", phone: "" };
 
 describe("profileSchema gender", () => {
   it.each(["male", "female"])("accepts %s", (gender) => {

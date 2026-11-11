@@ -73,6 +73,7 @@ export type PublicRosterEntry = {
   status: ParticipantStatus;
   registeredAt: string;
   fullName: string | null;
+  avatarUrl: string | null;
 };
 
 // waitlist_position_of() exists in the database but EXECUTE is revoked from
@@ -356,7 +357,7 @@ export async function listPublicRoster(
   const { data, error } = await supabase
     .from("participants")
     .select(
-      "status, registered_at, guest_name, profiles!participants_user_id_fkey(full_name)",
+      "status, registered_at, guest_name, profiles!participants_user_id_fkey(full_name, avatar_url)",
     )
     .eq("session_id", sessionId)
     .neq("status", "cancelled")
@@ -368,6 +369,7 @@ export async function listPublicRoster(
     status: row.status,
     registeredAt: row.registered_at,
     fullName: row.profiles?.full_name ?? row.guest_name,
+    avatarUrl: row.profiles?.avatar_url ?? null,
   }));
 }
 

@@ -1209,6 +1209,7 @@ export type Database = {
       all_time_leaderboard: {
         Args: { p_limit?: number }
         Returns: {
+          avatar_url: string
           full_name: string
           games_played: number
           is_me: boolean

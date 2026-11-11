@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import { HoldToConfirmButton } from "@/components/gallery/hold-to-confirm-button";
 import { formatPhotoTime } from "@/components/gallery/shared";
 import { reviewGalleryPhoto } from "@/lib/actions/galleries";
@@ -85,7 +86,10 @@ export function ReviewQueue({
                   />
                 </div>
                 <div className="flex min-w-0 flex-col gap-0.5">
-                  <span className="truncate text-sm font-medium">{photo.uploaderName ?? "Unknown"}</span>
+                  <span className="flex min-w-0 items-center gap-2">
+                    <UserAvatar name={photo.uploaderName} src={photo.uploaderAvatarUrl} size="xs" />
+                    <span className="truncate text-sm font-medium">{photo.uploaderName ?? "Unknown"}</span>
+                  </span>
                   {albumTitles?.[photo.galleryId] ? (
                     <span className="truncate text-xs text-muted-foreground">
                       in {albumTitles[photo.galleryId]}

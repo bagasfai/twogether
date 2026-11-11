@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { SessionLeaderboardRow } from "@/lib/dal/stats";
 
@@ -27,6 +28,7 @@ export function SessionLeaderboard({ rows }: { rows: SessionLeaderboardRow[] }) 
                   <TableCell>{row.rank}</TableCell>
                   <TableCell>
                     <span className="flex items-center gap-2">
+                      <UserAvatar name={row.name} src={row.avatarUrl} size="sm" />
                       {row.name}
                       {row.isGuest ? <Badge variant="outline">Guest</Badge> : null}
                     </span>
