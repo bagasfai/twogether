@@ -5,6 +5,7 @@ import Link from "next/link";
 import { House } from "lucide-react";
 import { requireUser } from "@/lib/dal/user";
 import { SkipLink } from "@/components/skip-link";
+import { appNavItems } from "@/lib/nav/app-nav-items";
 import { NavLinks } from "@/components/nav/nav-links";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 
@@ -28,16 +29,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   // exact destination in that rare case is an acceptable, honestly-documented
   // trade-off rather than a bug to silently paper over.
   const user = await requireUser("/dashboard");
-  const canHost = user.role === "host" || user.role === "admin";
-
-  const navItems = [
-    { href: "/sessions", label: "Sessions" },
-    { href: "/history", label: "History" },
-    { href: "/leaderboard", label: "Leaderboard" },
-    ...(canHost ? [{ href: "/sessions/new", label: "New session" }] : []),
-    { href: "/profile", label: "Profile" },
-    ...(user.role === "admin" ? [{ href: "/admin", label: "Admin" }] : []),
-  ];
+  const navItems = appNavItems(user.role);
 
   return (
     <div className="flex flex-1 flex-col">

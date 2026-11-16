@@ -8,6 +8,7 @@ export const DISALLOWED_PATHS = [
   "/admin",
   "/history",
   "/leaderboard",
+  "/hosted",
   "/login",
   "/signup",
   "/auth",
