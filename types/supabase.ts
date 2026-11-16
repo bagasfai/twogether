@@ -190,6 +190,63 @@ export type Database = {
           },
         ]
       }
+      email_outbox: {
+        Row: {
+          attempts: number
+          claimed_at: string | null
+          created_at: string
+          dedupe_key: string | null
+          id: string
+          last_error: string | null
+          payload: Json
+          sent_at: string | null
+          session_id: string
+          type: Database["public"]["Enums"]["email_type"]
+          user_id: string
+        }
+        Insert: {
+          attempts?: number
+          claimed_at?: string | null
+          created_at?: string
+          dedupe_key?: string | null
+          id?: string
+          last_error?: string | null
+          payload?: Json
+          sent_at?: string | null
+          session_id: string
+          type: Database["public"]["Enums"]["email_type"]
+          user_id: string
+        }
+        Update: {
+          attempts?: number
+          claimed_at?: string | null
+          created_at?: string
+          dedupe_key?: string | null
+          id?: string
+          last_error?: string | null
+          payload?: Json
+          sent_at?: string | null
+          session_id?: string
+          type?: Database["public"]["Enums"]["email_type"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_outbox_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_outbox_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       faq_items: {
         Row: {
           answer_en: string
@@ -878,6 +935,7 @@ export type Database = {
         Row: {
           avatar_url: string | null
           created_at: string
+          email_reminders: boolean
           full_name: string | null
           id: string
           role: Database["public"]["Enums"]["user_role"]
@@ -886,6 +944,7 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           created_at?: string
+          email_reminders?: boolean
           full_name?: string | null
           id: string
           role?: Database["public"]["Enums"]["user_role"]
@@ -894,6 +953,7 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           created_at?: string
+          email_reminders?: boolean
           full_name?: string | null
           id?: string
           role?: Database["public"]["Enums"]["user_role"]
@@ -1227,6 +1287,28 @@ export type Database = {
       cancel_registration: {
         Args: { p_session_id: string }
         Returns: undefined
+      }
+      claim_email_outbox: {
+        Args: { p_limit: number }
+        Returns: {
+          attempts: number
+          claimed_at: string | null
+          created_at: string
+          dedupe_key: string | null
+          id: string
+          last_error: string | null
+          payload: Json
+          sent_at: string | null
+          session_id: string
+          type: Database["public"]["Enums"]["email_type"]
+          user_id: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "email_outbox"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
       complete_match: {
         Args: { p_match_id: string }
@@ -1611,6 +1693,15 @@ export type Database = {
     }
     Enums: {
       court_status: "idle" | "in_use" | "unavailable"
+      email_type:
+        | "registration_confirmed"
+        | "registration_waitlisted"
+        | "registration_cancelled"
+        | "waitlist_promoted"
+        | "bumped"
+        | "session_cancelled"
+        | "session_changed"
+        | "session_reminder"
       featured_post_kind: "schedule" | "match" | "video" | "other"
       gallery_photo_status: "pending" | "approved"
       gender: "male" | "female"
@@ -1767,6 +1858,16 @@ export const Constants = {
   public: {
     Enums: {
       court_status: ["idle", "in_use", "unavailable"],
+      email_type: [
+        "registration_confirmed",
+        "registration_waitlisted",
+        "registration_cancelled",
+        "waitlist_promoted",
+        "bumped",
+        "session_cancelled",
+        "session_changed",
+        "session_reminder",
+      ],
       featured_post_kind: ["schedule", "match", "video", "other"],
       gallery_photo_status: ["pending", "approved"],
       gender: ["male", "female"],
@@ -1791,3 +1892,8 @@ export const Constants = {
     },
   },
 } as const
+Connecting to db 5432
+(node:1) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [BoundPool]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(Use `node --trace-warnings ...` to show where the warning was created)
+A new version of Supabase CLI is available: v3.1.0 (currently installed v2.117.0)
+We recommend updating regularly for new features and bug fixes: https://supabase.com/docs/guides/cli/getting-started#updating-the-supabase-cli
