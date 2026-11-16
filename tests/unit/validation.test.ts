@@ -165,6 +165,21 @@ describe("profileSchema", () => {
     expect(result.success).toBe(true);
     if (result.success) expect("avatarUrl" in result.data).toBe(false);
   });
+
+  it("accepts emailReminders false", () => {
+    const parsed = profileSchema.parse({ fullName: "Budi", phone: "", emailReminders: false });
+    expect(parsed.emailReminders).toBe(false);
+  });
+
+  it("leaves emailReminders undefined when omitted", () => {
+    const parsed = profileSchema.parse({ fullName: "Budi", phone: "" });
+    expect(parsed.emailReminders).toBeUndefined();
+  });
+
+  it("rejects a non-boolean emailReminders", () => {
+    const result = profileSchema.safeParse({ fullName: "Budi", phone: "", emailReminders: "yes" });
+    expect(result.success).toBe(false);
+  });
 });
 
 describe("sessionSchema", () => {

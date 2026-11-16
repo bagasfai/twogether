@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, useFocusFormError, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { updateProfile } from "@/lib/actions/profile";
 import { profileSchema, type ProfileInput } from "@/lib/validation/profile";
@@ -99,6 +100,21 @@ export function ProfileForm({ defaultValues }: { defaultValues: ProfileFormValue
                   </Select>
                   <FormDescription>Used by hosts to balance matches.</FormDescription>
                   <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="emailReminders"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between gap-4">
+                  <div className="space-y-1">
+                    <FormLabel>Email pengingat sesi</FormLabel>
+                    <FormDescription>Dikirim sehari sebelum sesi yang kamu ikuti.</FormDescription>
+                  </div>
+                  <FormControl>
+                    <Switch checked={field.value ?? true} onCheckedChange={field.onChange} />
+                  </FormControl>
                 </FormItem>
               )}
             />

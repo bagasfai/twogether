@@ -11,6 +11,7 @@ export type MyProfile = {
   avatarUrl: string | null;
   phone: string | null;
   gender: Gender | null;
+  emailReminders: boolean;
   role: Role;
 };
 
@@ -28,12 +29,19 @@ export async function getMyProfile(): Promise<MyProfile | null> {
     .eq("user_id", user.id)
     .maybeSingle();
 
+  const { data: prefs } = await supabase
+    .from("profiles")
+    .select("email_reminders")
+    .eq("id", user.id)
+    .maybeSingle();
+
   return {
     id: user.id,
     fullName: user.fullName,
     avatarUrl: user.avatarUrl,
     phone: data?.phone ?? null,
     gender: data?.gender ?? null,
+    emailReminders: prefs?.email_reminders ?? true,
     role: user.role,
   };
 }

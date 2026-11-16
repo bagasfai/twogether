@@ -23,7 +23,10 @@ export async function updateProfile(input: ProfileInput): Promise<ActionResult<n
   // eq() filter.
   const { error: profileError } = await supabase
     .from("profiles")
-    .update({ full_name: parsed.data.fullName })
+    .update({
+      full_name: parsed.data.fullName,
+      ...(parsed.data.emailReminders !== undefined ? { email_reminders: parsed.data.emailReminders } : {}),
+    })
     .eq("id", user.id);
 
   if (profileError) return fail("unknown", "Could not save your profile.");

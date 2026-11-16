@@ -20,6 +20,7 @@ export default async function ProfilePage() {
           fullName: profile.fullName ?? "",
           phone: profile.phone ?? "",
           gender: profile.gender ?? undefined,
+          emailReminders: profile.emailReminders,
         }}
       />
     </div>

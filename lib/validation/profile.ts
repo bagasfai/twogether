@@ -7,6 +7,7 @@ export const profileSchema = z.object({
   phone: optionalPhone,
   // Omitted means "leave the stored value alone"; there is no clear-to-null.
   gender: z.enum(GENDERS).optional(),
+  emailReminders: z.boolean().optional(),
 });
 
 export type ProfileInput = z.infer<typeof profileSchema>;
