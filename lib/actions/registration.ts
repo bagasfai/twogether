@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/dal/user";
+import { scheduleEmailDrain } from "@/lib/email/schedule-drain";
 import { fail,failFromRpc, failFromZod, ok, type ActionResult } from "@/lib/actions/result";
 import { cancelGuestRegistrationSchema, registerGuestSchema } from "@/lib/validation/participants";
 
@@ -31,6 +32,8 @@ export async function registerForSession(sessionId: string): Promise<ActionResul
     return fail("unknown");
   }
 
+  // Emails are queued by database triggers and drained after the response.
+  scheduleEmailDrain();
   // The public session page shows capacity, not a live count, so it is not
   // revalidated here -- doing so on every registration would invalidate the ISR
   // cache continuously during a rush.
@@ -52,6 +55,7 @@ export async function cancelRegistration(sessionId: string): Promise<ActionResul
 
   if (error) return failFromRpc(error);
 
+  scheduleEmailDrain();
   revalidatePath("/dashboard");
   return ok(null);
 }
@@ -86,6 +90,7 @@ export async function registerGuestForSession(
     return fail("unknown");
   }
 
+  scheduleEmailDrain();
   revalidatePath("/dashboard");
 
   return ok({ status, waitlistPosition: data?.waitlist_position ?? null });
@@ -112,6 +117,7 @@ export async function cancelGuestRegistration(
 
   if (error) return failFromRpc(error);
 
+  scheduleEmailDrain();
   revalidatePath("/dashboard");
   return ok(null);
 }
@@ -130,6 +136,7 @@ export async function confirmParticipation(sessionId: string): Promise<ActionRes
 
   if (error) return failFromRpc(error);
 
+  scheduleEmailDrain();
   revalidatePath("/dashboard");
   return ok(null);
 }

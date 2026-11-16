@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/dal/user";
+import { scheduleEmailDrain } from "@/lib/email/schedule-drain";
 import { searchAddableMembers, type AddableMember } from "@/lib/dal/participants";
 import { fail, failFromRpc, failFromZod, ok, type ActionResult } from "@/lib/actions/result";
 import {
@@ -44,6 +45,7 @@ export async function setParticipantStatus(
 
   if (error) return failFromRpc(error);
 
+  scheduleEmailDrain();
   revalidatePath(`/sessions/${parsed.data.sessionId}/manage`);
   revalidatePath("/dashboard");
   return ok(null);
@@ -190,6 +192,7 @@ export async function hostAddParticipant(
 
   if (error) return failFromRpc(error);
 
+  scheduleEmailDrain();
   revalidatePath(`/sessions/${parsed.data.sessionId}/manage`);
   return ok(null);
 }

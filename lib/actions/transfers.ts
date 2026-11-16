@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/dal/user";
+import { scheduleEmailDrain } from "@/lib/email/schedule-drain";
 import { fail, failFromRpc, failFromZod, ok, type ActionResult } from "@/lib/actions/result";
 import { transferSeatSchema } from "@/lib/validation/drilling";
 
@@ -38,6 +39,7 @@ export async function transferSeat(
 
   if (error) return failFromRpc(error);
 
+  scheduleEmailDrain();
   if (row?.session_id) revalidatePath(`/sessions/${row.session_id}/manage`);
   revalidatePath("/dashboard");
   return ok(null);

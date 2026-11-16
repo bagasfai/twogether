@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/dal/user";
+import { scheduleEmailDrain } from "@/lib/email/schedule-drain";
 import { sessionSchema, sessionIdSchema, isZonedInstant, type SessionInput } from "@/lib/validation/session";
 import { getHostSession } from "@/lib/dal/sessions";
 import { listRoster } from "@/lib/dal/participants";
@@ -152,6 +153,7 @@ export async function updateSession(id: string, input: SessionInput): Promise<Ac
     return fail("unknown", "Could not update the session.");
   }
 
+  scheduleEmailDrain();
   revalidatePath(`/sessions/${idParsed.data.id}/manage`);
   revalidatePath("/dashboard");
   revalidatePath("/sessions");
@@ -183,6 +185,7 @@ export async function cancelSession(id: string): Promise<ActionResult<null>> {
     return fail("unknown", "Could not cancel the session.");
   }
 
+  scheduleEmailDrain();
   revalidatePath(`/sessions/${idParsed.data.id}/manage`);
   revalidatePath("/dashboard");
   revalidatePath("/sessions");
