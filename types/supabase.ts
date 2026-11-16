@@ -1495,6 +1495,7 @@ export type Database = {
           total_checkins: number
         }[]
       }
+      queue_session_reminders: { Args: never; Returns: number }
       register_for_session: {
         Args: { p_session_id: string }
         Returns: Database["public"]["CompositeTypes"]["registration_result"]
