@@ -17,9 +17,10 @@ type EmailLayoutProps = {
   ctx: EmailContext;
   children?: ReactNode;
   cta?: boolean;
+  footer?: ReactNode;
 };
 
-export function EmailLayout({ preview, heading, name, ctx, children, cta = true }: EmailLayoutProps) {
+export function EmailLayout({ preview, heading, name, ctx, children, cta = true, footer }: EmailLayoutProps) {
   return (
     <Html lang="id">
       <Head />
@@ -46,6 +47,7 @@ export function EmailLayout({ preview, heading, name, ctx, children, cta = true 
               Lihat sesi
             </Button>
           ) : null}
+          {footer}
         </Container>
       </Body>
     </Html>

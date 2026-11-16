@@ -76,6 +76,17 @@ describe("email templates", () => {
     expect(out).toContain("Tidak ingin menerima pengingat?");
   });
 
+  it("session_reminder puts the opt-out line after the summary and button", async () => {
+    const out = await html("session_reminder");
+    const optOut = out.indexOf("Tidak ingin menerima pengingat?");
+    expect(optOut).toBeGreaterThan(out.indexOf("GOR Grogol"));
+    expect(optOut).toBeGreaterThan(out.indexOf("Lihat sesi"));
+  });
+
+  it("bumped includes the formatted start date", async () => {
+    expect(await html("bumped")).toContain("Sabtu, 21 November 2026");
+  });
+
   it("renders without a name", async () => {
     expect(await html("registration_confirmed", { ...ctx, name: null })).toContain("Halo,");
   });
