@@ -166,9 +166,8 @@ select is(
   0, 'raise_never_bumps_anyone: no bumped or cancelled rows');
 reset role;
 select is(
-  (select count(*)::int from public.bump_notifications b
-     join public.participants p on p.id = b.participant_id
-    where p.session_id = 'a4400004-0000-0000-0000-000000000000'),
+  (select count(*)::int from public.email_outbox
+    where type = 'bumped' and session_id = 'a4400004-0000-0000-0000-000000000000'),
   0, 'raise_never_bumps_anyone: no bump notification');
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"00000001-0044-0044-0044-000000000000","role":"authenticated"}';

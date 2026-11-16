@@ -1,7 +1,7 @@
 -- Covers migration 20261028000002_drilling_registration_rules.sql:
 --   * the premium bump target now includes host-added rows and guest rows
 --     (still skips premium and checked-in rows);
---   * bumping a guest row (no account) inserts no bump_notifications row;
+--   * bumping a guest row (no account) queues no bumped email_outbox row;
 --   * re-registration, host re-add and host un-cancel clear replaced_by and
 --     paid_by_user_id.
 
@@ -124,7 +124,7 @@ select is(
   'bump_target_includes_host_added_participant: drilling host-added row bumped'
 );
 select is(
-  (select count(*)::int from public.bump_notifications),
+  (select count(*)::int from public.email_outbox where type = 'bumped'),
   2,
   'bump_target_includes_host_added_participant: members with accounts get notifications'
 );
@@ -146,13 +146,13 @@ select is(
   'bump_target_includes_guest_row: guest row bumped'
 );
 select is(
-  (select count(*)::int from public.bump_notifications
-    where participant_id = 'b4100003-0000-0000-0000-000000000000'),
+  (select count(*)::int from public.email_outbox
+    where type = 'bumped' and session_id = 'a4100003-0000-0000-0000-000000000000'),
   0,
-  'bump_target_includes_guest_row: no bump_notifications row for a guest'
+  'bump_target_includes_guest_row: no bumped email_outbox row for a guest'
 );
 select is(
-  (select count(*)::int from public.bump_notifications),
+  (select count(*)::int from public.email_outbox where type = 'bumped'),
   2,
   'bump_target_includes_guest_row: notification count unchanged'
 );

@@ -11,7 +11,7 @@
 -- participants row is refused by the column-level grant.
 
 begin;
-select plan(39);
+select plan(34);
 
 -- ---------------------------------------------------------------------
 -- admin RPCs: no EXECUTE for anon or PUBLIC
@@ -120,18 +120,7 @@ select ok(not has_table_privilege('authenticated', 'public.membership_usages', '
 select ok(not has_table_privilege('authenticated', 'public.membership_usages', 'delete'),
   'authenticated lacks DELETE on membership_usages');
 
-select ok(not has_table_privilege('anon', 'public.bump_notifications', 'insert'),
-  'anon lacks INSERT on bump_notifications');
-select ok(not has_table_privilege('anon', 'public.bump_notifications', 'update'),
-  'anon lacks UPDATE on bump_notifications');
-select ok(not has_table_privilege('anon', 'public.bump_notifications', 'delete'),
-  'anon lacks DELETE on bump_notifications');
-select ok(not has_table_privilege('authenticated', 'public.bump_notifications', 'insert'),
-  'authenticated lacks INSERT on bump_notifications');
-select ok(not has_table_privilege('authenticated', 'public.bump_notifications', 'update'),
-  'authenticated lacks UPDATE on bump_notifications');
-select ok(not has_table_privilege('authenticated', 'public.bump_notifications', 'delete'),
-  'authenticated lacks DELETE on bump_notifications');
+select hasnt_table('public', 'bump_notifications', 'bump_notifications is gone');
 
 -- ---------------------------------------------------------------------
 -- participants premium columns: not client-writable

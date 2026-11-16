@@ -1,17 +1,17 @@
 -- Premium membership schema, RLS and grants
 -- (docs/superpowers/specs/2026-10-23-premium-membership-design.md, sections 3 and 5).
--- All writes to memberships, membership_usages and bump_notifications are
+-- All writes to memberships and membership_usages are
 -- RPC/trigger only; membership_plans is admin-writable through RLS.
 -- Visibility counts are scoped to this file's fixture ids so rows left in
 -- the local DB by app runs do not turn the suite red.
 
 begin;
-select plan(35);
+select plan(30);
 
 select has_table('public', 'membership_plans', 'membership_plans exists');
 select has_table('public', 'memberships', 'memberships exists');
 select has_table('public', 'membership_usages', 'membership_usages exists');
-select has_table('public', 'bump_notifications', 'bump_notifications exists');
+select hasnt_table('public', 'bump_notifications', 'bump_notifications is gone');
 
 select has_column('public', 'participants', 'is_premium', 'participants.is_premium exists');
 select has_column('public', 'participants', 'membership_id', 'participants.membership_id exists');
@@ -52,9 +52,6 @@ values ('f0000000-4444-4444-4444-444444444444', 'e0000000-4444-4444-4444-4444444
 insert into public.membership_usages (id, membership_id, participant_id)
 values ('a1000000-4444-4444-4444-444444444444', 'c0000000-4444-4444-4444-444444444444',
         'f0000000-4444-4444-4444-444444444444');
-
-insert into public.bump_notifications (id, participant_id)
-values ('a2000000-4444-4444-4444-444444444444', 'f0000000-4444-4444-4444-444444444444');
 
 -- ======== constraints (as superuser) ========
 
@@ -108,16 +105,6 @@ select throws_ok(
 select throws_ok(
   $$ delete from public.membership_usages $$,
   '42501', null, 'member cannot delete membership_usages');
-select throws_ok(
-  $$ insert into public.bump_notifications (participant_id)
-     values ('f0000000-4444-4444-4444-444444444444') $$,
-  '42501', null, 'member cannot insert bump_notifications');
-select throws_ok(
-  $$ update public.bump_notifications set sent_at = now() $$,
-  '42501', null, 'member cannot update bump_notifications');
-select throws_ok(
-  $$ delete from public.bump_notifications $$,
-  '42501', null, 'member cannot delete bump_notifications');
 
 select is(
   (select count(*)::int from public.memberships),
@@ -125,9 +112,6 @@ select is(
 select is(
   (select count(*)::int from public.membership_usages),
   1, 'member sees their own usage');
-select throws_ok(
-  $$ select count(*) from public.bump_notifications $$,
-  '42501', null, 'member has no select on bump_notifications');
 
 select is(
   (select array_agg(name order by name) from public.membership_plans
@@ -182,7 +166,6 @@ set local request.jwt.claims = '{"role":"anon"}';
 select throws_ok($$ select 1 from public.membership_plans $$, '42501', null, 'anon has no access to membership_plans');
 select throws_ok($$ select 1 from public.memberships $$, '42501', null, 'anon has no access to memberships');
 select throws_ok($$ select 1 from public.membership_usages $$, '42501', null, 'anon has no access to membership_usages');
-select throws_ok($$ select 1 from public.bump_notifications $$, '42501', null, 'anon has no access to bump_notifications');
 
 reset role;
 select * from finish();

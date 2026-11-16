@@ -147,7 +147,7 @@ select is(
 select is(public.membership_quota_left('e3300002-0000-0000-0000-000000000000'), 4,
   'premium_takes_free_seat_and_consumes_quota: quota decremented');
 select is(
-  (select count(*)::int from public.bump_notifications),
+  (select count(*)::int from public.email_outbox where type = 'bumped'),
   0,
   'premium_takes_free_seat_and_consumes_quota: no bump on a free seat'
 );
@@ -180,9 +180,9 @@ select is(
   'premium_on_full_session_bumps_last_registered_non_premium: re-stamped 1us before the oldest waiter'
 );
 select is(
-  (select array_agg(participant_id) from public.bump_notifications),
-  array['b3320015-0000-0000-0000-000000000000'::uuid],
-  'premium_on_full_session_bumps_last_registered_non_premium: exactly one bump_notifications row, for B'
+  (select array_agg(user_id) from public.email_outbox where type = 'bumped'),
+  array['00000015-0033-0033-0033-000000000000'::uuid],
+  'premium_on_full_session_bumps_last_registered_non_premium: exactly one bumped email_outbox row, for B'
 );
 select is(
   public.waitlist_position_of('a3300002-0000-0000-0000-000000000000',
@@ -242,9 +242,9 @@ select is(
   'bump_skips_checked_in_and_premium_but_takes_guest: checked-in, premium and older host-added rows stay put'
 );
 select is(
-  (select count(*)::int from public.bump_notifications),
+  (select count(*)::int from public.email_outbox where type = 'bumped'),
   1,
-  'bump_skips_checked_in_and_premium_but_takes_guest: guest bump adds no bump_notifications'
+  'bump_skips_checked_in_and_premium_but_takes_guest: guest bump adds no bumped email_outbox row'
 );
 select is(
   (select count(*)::int from public.participants

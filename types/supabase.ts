@@ -81,42 +81,6 @@ export type Database = {
           },
         ]
       }
-      bump_notifications: {
-        Row: {
-          created_at: string
-          id: string
-          participant_id: string
-          sent_at: string | null
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          participant_id: string
-          sent_at?: string | null
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          participant_id?: string
-          sent_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "bump_notifications_participant_id_fkey"
-            columns: ["participant_id"]
-            isOneToOne: false
-            referencedRelation: "participants"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "bump_notifications_participant_id_fkey"
-            columns: ["participant_id"]
-            isOneToOne: false
-            referencedRelation: "session_games_played"
-            referencedColumns: ["participant_id"]
-          },
-        ]
-      }
       community_about: {
         Row: {
           body_en: string
