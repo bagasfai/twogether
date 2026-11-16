@@ -61,6 +61,7 @@ Copy `.env.example` to `.env.local`. Read local Supabase values with `npx supaba
 | `SUPABASE_SERVICE_ROLE_KEY` | Server-only, bypasses RLS, never expose to the client |
 | `RESEND_API_KEY` | Server-only. Also set on the `send-email` edge function via `supabase secrets set` |
 | `RESEND_EMAIL_DOMAIN` | Verified Resend domain, no scheme. Mail is sent from `no-reply@<domain>` |
+| `CRON_SECRET` | Server-only. Vercel Cron sends it as a bearer token to `/api/cron/email`; unset makes the route answer 401 |
 | `NEXT_PUBLIC_SITE_URL` | Public origin for auth redirects. Must match `supabase/config.toml` `site_url` |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_SECRET` | Google OAuth. Leave blank until credentials exist; provider is disabled in `config.toml` |
 | `PARTNER_INBOX_EMAIL` | Inbox for partner inquiries. Blank skips emailing; inquiries still show in `/admin` |
@@ -117,7 +118,7 @@ The app deploys to Vercel and the backend to Supabase Cloud.
 1. Push all migrations to the hosted project and confirm `types/supabase.ts` matches it.
 2. Deploy the `send-email` edge function (`--no-verify-jwt`) and set its secrets (`RESEND_API_KEY`, `RESEND_EMAIL_DOMAIN`, `SEND_EMAIL_HOOK_SECRET`).
 3. In the Supabase dashboard: enable the Auth Send Email hook, set the Site URL and redirect allow-list, and check the gallery storage bucket.
-4. Set Vercel environment variables to hosted values, including `NEXT_PUBLIC_SITE_URL`. Local values in Production break the build at `/sitemap.xml`.
+4. Set Vercel environment variables to hosted values, including `NEXT_PUBLIC_SITE_URL`. Local values in Production break the build at `/sitemap.xml`. Also set `CRON_SECRET` (any long random string) so the daily email cron in `vercel.json` can authenticate.
 5. Create the first admin (see above).
 
 ## Scope
