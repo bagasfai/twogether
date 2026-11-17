@@ -174,7 +174,9 @@ found by review, triaged, and deliberately left. Verdicts are from the final who
   files without calling `add_gallery_photo` for the whole 7-day window. Each is capped
   at 5 MB by the bucket, but their number is not. The orphan cleanup script above
   reclaims them; a per-user object quota would prevent them.
-- **Owner can delete their approved photo's file.** `gallery_delete` on `storage.objects`
+- **Resolved (`20261117000002_gallery_delete_approved.sql`, covered by
+  `056_gallery_delete_approved.test.sql`): the owner branch of `gallery_delete` excludes files
+  behind an approved row.** Was: owner can delete their approved photo's file. `gallery_delete` on `storage.objects`
   lets the object owner delete regardless of the row's status, so a member can remove
   the file behind an approved photo through the Storage API. The row stays and the
   public tile breaks. Fix: make the owner branch require no approved row at that path.
@@ -274,8 +276,11 @@ found by review, triaged, and deliberately left. Verdicts are from the final who
 - Raising capacity with gapped court numbers leaves the extra court rows above `court_count`
   in place (locked by a test).
 - `JB023` is also raised when the session is not `scheduled`/`live`, even for hosts.
-- **Open: one quota unit can back two premium seats (register, transfer, register, cancel,
-  register).** After a hand-off, `register_for_session` skips `lock_current_membership` while the
+- **Resolved (`20261117000001_premium_handoff_unit.sql`, covered by `055_premium_handoff_unit.test.sql`):
+  the `register_for_session` guard now keys on the row, not `replaced_by`. A live usage on a
+  handed-over or non-premium row is never re-pointed and the registration is non-premium.**
+  Was: one quota unit can back two premium seats (register, transfer, register, cancel,
+  register). After a hand-off, `register_for_session` skips `lock_current_membership` while the
   old row still has `replaced_by` set, so the re-registration is non-premium. But the revive
   clears `replaced_by` (a host un-cancel does too). If the member then cancels from confirmed
   (no refund, because the row is not premium) and registers again, the guard no longer fires,
@@ -285,7 +290,10 @@ found by review, triaged, and deliberately left. Verdicts are from the final who
   `replaced_by`; treat a live usage on a non-premium row as forfeited or funding and never
   re-point it, or check for an active row with `paid_by_user_id = <member>`. Add a pgTAP case
   for the full sequence.
-- **Open: the live/completed waitlist sweep refunds the unit that funds a replacement.** A
+- **Resolved (`20261117000001_premium_handoff_unit.sql`, owner ruling 2026-11-17): the live /
+  completed sweep refunds premium waitlist rows only.** A forfeited unit on a non-premium
+  waitlist row stays forfeited. Was: the live/completed waitlist sweep refunds the unit that
+  funds a replacement. A
   member who re-registers after a hand-off on a full session lands on the waitlist as
   non-premium; when the session goes live or completes, the sweep in `20261023000007` refunds
   every live usage on a waitlisted row regardless of `is_premium`. Restricting that sweep to
@@ -301,6 +309,16 @@ found by review, triaged, and deliberately left. Verdicts are from the final who
   no `JB017`-style guard (host override).
 - `adjust_session_capacity` and `updateSession` do not revalidate the public `/sessions/[id]`
   page that shows `maxParticipants`.
+
+## Test isolation
+
+- **Resolved (2026-11-17): `045` now clears `email_outbox` before its fixtures, and `049` test 14
+  ranks only its own `a4900000-` members.** Was: on a freshly seeded local DB (`supabase db reset`),
+  `045_email_outbox.test.sql` (tests 10, 14) and `049_report_attendance.test.sql` (test 14) fail:
+  seed rows leak in. `claim_email_outbox`
+  also returns the outbox rows the seed's participant inserts queue, and the attendance report
+  ranks seed members. Both tests must scope to their own fixtures (or clear seed rows first).
+  Found 2026-11-17; same failures with and without that day's fixes.
 
 ## Process note
 

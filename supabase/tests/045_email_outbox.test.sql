@@ -27,6 +27,7 @@ select ok(has_function_privilege('service_role', 'public.claim_email_outbox(int)
   'service_role can claim');
 select ok((select relrowsecurity from pg_class where oid = 'public.email_outbox'::regclass), 'RLS enabled');
 
+delete from public.email_outbox;
 insert into public.email_outbox (id, type, user_id, session_id, created_at, sent_at, attempts, claimed_at) values
   ('e4500001-0000-0000-0000-000000000000', 'registration_confirmed', '00000001-0045-0045-0045-000000000000',
    'a4500001-0000-0000-0000-000000000000', now() - interval '5 hours', null, 0, null),

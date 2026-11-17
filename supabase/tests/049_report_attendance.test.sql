@@ -145,7 +145,8 @@ select is(
   0, 'null/null window excludes a session 40 days ago');
 
 select is(
-  (select member_id::text from public.report_attendance('2026-11-01', '2026-11-30') limit 1),
+  (select member_id::text from public.report_attendance('2026-11-01', '2026-11-30')
+    where member_id::text like 'a4900000-%' limit 1),
   'a4900000-0000-0000-0000-000000000003',
   'ordered by attended_count desc');
 
