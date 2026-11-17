@@ -6,6 +6,9 @@ type StubUser = { id: string; email: string };
 function stubClient(users: StubUser[], failingIds: string[] = []) {
   const calls: string[] = [];
   const client: SweepClient = {
+    async deleteGalleriesByTitlePrefix(prefix) {
+      calls.push(`galleries:${prefix}`);
+    },
     async deleteSessionsByTitlePrefix(prefix) {
       calls.push(`sessions:${prefix}`);
     },
@@ -21,7 +24,7 @@ function stubClient(users: StubUser[], failingIds: string[] = []) {
 }
 
 describe("sweepE2eData", () => {
-  it("deletes E2E sessions before any user, and only e2e sink users", async () => {
+  it("deletes E2E galleries and sessions before any user, and only e2e sink users", async () => {
     const { client, calls } = stubClient([
       { id: "seed-1", email: "host@jakbar.local" },
       { id: "e2e-1", email: "delivered+e2e-abc123-host@resend.dev" },
@@ -31,7 +34,7 @@ describe("sweepE2eData", () => {
 
     await sweepE2eData(client);
 
-    expect(calls).toEqual(["sessions:E2E ", "user:e2e-1", "user:e2e-2"]);
+    expect(calls).toEqual(["galleries:E2E ", "sessions:E2E ", "user:e2e-1", "user:e2e-2"]);
   });
 
   it("pages through every user", async () => {
@@ -43,7 +46,7 @@ describe("sweepE2eData", () => {
 
     await sweepE2eData(client);
 
-    expect(calls).toEqual(["sessions:E2E ", "user:u-449"]);
+    expect(calls).toEqual(["galleries:E2E ", "sessions:E2E ", "user:u-449"]);
   });
 
   it("keeps deleting after a failure and throws naming the user it could not delete", async () => {

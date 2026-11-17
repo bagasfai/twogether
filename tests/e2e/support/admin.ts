@@ -127,9 +127,24 @@ export async function createSession(
   return { id: data.id, title };
 }
 
+// guard_court_delete refuses to drop a court with a scheduled or in-progress
+// match, and galleries.session_id is ON DELETE SET NULL, so both go first.
+async function purgeSessions(ids: string[]): Promise<void> {
+  if (ids.length === 0) return;
+  const matches = await admin().from("matches").delete().in("session_id", ids);
+  if (matches.error) throw new Error(`delete matches: ${matches.error.message}`);
+  const galleries = await admin().from("galleries").delete().in("session_id", ids);
+  if (galleries.error) throw new Error(`delete galleries: ${galleries.error.message}`);
+  const sessions = await admin().from("sessions").delete().in("id", ids);
+  if (sessions.error) throw new Error(`delete sessions: ${sessions.error.message}`);
+}
+
 export async function deleteSession(id: string): Promise<void> {
-  const { error } = await admin().from("sessions").delete().eq("id", id);
-  if (error) throw new Error(`deleteSession ${id}: ${error.message}`);
+  try {
+    await purgeSessions([id]);
+  } catch (error) {
+    throw new Error(`deleteSession ${id}: ${error instanceof Error ? error.message : String(error)}`);
+  }
 }
 
 export async function addCheckedInParticipant(sessionId: string, user: TestUser): Promise<void> {
@@ -172,9 +187,14 @@ export async function recoveryLink(email: string): Promise<string> {
 
 function sweepClient(): SweepClient {
   return {
-    async deleteSessionsByTitlePrefix(prefix) {
-      const { error } = await admin().from("sessions").delete().like("title", `${prefix}%`);
+    async deleteGalleriesByTitlePrefix(prefix) {
+      const { error } = await admin().from("galleries").delete().like("title", `${prefix}%`);
       if (error) throw new Error(error.message);
+    },
+    async deleteSessionsByTitlePrefix(prefix) {
+      const { data, error } = await admin().from("sessions").select("id").like("title", `${prefix}%`);
+      if (error) throw new Error(error.message);
+      await purgeSessions((data ?? []).map((row) => row.id));
     },
     listUsers,
     deleteUser,

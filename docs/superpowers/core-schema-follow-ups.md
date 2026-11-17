@@ -111,7 +111,8 @@ found by review, triaged, and deliberately left. Verdicts are from the final who
   hosted project (2026-10-23), but the Auth Send Email hook is not enabled in the dashboard,
   so email confirmation still works only locally through Inbucket. Must be wired before the
   first real user.
-- Google OAuth ships disabled and has never been exercised end to end.
+- Google OAuth is enabled and live in production per the owner (2026-11-17). It still has no
+  automated coverage: the Playwright suite cannot drive a real Google sign-in.
 - No password reset flow exists.
 - ~~No admin UI: roles are changed by seed or by a service-role script.~~ **Resolved**:
   `/admin` (`app/(app)/admin/page.tsx`, gated by the new `requireAdmin`) lists every member
@@ -122,8 +123,17 @@ found by review, triaged, and deliberately left. Verdicts are from the final who
   else's account, which was judged out of scope for a first pass.
 - ~~`host_add_participant` has no UI; it needs a member picker.~~ **Resolved** together with
   the consent fix above — see that entry.
-- No E2E coverage — signup, login, registration and override flows are verified by hand only.
-  The auto-match panel (below) is in the same state: browser-verified by hand on 2026-10-26.
+- ~~No E2E coverage — signup, login, registration and override flows are verified by hand only.
+  The auto-match panel (below) is in the same state: browser-verified by hand on 2026-10-26.~~
+  **Resolved** (2026-11-17): `npm run test:e2e` runs a Playwright suite against the local
+  Supabase stack (`tests/e2e/`, see the README). Covered: login, logout and the protected-route
+  redirect; signup with confirmation by link; password reset; member register, cancel,
+  waitlist and promotion; host session creation, manual add, override past capacity, check-in,
+  cancel player and the member's consent banner; auto-match generate, confirm and the
+  shortfall message. Not covered: Google OAuth, gallery, admin, reports, announcements,
+  drilling sessions and premium. The suite is local only (it refuses a non-local Supabase
+  URL) and no CI workflow runs it yet. Race-safety is still proven by
+  `scripts/test-concurrent-*.sh`, not by this suite.
 
 ## From the gallery work
 

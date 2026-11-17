@@ -7,6 +7,7 @@ export function isE2eEmail(email: string | null | undefined): boolean {
 }
 
 export type SweepClient = {
+  deleteGalleriesByTitlePrefix(prefix: string): Promise<void>;
   deleteSessionsByTitlePrefix(prefix: string): Promise<void>;
   listUsers(page: number, perPage: number): Promise<{ id: string; email?: string | null }[]>;
   deleteUser(id: string): Promise<void>;
@@ -20,6 +21,14 @@ function reason(error: unknown): string {
 
 export async function sweepE2eData(client: SweepClient): Promise<void> {
   const failures: string[] = [];
+
+  // Starting a session creates a gallery with the session's title; deleting
+  // the session only nulls galleries.session_id.
+  try {
+    await client.deleteGalleriesByTitlePrefix(E2E_SESSION_PREFIX);
+  } catch (error) {
+    failures.push(`galleries titled "${E2E_SESSION_PREFIX}%": ${reason(error)}`);
+  }
 
   try {
     await client.deleteSessionsByTitlePrefix(E2E_SESSION_PREFIX);
