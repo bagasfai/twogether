@@ -44,8 +44,10 @@ function makeFakes(opts: {
   sessions?: SessionRow[];
   noEmailFor?: string[];
   sendError?: boolean;
+  sendResult?: (call: number) => { data: unknown; error: unknown };
   claimError?: boolean;
 }) {
+  const db = { now: Date.parse("2026-11-17T00:00:00Z") };
   const rows = opts.rows;
   const sessions = opts.sessions ?? [
     {
@@ -61,9 +63,17 @@ function makeFakes(opts: {
   const rpc = vi.fn(async (_name: string, args: { p_limit: number }) => {
     if (opts.claimError) return { data: null, error: { message: "rpc down" } };
     const claimable = rows
-      .filter((r) => r.claimed_at === null && r.sent_at === null)
+      .filter(
+        (r) =>
+          r.sent_at === null &&
+          r.attempts < 3 &&
+          (r.claimed_at === null || Date.parse(r.claimed_at) < db.now - 10 * 60 * 1000),
+      )
       .slice(0, args.p_limit);
-    for (const r of claimable) r.claimed_at = new Date().toISOString();
+    for (const r of claimable) {
+      r.claimed_at = new Date(db.now).toISOString();
+      r.attempts += 1;
+    }
     return { data: claimable.map((r) => ({ ...r })), error: null };
   });
 
@@ -115,24 +125,35 @@ function makeFakes(opts: {
     },
   };
 
-  const send = vi.fn(async () =>
-    opts.sendError
+  let sendCalls = 0;
+  const send = vi.fn(async () => {
+    sendCalls += 1;
+    if (opts.sendResult) return opts.sendResult(sendCalls);
+    return opts.sendError
       ? { data: null, error: { name: "x", message: "boom" } }
-      : { data: { id: "e1" }, error: null },
-  );
+      : { data: { id: "e1" }, error: null };
+  });
   const resend = { emails: { send } };
 
-  return { rows, rpc, supabase, resend, send };
+  return { rows, rpc, supabase, resend, send, db };
 }
 
-async function run(f: ReturnType<typeof makeFakes>) {
+async function run(
+  f: ReturnType<typeof makeFakes>,
+  extra: { sleep?: (ms: number) => Promise<void>; now?: () => number } = {},
+) {
   return drainEmailOutbox({
+    sleep: async () => {},
+    ...extra,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     supabase: f.supabase as any,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resend: f.resend as any,
-    sleep: async () => {},
   });
+}
+
+function manyRows(n: number) {
+  return Array.from({ length: n }, (_, i) => makeRow({ id: `r${i}` }));
 }
 
 describe("drainEmailOutbox", () => {
@@ -157,10 +178,11 @@ describe("drainEmailOutbox", () => {
     expect(options).toEqual({ idempotencyKey: "r1" });
   });
 
-  it("releases the claim and stores the error when Resend fails", async () => {
+  it("keeps the claim and stores the error when Resend fails", async () => {
     const f = makeFakes({ rows: [makeRow({ id: "r1" })], sendError: true });
     expect(await run(f)).toEqual({ sent: 0, failed: 1, skipped: 0 });
-    expect(f.rows[0].claimed_at).toBeNull();
+    expect(f.rows[0].claimed_at).not.toBeNull();
+    expect(f.rows[0].attempts).toBe(1);
     expect(f.rows[0].last_error).toBe("boom");
     expect(f.rows[0].sent_at).toBeNull();
   });
@@ -172,7 +194,7 @@ describe("drainEmailOutbox", () => {
     });
     expect(await run(f)).toEqual({ sent: 1, failed: 1, skipped: 0 });
     expect(f.send).toHaveBeenCalledTimes(1);
-    expect(f.rows[0].claimed_at).toBeNull();
+    expect(f.rows[0].claimed_at).not.toBeNull();
     expect(f.rows[0].last_error).toBeTruthy();
     expect(f.rows[0].sent_at).toBeNull();
     expect(f.rows[1].sent_at).not.toBeNull();
@@ -275,13 +297,139 @@ describe("drainEmailOutbox", () => {
     });
     expect(await run(f)).toEqual({ sent: 3, failed: 0, skipped: 0 });
     expect(f.rpc).toHaveBeenCalledTimes(1);
-    expect(f.rpc).toHaveBeenCalledWith("claim_email_outbox", { p_limit: 50 });
+    expect(f.rpc).toHaveBeenCalledWith("claim_email_outbox", { p_limit: 10 });
   });
 
-  it("drains at most 4 batches of 50", async () => {
-    const rows = Array.from({ length: 220 }, (_, i) => makeRow({ id: `r${i}` }));
-    const f = makeFakes({ rows });
-    expect(await run(f)).toEqual({ sent: 200, failed: 0, skipped: 0 });
-    expect(f.rpc).toHaveBeenCalledTimes(4);
+  it("drains at most 10 batches of 10", async () => {
+    const f = makeFakes({ rows: manyRows(220) });
+    expect(await run(f)).toEqual({ sent: 100, failed: 0, skipped: 0 });
+    expect(f.rpc).toHaveBeenCalledTimes(10);
+  });
+
+  it("never claims a failed row twice in one drain", async () => {
+    const f = makeFakes({ rows: manyRows(25), sendError: true });
+    expect(await run(f)).toEqual({ sent: 0, failed: 25, skipped: 0 });
+    expect(f.send).toHaveBeenCalledTimes(25);
+    expect(f.rows.map((r) => r.attempts)).toEqual(Array(25).fill(1));
+    expect(f.rows.every((r) => r.claimed_at !== null && r.sent_at === null)).toBe(true);
+  });
+
+  it("does not re-claim a full batch of failures in the same drain", async () => {
+    const f = makeFakes({ rows: manyRows(10), sendError: true });
+    await run(f);
+    expect(f.rows.map((r) => r.attempts)).toEqual(Array(10).fill(1));
+    expect(f.send).toHaveBeenCalledTimes(10);
+  });
+
+  it("retries a failed row only after the stale window and stops at 3 attempts", async () => {
+    const f = makeFakes({ rows: [makeRow({ id: "r1" })], sendError: true });
+    await run(f);
+    await run(f);
+    expect(f.rows[0].attempts).toBe(1);
+    f.db.now += 11 * 60 * 1000;
+    await run(f);
+    expect(f.rows[0].attempts).toBe(2);
+    f.db.now += 11 * 60 * 1000;
+    await run(f);
+    f.db.now += 11 * 60 * 1000;
+    await run(f);
+    expect(f.rows[0].attempts).toBe(3);
+    expect(f.send).toHaveBeenCalledTimes(3);
+  });
+
+  it("sleeps after a failed send", async () => {
+    const sleep = vi.fn(async () => {});
+    const f = makeFakes({ rows: manyRows(3), sendError: true });
+    await run(f, { sleep });
+    expect(sleep).toHaveBeenCalledTimes(3);
+  });
+
+  it("does not sleep when no send was made", async () => {
+    const sleep = vi.fn(async () => {});
+    const f = makeFakes({ rows: [makeRow({ id: "r1", user_id: "u-bad" })], noEmailFor: ["u-bad"] });
+    await run(f, { sleep });
+    expect(sleep).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["rate_limit_exceeded", 429],
+    ["daily_quota_exceeded", 429],
+    ["monthly_quota_exceeded", 429],
+    ["application_error", 429],
+    ["rate_limit_exceeded", null],
+  ])("stops the drain on %s (%s) without burning attempts", async (name, statusCode) => {
+    const f = makeFakes({
+      rows: manyRows(25),
+      sendResult: (call) =>
+        call < 3
+          ? { data: { id: "e" }, error: null }
+          : { data: null, error: { name, statusCode, message: "limited" } },
+    });
+    const result = await run(f);
+    expect(result).toEqual({ sent: 2, failed: 1, skipped: 0 });
+    expect(f.send).toHaveBeenCalledTimes(3);
+    expect(f.rpc).toHaveBeenCalledTimes(1);
+    expect(f.rows[0].sent_at).not.toBeNull();
+    expect(f.rows[1].sent_at).not.toBeNull();
+    expect(f.rows[2].attempts).toBe(0);
+    expect(f.rows[2].claimed_at).not.toBeNull();
+    expect(f.rows[2].last_error).toBe("limited");
+    for (const r of f.rows.slice(3, 10)) {
+      expect(r.attempts).toBe(0);
+      expect(r.claimed_at).toBeNull();
+    }
+    for (const r of f.rows.slice(10)) {
+      expect(r.attempts).toBe(0);
+      expect(r.claimed_at).toBeNull();
+    }
+  });
+
+  it("does not treat an ordinary error as a rate limit", async () => {
+    const f = makeFakes({
+      rows: manyRows(3),
+      sendResult: () => ({
+        data: null,
+        error: { name: "validation_error", statusCode: 422, message: "bad" },
+      }),
+    });
+    expect(await run(f)).toEqual({ sent: 0, failed: 3, skipped: 0 });
+    expect(f.send).toHaveBeenCalledTimes(3);
+  });
+
+  it("releases untried rows with their attempt restored when the budget expires mid-batch", async () => {
+    let t = 0;
+    const f = makeFakes({ rows: manyRows(25) });
+    const result = await run(f, {
+      now: () => t,
+      sleep: async () => {
+        t += 20_000;
+      },
+    });
+    expect(result).toEqual({ sent: 3, failed: 0, skipped: 0 });
+    expect(f.send).toHaveBeenCalledTimes(3);
+    expect(f.rpc).toHaveBeenCalledTimes(1);
+    for (const r of f.rows.slice(0, 3)) expect(r.sent_at).not.toBeNull();
+    for (const r of f.rows.slice(3)) {
+      expect(r.attempts).toBe(0);
+      expect(r.claimed_at).toBeNull();
+      expect(r.sent_at).toBeNull();
+    }
+  });
+
+  it("does not claim another batch once the budget has expired", async () => {
+    let t = 0;
+    const f = makeFakes({ rows: manyRows(20) });
+    const result = await run(f, {
+      now: () => t,
+      sleep: async () => {
+        t += 4_600;
+      },
+    });
+    expect(result).toEqual({ sent: 10, failed: 0, skipped: 0 });
+    expect(f.rpc).toHaveBeenCalledTimes(1);
+    for (const r of f.rows.slice(10)) {
+      expect(r.attempts).toBe(0);
+      expect(r.claimed_at).toBeNull();
+    }
   });
 });

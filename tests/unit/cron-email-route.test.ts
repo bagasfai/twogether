@@ -14,7 +14,7 @@ vi.mock("@/lib/email/drain-outbox", () => ({
   drainEmailOutbox: (...args: unknown[]) => drainEmailOutbox(...args),
 }));
 
-import { GET } from "@/app/api/cron/email/route";
+import { GET, maxDuration } from "@/app/api/cron/email/route";
 import { isProtected } from "@/proxy";
 
 function request(authorization?: string) {
@@ -45,6 +45,10 @@ afterEach(() => {
 });
 
 describe("cron email route", () => {
+  it("allows up to 300 seconds", () => {
+    expect(maxDuration).toBe(300);
+  });
+
   it("rejects a missing header", async () => {
     const res = await GET(request());
     expect(res.status).toBe(401);

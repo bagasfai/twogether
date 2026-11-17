@@ -2,6 +2,8 @@ import { timingSafeEqual } from "node:crypto";
 import { drainEmailOutbox } from "@/lib/email/drain-outbox";
 import { createServiceClient } from "@/lib/supabase/service";
 
+export const maxDuration = 300;
+
 function isAuthorized(request: Request): boolean {
   const secret = process.env.CRON_SECRET;
   if (!secret) return false;

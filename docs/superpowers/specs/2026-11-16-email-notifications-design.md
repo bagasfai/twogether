@@ -197,7 +197,8 @@ process that died between claiming and sending left the row looking sent. A sepa
 Replaces `send-bump-notifications.ts`. Keeps its dependency-injection shape
 (`{ resend?, supabase? }`) so unit tests inject fakes.
 
-1. Claim a batch.
+1. Claim a batch of 10 (at most 10 batches per drain). Stop when a batch comes back
+   short.
 2. For each row, load the session, the profile's `full_name`, and the address
    (`auth.admin.getUserById`).
 3. **Stale guard:** if the session's `ends_at` has passed, close the row
@@ -207,8 +208,19 @@ Replaces `send-bump-notifications.ts`. Keeps its dependency-injection shape
    paced to stay under Resend's request rate limit. The batch API is not used: its
    idempotency key covers a whole request, and a retried batch rarely has the same
    rows, so it cannot guarantee per-email deduplication.
-6. On success set `sent_at`. On failure store `last_error` and clear `claimed_at` so
-   the next drain retries it.
+6. On success set `sent_at`. On failure store `last_error` only and keep `claimed_at`:
+   the 10-minute stale window in `claim_email_outbox` is the retry backoff, so the same
+   drain never claims the row again. Sleep after every send attempt, successful or not.
+7. **Rate limit or quota:** a Resend error with `statusCode` 429, or name
+   `rate_limit_exceeded`, `daily_quota_exceeded` or `monthly_quota_exceeded`, stops the
+   drain and does not count as an attempt. The row that hit it gets its attempt back and
+   keeps `claimed_at`; rows claimed but not yet tried get their attempt back and
+   `claimed_at = null`.
+8. **Time budget:** the drain has a 45-second wall-clock budget, checked before each
+   claim and before each row. When it runs out, untried claimed rows get their attempt
+   back and `claimed_at = null`. The cron route sets `maxDuration = 300`.
+
+No row loses an attempt unless a send was really made for it.
 
 The drain never throws. It returns `{ sent, failed, skipped }`.
 
@@ -273,12 +285,13 @@ every status the emails report; the emails follow those overrides automatically.
 
 | Failure | Result |
 |---|---|
-| Resend rejects or times out | `last_error` stored, claim released, retried on the next drain, up to 3 attempts. |
+| Resend rejects or times out | `last_error` stored, `claimed_at` kept, retried after the 10-minute stale window, up to 3 attempts. |
 | Process dies mid-drain | Claim goes stale after 10 minutes and the row is retried. |
 | Same row sent twice | Resend idempotency key (outbox id) suppresses the duplicate. |
 | Recipient has no address or the account is gone | Counts as a failed attempt; the row stops at 3 attempts. Deleting the profile cascades the row away. |
 | Session already ended | Row closed as `stale`, nothing sent. |
-| Daily quota exhausted | Sends fail and retry on later drains, up to 3 attempts. |
+| Rate limit or quota exhausted | Drain stops, no attempt is counted, the hit row keeps its claim (retried after the stale window), untried rows are released with their attempt restored. |
+| Drain runs past 45 seconds | Untried claimed rows are released with their attempt restored; the next cron or action drain picks them up. |
 
 Email failure never changes an action's result.
 
