@@ -11,6 +11,8 @@ export const DISALLOWED_PATHS = [
   "/hosted",
   "/login",
   "/signup",
+  "/forgot-password",
+  "/reset-password",
   "/auth",
   "/api",
   "/sessions/new",

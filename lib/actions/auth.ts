@@ -2,7 +2,16 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { signInSchema, signUpSchema, type SignInInput, type SignUpInput } from "@/lib/validation/auth";
+import {
+  forgotPasswordSchema,
+  resetPasswordSchema,
+  signInSchema,
+  signUpSchema,
+  type ForgotPasswordInput,
+  type ResetPasswordInput,
+  type SignInInput,
+  type SignUpInput,
+} from "@/lib/validation/auth";
 import { fail, failFromZod, ok, type ActionResult } from "@/lib/actions/result";
 import { safeNext } from "@/lib/auth/redirect";
 
@@ -62,6 +71,56 @@ export async function signUp(input: SignUpInput): Promise<ActionResult<{ needsCo
   // outcome whether or not the address was already registered -- saying "that
   // email is taken" would leak membership.
   return ok({ needsConfirmation: true as const });
+}
+
+export async function requestPasswordReset(
+  input: ForgotPasswordInput,
+): Promise<ActionResult<{ sent: true }>> {
+  const parsed = forgotPasswordSchema.safeParse(input);
+  if (!parsed.success) return failFromZod(parsed.error);
+
+  const supabase = await createClient();
+  // No `next` on the link: app/auth/confirm sends every recovery link to
+  // /reset-password regardless (see confirmDestination).
+  const { error } = await supabase.auth.resetPasswordForEmail(parsed.data.email, {
+    redirectTo: `${siteUrl()}/auth/confirm`,
+  });
+
+  // Same outcome whether the address has an account, has none, or was
+  // rate-limited -- any difference is an account-enumeration oracle. The
+  // per-address send throttle in particular only trips for a real account.
+  if (error) console.error("[auth] resetPasswordForEmail", error.code ?? error.message);
+
+  return ok({ sent: true as const });
+}
+
+export async function updatePassword(input: ResetPasswordInput): Promise<ActionResult<null>> {
+  const parsed = resetPasswordSchema.safeParse(input);
+  if (!parsed.success) return failFromZod(parsed.error);
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return fail("not_authenticated", "That reset link has expired. Request a new one.");
+  }
+
+  const { error } = await supabase.auth.updateUser({ password: parsed.data.password });
+  if (error) {
+    if (error.code === "same_password") {
+      return fail("validation", undefined, {
+        password: ["Choose a password different from your current one"],
+      });
+    }
+    return fail("unknown", "We could not update your password. Please try again.");
+  }
+
+  // Whoever else holds a session on this account -- the reason for a reset may
+  // be that someone does -- is signed out. This session stays.
+  await supabase.auth.signOut({ scope: "others" });
+
+  redirect("/dashboard");
 }
 
 export async function signOut(): Promise<never> {

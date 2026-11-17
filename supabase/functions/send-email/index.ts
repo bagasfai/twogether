@@ -3,16 +3,17 @@
 // instead for every auth email it would otherwise send -- so every
 // email_action_type must be handled or explicitly rejected here.
 //
-// Only `signup` has a real flow in this app: app/auth/confirm/route.ts only
-// accepts type=email (see ALLOWED_OTP_TYPES there), and there is no
-// email-change, password-reset, or magic-link UI yet. Anything else throws
-// rather than emailing a link the app can't handle -- widen this switch only
-// when a route exists to receive the result.
+// `signup` and `recovery` have a real flow in this app: app/auth/confirm/route.ts
+// accepts type=email and type=recovery (see ALLOWED_OTP_TYPES in
+// lib/auth/otp.ts), and there is no email-change or magic-link UI yet.
+// Anything else throws rather than emailing a link the app can't handle --
+// widen EMAILS only when a route exists to receive the result.
 import { Webhook } from "npm:standardwebhooks@^1";
 import { render } from "npm:@react-email/render@^2";
 import React from "npm:react@^19";
 import { Resend } from "npm:resend@^6";
 
+import { RecoveryEmail } from "./_templates/recovery.tsx";
 import { SignUpEmail } from "./_templates/signup.tsx";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY") as string);
@@ -32,6 +33,26 @@ interface HookPayload {
   };
 }
 
+interface EmailSpec {
+  // the `type` app/auth/confirm/route.ts hands to verifyOtp()
+  otpType: "email" | "recovery";
+  subject: string;
+  element: (fullName: string | null, url: string) => React.ReactElement;
+}
+
+const EMAILS: Record<string, EmailSpec> = {
+  signup: {
+    otpType: "email",
+    subject: "Konfirmasi akun Jakbar Twogether kamu",
+    element: (fullName, url) => React.createElement(SignUpEmail, { fullName, confirmUrl: url }),
+  },
+  recovery: {
+    otpType: "recovery",
+    subject: "Atur ulang kata sandi Jakbar Twogether kamu",
+    element: (fullName, url) => React.createElement(RecoveryEmail, { fullName, resetUrl: url }),
+  },
+};
+
 Deno.serve(async (req) => {
   if (req.method !== "POST") {
     return new Response("not allowed", { status: 400 });
@@ -47,29 +68,28 @@ Deno.serve(async (req) => {
       email_data: { token_hash, redirect_to, email_action_type, site_url },
     } = wh.verify(payload, headers) as HookPayload;
 
-    if (email_action_type !== "signup") {
+    const spec = Object.hasOwn(EMAILS, email_action_type) ? EMAILS[email_action_type] : undefined;
+    if (!spec) {
       throw new Error(`email_action_type "${email_action_type}" has no handler yet`);
     }
 
-    // redirect_to is the emailRedirectTo passed to supabase.auth.signUp()
-    // (see lib/actions/auth.ts) -- already `${siteUrl}/auth/confirm?next=...`.
+    // redirect_to is the emailRedirectTo / redirectTo passed to
+    // supabase.auth.signUp() or resetPasswordForEmail() (see
+    // lib/actions/auth.ts) -- already `${siteUrl}/auth/confirm[?next=...]`.
     // Append the verification params that route expects rather than hand-
     // building the URL, so this stays correct if `next` ever changes.
     const confirmUrl = new URL(redirect_to || site_url);
     confirmUrl.searchParams.set("token_hash", token_hash);
-    confirmUrl.searchParams.set("type", "email");
+    confirmUrl.searchParams.set("type", spec.otpType);
 
     const html = await render(
-      React.createElement(SignUpEmail, {
-        fullName: user.user_metadata.full_name || null,
-        confirmUrl: confirmUrl.toString(),
-      })
+      spec.element(user.user_metadata.full_name || null, confirmUrl.toString())
     );
 
     const { error } = await resend.emails.send({
       from: fromAddress,
       to: [user.email],
-      subject: "Konfirmasi akun Jakbar Twogether kamu",
+      subject: spec.subject,
       html,
     });
     if (error) throw error;

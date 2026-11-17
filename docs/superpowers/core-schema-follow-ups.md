@@ -111,9 +111,18 @@ found by review, triaged, and deliberately left. Verdicts are from the final who
   hosted project (2026-10-23), but the Auth Send Email hook is not enabled in the dashboard,
   so email confirmation still works only locally through Inbucket. Must be wired before the
   first real user.
+- Email notifications: set `CRON_SECRET` on Vercel, or `/api/cron/email` answers 401 and the daily
+  reminder/retry run never fires. Push the three `20261116` migrations to the hosted project first.
 - Google OAuth is enabled and live in production per the owner (2026-11-17). It still has no
   automated coverage: the Playwright suite cannot drive a real Google sign-in.
-- No password reset flow exists.
+- ~~No password reset flow exists.~~ **Resolved**: `/forgot-password` requests a link
+  (`requestPasswordReset`), the `send-email` hook now handles `recovery`
+  (`_templates/recovery.tsx`), `app/auth/confirm` accepts `type=recovery` and always lands on
+  `/reset-password` (`lib/auth/otp.ts`), and `updatePassword` sets the new password and signs
+  out other sessions. Browser-verified locally on 2026-11-16 with an admin-generated recovery
+  link, and the owner confirmed the emailed link works end to end the same day. The hosted
+  `send-email` function must be redeployed. `/reset-password` works for any signed-in session,
+  not only one from a recovery link (matches `secure_password_change = false`).
 - ~~No admin UI: roles are changed by seed or by a service-role script.~~ **Resolved**:
   `/admin` (`app/(app)/admin/page.tsx`, gated by the new `requireAdmin`) lists every member
   and lets an admin change roles via `lib/actions/admin.ts`'s `setUserRole`, enforced by the

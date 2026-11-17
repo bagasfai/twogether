@@ -73,6 +73,9 @@ export function LoginForm({ next }: { next?: string }) {
                     <Input type="password" autoComplete="current-password" {...field} />
                   </FormControl>
                   <FormMessage />
+                  <p className="text-sm text-muted-foreground">
+                    <Link href="/forgot-password" className="underline">Forgot password?</Link>
+                  </p>
                 </FormItem>
               )}
             />

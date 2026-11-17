@@ -7,7 +7,7 @@ import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from "@/comp
 export const metadata: Metadata = { title: "Sign-in problem" };
 
 const REASONS: Record<string, string> = {
-  invalid_link: "That confirmation link is invalid or has expired.",
+  invalid_link: "That link is invalid or has expired.",
   oauth_failed: "We could not complete that sign-in.",
 };
 
