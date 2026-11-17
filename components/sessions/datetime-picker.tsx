@@ -66,6 +66,7 @@ export function DateTimePicker({ value, onChange, disabled, className, ...rest }
       <Input
         type="time"
         lang="en-GB"
+        data-testid="datetime-time"
         className="w-[120px]"
         disabled={disabled}
         value={time}
