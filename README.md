@@ -81,6 +81,25 @@ Local Supabase ports are remapped to the 5433x block so it can run next to other
 | `npm run lint` | ESLint |
 | `npm run test:unit` | Vitest, single run |
 | `npm run test:unit:watch` | Vitest, watch mode |
+| `npm run test:e2e` | Playwright end-to-end suite against the local stack |
+
+## End-to-end tests
+
+Playwright drives the real app (UI, Server Actions, RLS, RPCs) against the local Supabase stack. Nothing in Supabase is mocked.
+
+Prerequisites:
+
+- The local stack is running: `npx supabase start`.
+- The `supabase_edge_runtime_twogether` container is up. Signup and the password reset request go through the `send-email` hook and fail without it; `docker start supabase_edge_runtime_twogether` brings it back.
+- `.env.local` holds the local values (`NEXT_PUBLIC_SUPABASE_URL` on `127.0.0.1`, the local anon and service-role keys). The suite creates and deletes users with the service-role key, so it refuses to start when the Supabase URL is not `127.0.0.1` or `localhost`.
+- Chromium is installed once: `npx playwright install chromium`.
+
+```bash
+npm run test:e2e          # headless, one worker
+npx playwright test --ui  # interactive runner
+```
+
+Playwright starts `next dev` on `http://127.0.0.1:3000` with `RESEND_API_KEY` empty, or reuses a dev server already listening there. Every run creates its own users and sessions and removes them again; it never touches the seed users. Test users' addresses are Resend sink addresses (`delivered+e2e-…@resend.dev`), so any mail a run does send goes to Resend's `delivered@resend.dev` sink and not to a real inbox.
 
 ## Database
 

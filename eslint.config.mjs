@@ -19,6 +19,8 @@ const eslintConfig = defineConfig([
     ".impeccable/**",
     ".vitest/**",
     "supabase/.temp/**",
+    "test-results/**",
+    "playwright-report/**",
   ]),
 ]);
 
