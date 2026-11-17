@@ -198,9 +198,9 @@ export function RegisterPanel({
       <div className="flex flex-col gap-3">
         <div className="flex flex-wrap items-center gap-3">
           {registration.status === "confirmed" ? (
-            <Badge variant="success">{t("confirmed")}</Badge>
+            <Badge variant="success" data-testid="my-registration-status">{t("confirmed")}</Badge>
           ) : (
-            <Badge variant="warning" className="tabular-nums">
+            <Badge variant="warning" className="tabular-nums" data-testid="my-registration-status">
               {t("waitlistPosition", { position: registration.waitlistPosition ?? 0 })}
             </Badge>
           )}
