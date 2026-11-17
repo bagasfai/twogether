@@ -220,7 +220,10 @@ Replaces `send-bump-notifications.ts`. Keeps its dependency-injection shape
    claim and before each row. When it runs out, untried claimed rows get their attempt
    back and `claimed_at = null`. The cron route sets `maxDuration = 300`.
 
-No row loses an attempt unless a send was really made for it.
+Rate-limit, quota and time-budget stops never cost an attempt. Any other failure,
+including one before the send (session lookup, missing address, render), counts as an
+attempt, and the failed row keeps `claimed_at` so the 10-minute stale window is its
+backoff.
 
 The drain never throws. It returns `{ sent, failed, skipped }`.
 

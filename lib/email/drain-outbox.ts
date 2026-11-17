@@ -42,8 +42,9 @@ const defaultSleep = (ms: number) => new Promise<void>((resolve) => setTimeout(r
 // Rate-limit and quota errors from Resend stop the drain and do not count as an
 // attempt: the row that hit the error and every claimed-but-untried row get their
 // attempt back. The same happens to untried rows when the TIME_BUDGET_MS wall-clock
-// budget (checked before each claim and before each row) runs out. No row loses an
-// attempt unless a send was really made for it.
+// budget (checked before each claim and before each row) runs out. Rate-limit, quota
+// and time-budget stops never cost an attempt. Any other failure, including one
+// before the send (session lookup, missing address, render), counts as an attempt.
 //
 // Claim is atomic in claim_email_outbox (FOR UPDATE SKIP LOCKED), so concurrent
 // drains never email the same row twice; row.id is also the Resend idempotency
