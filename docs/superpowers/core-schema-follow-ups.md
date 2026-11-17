@@ -77,8 +77,8 @@ found by review, triaged, and deliberately left. Verdicts are from the final who
   stack: default run passed unchanged (barrier spread 2-3ms, well under 50ms); a
   `ARRIVAL_SPREAD_THRESHOLD_MS=1` override correctly failed on the barrier-spread assertion
   specifically ("barrier spread 1ms >= 1ms"), proving the override is actually read; a follow-up
-  default run passed again. No CI workflow exists yet in this repo — this just makes the
-  threshold override-able ahead of that.
+  default run passed again. CI (`.github/workflows/ci.yml`, job `db-and-e2e`) now runs the
+  script with the default threshold.
 - ~~A demoted participant keeps their original `registered_at`, so they rejoin the queue ahead
   of people who have waited longer.~~ **Resolved** by migration
   `20260917000003_demotion_queue_fairness.sql`: `host_set_participant_status` now re-stamps
@@ -141,7 +141,7 @@ found by review, triaged, and deliberately left. Verdicts are from the final who
   cancel player and the member's consent banner; auto-match generate, confirm and the
   shortfall message. Not covered: Google OAuth, gallery, admin, reports, announcements,
   drilling sessions and premium. The suite is local only (it refuses a non-local Supabase
-  URL) and no CI workflow runs it yet. Race-safety is still proven by
+  URL); CI runs it in `.github/workflows/ci.yml` (job `db-and-e2e`). Race-safety is still proven by
   `scripts/test-concurrent-*.sh`, not by this suite.
 
 ## From the gallery work
@@ -351,3 +351,7 @@ on a deadlock and on removing both locks.
   equivalent) before pushing to any such project, rather than assuming a clean push.~~
   **Resolved** (2026-10-23): the hosted project has no `20260910050037` entry, so no repair is
   needed.
+- **The `send-email` hook is not exercised by CI.** CI turns the hook off before
+  `supabase start` (`scripts/ci/disable-send-email-hook.sh`), so signup and password-reset
+  mail through Resend are verified only by hand. Check them after any change to
+  `supabase/functions/send-email/` or its templates.

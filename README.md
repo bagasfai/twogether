@@ -130,6 +130,26 @@ update public.profiles set role = 'admin' where id = '<your-user-uuid>';
 
 The role-change guard exempts calls where `auth.uid()` is null, which covers the SQL editor and any `service_role` connection.
 
+## CI
+
+`.github/workflows/ci.yml` runs on every push to `dev` and on every pull request into `main`. It has two jobs, run in parallel:
+
+- **`checks`** (no database): `npm run lint`, `next typegen` + `tsc --noEmit`, `npm run test:unit`.
+- **`db-and-e2e`**: boots the local Supabase stack, then runs `npm run build`, the pgTAP suite (`npx supabase test db`), the scripts in `scripts/` (`test-concurrent-*.sh`, `test-public-community-stats.sh`) and the Playwright suite. One failing suite does not skip the others. On failure, the Playwright traces are uploaded as the `playwright-traces` artifact. The build runs here, not in `checks`, because `/about` is prerendered and reads the database at build time.
+
+A red run on `dev` only warns. A pull request into `main` cannot be merged until both checks pass.
+
+CI uses no secrets: every credential comes from the stack it boots. CI turns off the `send-email` auth hook, so Auth uses its built-in mailer. The hook and Resend delivery are not tested in CI.
+
+Vercel builds only `main` (`git.deploymentEnabled` in `vercel.json`). Other branches, including pull request branches, get no preview deploy.
+
+### Release checklist
+
+1. CI is green on the `dev` head.
+2. If the release adds migrations, run `npx supabase db push` to the hosted project and check that it applied. If it touches `supabase/functions/`, redeploy that function.
+3. Open a `dev` → `main` pull request, wait for the required checks, and merge with a merge commit.
+4. Vercel builds and deploys `main`.
+
 ## Deployment
 
 The app deploys to Vercel and the backend to Supabase Cloud.
