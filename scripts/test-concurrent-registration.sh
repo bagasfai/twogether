@@ -43,8 +43,8 @@ TMPDIR=$(mktemp -d)
 # counts (e.g. 008_rls_core.test.sql) the next time `supabase test db` runs.
 cleanup() {
   if [ -n "${DB_URL:-}" ]; then
-    # Session delete cascades participants, and with them membership_usages
-    # and bump_notifications. The memberships delete is explicit (it would
+    # Session delete cascades participants and email_outbox, and with them
+    # membership_usages. The memberships delete is explicit (it would
     # also cascade from auth.users via profiles) and takes their remaining
     # usages with it. No membership_plans are seeded: memberships.plan_id is
     # informational and left null.
@@ -258,7 +258,7 @@ check_workers_ok() {
 #   member: if a non-premium caller won the seat first, that row is bumpable
 #   (registered by the member, not checked in, not host-added), so the
 #   premium caller bumps it;
-# * bump_notifications rows = participants with bumped_at set, at most 1;
+# * 'bumped' email_outbox rows = participants with bumped_at set, at most 1;
 # * a bumped participant is waiting_list, never confirmed.
 # The waitlist cap equals B_RACERS, so every caller fits (a bump ignores the
 # cap anyway) and every worker must succeed.
@@ -341,9 +341,8 @@ select
   (select count(*) from public.participants where session_id = '$B_SESSION_ID'),
   (select count(*) from public.participants
     where session_id = '$B_SESSION_ID' and bumped_at is not null),
-  (select count(*) from public.bump_notifications n
-     join public.participants p on p.id = n.participant_id
-    where p.session_id = '$B_SESSION_ID'),
+  (select count(*) from public.email_outbox
+    where session_id = '$B_SESSION_ID' and type = 'bumped'),
   (select count(*) from public.participants
     where session_id = '$B_SESSION_ID' and bumped_at is not null and status = 'confirmed'),
   (select count(*) from public.participants
@@ -359,7 +358,7 @@ SQL
 [ "$B_PREMIUM_FLAG" = "t" ] || { echo "FAIL: B premium member row has is_premium='$B_PREMIUM_FLAG'"; B_FAIL=1; }
 [ "$B_WAITING" = "$B_RACERS" ] || { echo "FAIL: B expected $B_RACERS waitlisted, got $B_WAITING"; B_FAIL=1; }
 [ "$B_TOTAL" = "$((B_RACERS + 1))" ] || { echo "FAIL: B expected $((B_RACERS + 1)) rows, got $B_TOTAL"; B_FAIL=1; }
-[ "$B_NOTIFS" = "$B_BUMPED" ] || { echo "FAIL: B bump_notifications ($B_NOTIFS) != bumped participants ($B_BUMPED)"; B_FAIL=1; }
+[ "$B_NOTIFS" = "$B_BUMPED" ] || { echo "FAIL: B bumped emails ($B_NOTIFS) != bumped participants ($B_BUMPED)"; B_FAIL=1; }
 [ "$B_BUMPED" -le 1 ] || { echo "FAIL: B expected at most 1 bumped participant, got $B_BUMPED"; B_FAIL=1; }
 [ "$B_BUMPED_CONFIRMED" = 0 ] || { echo "FAIL: B $B_BUMPED_CONFIRMED participant(s) have bumped_at set but are confirmed"; B_FAIL=1; }
 [ "$B_BUMPED_NOT_WAITING" = 0 ] || { echo "FAIL: B $B_BUMPED_NOT_WAITING bumped participant(s) are not waiting_list"; B_FAIL=1; }

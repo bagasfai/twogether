@@ -23,17 +23,19 @@ export async function getMyProfile(): Promise<MyProfile | null> {
 
   // phone lives in profiles_private, readable only by self, an admin, or a host
   // of a session this user is a non-cancelled participant in.
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("profiles_private")
     .select("phone, gender")
     .eq("user_id", user.id)
     .maybeSingle();
+  if (error) throw new Error(`Could not load profile details: ${error.message}`);
 
-  const { data: prefs } = await supabase
+  const { data: prefs, error: prefsError } = await supabase
     .from("profiles")
     .select("email_reminders")
     .eq("id", user.id)
     .maybeSingle();
+  if (prefsError) throw new Error(`Could not load email preferences: ${prefsError.message}`);
 
   return {
     id: user.id,
