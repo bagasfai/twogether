@@ -6,7 +6,7 @@ import {
   randomPhone,
   testEmail,
 } from "./support/admin";
-import { expect, formAlert, hydrated, logIn, test } from "./support/fixtures";
+import { expect, formAlert, hydrated, logIn, signOut, test } from "./support/fixtures";
 
 test("signed-out visitor is sent to login and back", async ({ page, users }) => {
   await page.goto("/dashboard");
@@ -25,8 +25,7 @@ test("wrong password shows the error and stays on login", async ({ page, users }
 test("sign out returns home and re-protects the dashboard", async ({ asUser, users }) => {
   const page = await asUser(users.memberA, { fresh: true });
   await page.goto("/dashboard");
-  await page.getByRole("button", { name: "Sign out" }).click();
-  await expect(page).toHaveURL("/");
+  await signOut(page);
   await page.goto("/dashboard");
   await expect(page).toHaveURL("/login?next=%2Fdashboard");
 });
@@ -61,8 +60,7 @@ test.describe("signup", () => {
     await page.goto(await confirmationLink(email, TEST_PASSWORD));
     await expect(page).toHaveURL("/dashboard");
 
-    await page.getByRole("button", { name: "Sign out" }).click();
-    await expect(page).toHaveURL("/");
+    await signOut(page);
     await page.goto("/login");
     await logIn(page, email, TEST_PASSWORD);
     await expect(page).toHaveURL("/dashboard");

@@ -2,6 +2,7 @@ import { randomBytes } from "node:crypto";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "../../../types/supabase";
 import { assertLocalStack, env } from "./env";
+import { appServerProblem } from "./local-guard";
 import { E2E_SESSION_PREFIX, sweepE2eData as sweepWith, type SweepClient } from "./sweep";
 
 export type Role = "member" | "host" | "admin";
@@ -64,6 +65,12 @@ export async function createUser(o: { label: string; role?: Role; gender?: Gende
 export async function deleteUser(id: string): Promise<void> {
   const { error } = await admin().auth.admin.deleteUser(id);
   if (error) throw new Error(`deleteUser ${id}: ${error.message}`);
+}
+
+export async function recoverySentAt(id: string): Promise<string | null> {
+  const { data, error } = await admin().auth.admin.getUserById(id);
+  if (error || !data.user) throw new Error(`getUserById ${id}: ${error?.message ?? "no user returned"}`);
+  return data.user.recovery_sent_at ?? null;
 }
 
 const USERS_PER_PAGE = 200;
@@ -183,6 +190,24 @@ export async function confirmationLink(email: string, password: string): Promise
 export async function recoveryLink(email: string): Promise<string> {
   const token = await hashedToken({ type: "recovery", email });
   return `/auth/confirm?token_hash=${token}&type=recovery`;
+}
+
+// The guard in env.ts covers this process only. A dev server that was already
+// running keeps its own environment, so prove it reads the same database.
+export async function assertAppServerUsesLocalStack(): Promise<void> {
+  const owner = await createUser({ label: "canary", role: "host" });
+  try {
+    const session = await createSession(owner, { courtCount: 1 });
+    try {
+      const response = await fetch(`${env.baseUrl}/en/sessions/${session.id}`);
+      const problem = appServerProblem(response.status, await response.text(), session.title);
+      if (problem) throw new Error(problem);
+    } finally {
+      await deleteSession(session.id);
+    }
+  } finally {
+    await deleteUser(owner.id);
+  }
 }
 
 function sweepClient(): SweepClient {

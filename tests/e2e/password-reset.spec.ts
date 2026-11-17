@@ -1,5 +1,5 @@
-import { createUser, deleteUser, recoveryLink, type TestUser } from "./support/admin";
-import { expect, formAlert, hydrated, logIn, test } from "./support/fixtures";
+import { createUser, deleteUser, recoveryLink, recoverySentAt, type TestUser } from "./support/admin";
+import { expect, formAlert, hydrated, logIn, signOut, test } from "./support/fixtures";
 
 const NEW_PASSWORD = "E2e-next-456";
 
@@ -19,7 +19,12 @@ test("request a reset, set a new password, log in with it", async ({ page }) => 
   await hydrated(send);
   await page.getByLabel("Email").fill(user.email);
   await send.click();
-  await expect(page.getByRole("heading", { name: "Check your email" })).toBeVisible();
+  // The form reports success whatever happened, so ask Auth whether the mail went out.
+  await expect(page.getByRole("heading", { name: "Check your email" })).toBeVisible({ timeout: 30_000 });
+  expect(
+    await recoverySentAt(user.id),
+    "no recovery mail was sent: is supabase_edge_runtime_twogether running?",
+  ).not.toBeNull();
 
   await page.goto(await recoveryLink(user.email));
   await expect(page).toHaveURL("/reset-password");
@@ -30,8 +35,7 @@ test("request a reset, set a new password, log in with it", async ({ page }) => 
   await save.click();
   await expect(page).toHaveURL("/dashboard");
 
-  await page.getByRole("button", { name: "Sign out" }).click();
-  await expect(page).toHaveURL("/");
+  await signOut(page);
 
   await page.goto("/login");
   await logIn(page, user.email, user.password);

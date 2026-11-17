@@ -1,4 +1,7 @@
+import { readFileSync } from "node:fs";
+import path from "node:path";
 import { loadEnvConfig } from "@next/env";
+import { localStackProblem } from "./local-guard";
 
 loadEnvConfig(process.cwd());
 
@@ -21,19 +24,16 @@ export const env = {
   baseUrl: "http://127.0.0.1:3000" as const,
 };
 
-const LOCAL_HOSTS = ["127.0.0.1", "localhost"];
+function configuredApiPort(): string | null {
+  try {
+    const toml = readFileSync(path.join(process.cwd(), "supabase", "config.toml"), "utf8");
+    return /^\[api\][^[]*?^port\s*=\s*(\d+)/m.exec(toml)?.[1] ?? null;
+  } catch {
+    return null;
+  }
+}
 
 export function assertLocalStack(): void {
-  const url = env.supabaseUrl;
-  let host: string;
-  try {
-    host = new URL(url).hostname;
-  } catch {
-    throw new Error(`NEXT_PUBLIC_SUPABASE_URL is not a URL: ${url}`);
-  }
-  if (!LOCAL_HOSTS.includes(host)) {
-    throw new Error(
-      `Refusing to run e2e tests against ${host}. The suite creates and deletes users with the service-role key and only runs against the local Supabase stack (127.0.0.1 or localhost).`,
-    );
-  }
+  const problem = localStackProblem(env.supabaseUrl, configuredApiPort());
+  if (problem) throw new Error(problem);
 }

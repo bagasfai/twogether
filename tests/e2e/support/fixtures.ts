@@ -45,6 +45,13 @@ export async function logIn(page: Page, email: string, password: string): Promis
   await submit.click();
 }
 
+export async function signOut(page: Page): Promise<void> {
+  const button = page.getByRole("button", { name: "Sign out" });
+  await hydrated(button);
+  await button.click();
+  await expect(page).toHaveURL("/");
+}
+
 async function dropSavedState(userId: string): Promise<void> {
   const file = savedStates.get(userId);
   if (!file) return;

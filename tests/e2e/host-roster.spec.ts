@@ -144,7 +144,9 @@ test("a member added by the host confirms the spot from their dashboard", async 
     .locator("div")
     .filter({ hasText: `A host added you to ${s.title}` })
     .last();
-  await banner.getByRole("button", { name: "Confirm", exact: true }).click();
+  const confirmSpot = banner.getByRole("button", { name: "Confirm", exact: true });
+  await hydrated(confirmSpot);
+  await confirmSpot.click();
   await expect(banner).toBeHidden(WAIT);
 
   await expect(row.getByText("Awaiting their confirmation")).toHaveCount(0, WAIT);

@@ -1,4 +1,4 @@
-import { sweepE2eData } from "./support/admin";
+import { assertAppServerUsesLocalStack, sweepE2eData } from "./support/admin";
 import { assertLocalStack, env } from "./support/env";
 
 export default async function globalSetup(): Promise<void> {
@@ -14,6 +14,7 @@ export default async function globalSetup(): Promise<void> {
   if (!response.ok) throw down;
 
   await sweepE2eData();
+  await assertAppServerUsesLocalStack();
 
   // Auth gives the send-email hook 5 s; a cold edge worker can take longer and
   // would fail the first signup. Boot it here. The response does not matter.
