@@ -14,4 +14,12 @@ export default async function globalSetup(): Promise<void> {
   if (!response.ok) throw down;
 
   await sweepE2eData();
+
+  // Auth gives the send-email hook 5 s; a cold edge worker can take longer and
+  // would fail the first signup. Boot it here. The response does not matter.
+  await fetch(`${env.supabaseUrl}/functions/v1/send-email`, {
+    method: "POST",
+    headers: { apikey: env.anonKey, "content-type": "application/json" },
+    body: "{}",
+  }).catch(() => undefined);
 }
