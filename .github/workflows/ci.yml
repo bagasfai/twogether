@@ -1,0 +1,88 @@
+name: CI
+
+on:
+  push:
+    branches: [dev]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npx next typegen
+      - run: npx tsc --noEmit
+      - run: npm run test:unit
+
+  db-and-e2e:
+    name: db-and-e2e
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      SEND_EMAIL_HOOK_SECRET: v1,whsec_Y2ktbm90LXNlY3JldC1ob29rLWtleS0wMDAwMDA=
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: scripts/ci/disable-send-email-hook.sh supabase/config.toml
+      - id: start
+        run: npx supabase start -x studio,postgres-meta,imgproxy,logflare,vector,supavisor,edge-runtime
+      - name: Write .env.local from the local stack
+        if: ${{ !cancelled() && steps.start.outcome == 'success' }}
+        run: scripts/ci/write-env-local.sh .env.local
+      - name: Build
+        if: ${{ !cancelled() && steps.start.outcome == 'success' }}
+        run: npm run build
+      - name: pgTAP
+        if: ${{ !cancelled() && steps.start.outcome == 'success' }}
+        run: npx supabase test db
+      - name: Race and RPC scripts
+        if: ${{ !cancelled() && steps.start.outcome == 'success' }}
+        run: |
+          failed=0
+          for script in scripts/test-concurrent-*.sh scripts/test-public-community-stats.sh; do
+            echo "== $script"
+            bash "$script" || failed=1
+          done
+          exit "$failed"
+      - name: Playwright version
+        id: pw
+        if: ${{ !cancelled() && steps.start.outcome == 'success' }}
+        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@v6
+        if: ${{ !cancelled() && steps.start.outcome == 'success' }}
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}
+      - name: Install Playwright Chromium
+        if: ${{ !cancelled() && steps.start.outcome == 'success' }}
+        run: npx playwright install --with-deps chromium
+      - name: Playwright
+        if: ${{ !cancelled() && steps.start.outcome == 'success' }}
+        run: npm run test:e2e
+      - uses: actions/upload-artifact@v7
+        if: ${{ failure() }}
+        with:
+          name: playwright-traces
+          path: test-results/
+          retention-days: 7
+          if-no-files-found: ignore
